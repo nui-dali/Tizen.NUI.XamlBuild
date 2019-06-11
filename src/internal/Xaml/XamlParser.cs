@@ -355,7 +355,7 @@ namespace Tizen.NUI.Xaml
             if (lookupAssemblies.Count == 0) {
                 string ns, asmstring, _;
                 XmlnsHelper.ParseXmlns(namespaceURI, out _, out ns, out asmstring, out _);
-                lookupAssemblies.Add(new XmlnsDefinitionAttribute(namespaceURI, ns) {
+                lookupAssemblies.Add(new XmlnsDefinitionAttribute(namespaceURI, ns, 0) {
                     AssemblyName = asmstring ?? currentAssembly.FullName
                 });
             }

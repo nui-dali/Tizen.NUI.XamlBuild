@@ -308,36 +308,34 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
         internal static IList<XmlnsDefinitionAttribute> s_xmlnsDefinitions = new List<XmlnsDefinitionAttribute>();
 
+        private Type definitionAttribute = null;
+
         private void GatherAssemblyInfo(string p)
         {
             try
             {
                 System.Reflection.Assembly assembly = System.Reflection.Assembly.LoadFrom(p);
 
-                Type definitionAttribute = assembly.GetType(bindingNameSpace + ".XmlnsDefinitionAttribute");
-
-                if (null != definitionAttribute)
+                foreach (object obj in assembly.GetCustomAttributes(definitionAttribute, false))
                 {
-                    foreach (object obj in assembly.GetCustomAttributes(definitionAttribute, false))
+                    string assemblyName = definitionAttribute.GetProperty("AssemblyName").GetValue(obj, null) as string;
+                    if (null == assemblyName)
                     {
-                        string assemblyName = definitionAttribute.GetProperty("AssemblyName").GetValue(obj, null) as string;
-                        if (null == assemblyName)
-                        {
-                            assemblyName = assembly.FullName;
-                        }
-
-                        if (typeof(XamlCTask).Assembly.GetName().Name == assembly.GetName().Name)
-                        {
-                            continue;
-                        }
-
-                        string clrNamespace = definitionAttribute.GetProperty("ClrNamespace").GetValue(obj, null) as string;
-                        string xmlNamespace = definitionAttribute.GetProperty("XmlNamespace").GetValue(obj, null) as string;
-
-                        XmlnsDefinitionAttribute attribute = new XmlnsDefinitionAttribute(xmlNamespace, clrNamespace);
-                        attribute.AssemblyName = assemblyName;
-                        s_xmlnsDefinitions.Add(attribute);
+                        assemblyName = assembly.FullName;
                     }
+
+                    if (typeof(XamlCTask).Assembly.GetName().Name == assembly.GetName().Name)
+                    {
+                        continue;
+                    }
+
+                    string clrNamespace = definitionAttribute.GetProperty("ClrNamespace").GetValue(obj, null) as string;
+                    string xmlNamespace = definitionAttribute.GetProperty("XmlNamespace").GetValue(obj, null) as string;
+                    int level = int.Parse(definitionAttribute.GetProperty("Level").GetValue(obj, null) as string);
+
+                    XmlnsDefinitionAttribute attribute = new XmlnsDefinitionAttribute(xmlNamespace, clrNamespace, level);
+                    attribute.AssemblyName = assemblyName;
+                    s_xmlnsDefinitions.Add(attribute);
                 }
             }
             catch (Exception e)
@@ -348,8 +346,6 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
         public override bool Execute(out IList<Exception> thrownExceptions)
         {
-            string injectRet = Environment.GetEnvironmentVariable("NeedInjection");
-
             Console.WriteLine("Assembly is " + Assembly);
 
             thrownExceptions = null;
@@ -379,6 +375,26 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 if (!string.IsNullOrEmpty(ReferencePath))
                 {
                     var paths = ReferencePath.Replace("//", "/").Split(';');
+
+                    foreach (var p in paths)
+                    {
+                        try
+                        {
+                            System.Reflection.Assembly assembly = System.Reflection.Assembly.LoadFrom(p);
+                            Type definitionAttribute = assembly.GetType(bindingNameSpace + ".XmlnsDefinitionAttribute");
+
+                            if (null != definitionAttribute)
+                            {
+                                this.definitionAttribute = definitionAttribute;
+                                break;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+
+                        }
+                    }
+
                     foreach (var p in paths)
                     {
                         GatherAssemblyInfo(p);

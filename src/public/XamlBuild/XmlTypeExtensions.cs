@@ -19,7 +19,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				typeof(Element).Assembly,
 				typeof(XamlLoader).Assembly,
 			};
-            s_xmlnsDefinitions = Tizen.NUI.Xaml.Build.Tasks.XamlCTask.s_xmlnsDefinitions;
+            s_xmlnsDefinitions = Tizen.NUI.Xaml.Build.Tasks.XamlCTask.s_xmlnsDefinitions.OrderByDescending(a => a.Level).ToList(); ;
         }
 
 		public static TypeReference GetTypeReference(string xmlType, ModuleDefinition module, BaseNode node)
@@ -84,7 +84,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				XmlnsHelper.ParseXmlns(namespaceURI, out typename, out ns, out asmstring, out targetPlatform);
 				asmstring = asmstring ?? module.Assembly.Name.Name;
 				if (ns != null)
-					lookupAssemblies.Add(new XmlnsDefinitionAttribute(namespaceURI, ns) {
+					lookupAssemblies.Add(new XmlnsDefinitionAttribute(namespaceURI, ns, 0) {
 						AssemblyName = asmstring
 					});
 			}

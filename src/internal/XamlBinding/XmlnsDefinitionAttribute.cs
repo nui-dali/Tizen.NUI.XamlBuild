@@ -24,7 +24,11 @@ namespace Tizen.NUI.XamlBinding
 
         /// This will be public opened in tizen_5.0 after ACR done. Before ACR, need to be hidden as inhouse API.
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public XmlnsDefinitionAttribute(string xmlNamespace, string clrNamespace)
+        public int Level { get; set; }
+
+        /// This will be public opened in tizen_5.0 after ACR done. Before ACR, need to be hidden as inhouse API.
+        [EditorBrowsable(EditorBrowsableState.Never)]
+        public XmlnsDefinitionAttribute(string xmlNamespace, string clrNamespace, int level)
         {
             if (xmlNamespace == null)
                 throw new ArgumentNullException(nameof(xmlNamespace));
@@ -33,6 +37,7 @@ namespace Tizen.NUI.XamlBinding
 
             ClrNamespace = clrNamespace;
             XmlNamespace = xmlNamespace;
+            Level = level;
         }
     }
 }

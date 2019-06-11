@@ -21,7 +21,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
         private class XmlnsInfo
         {
-            public void Add(Assembly assembly, string nameSpace)
+            public void Add(Assembly assembly, string nameSpace, int level)
             {
                 Type[] types = assembly.GetTypes();
 
@@ -33,12 +33,51 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                         &&
                         type.IsClass == true)
                     {
-                        classNameToNameSpace.Add(type.Name, type.Namespace);
+                        bool needUpdate = false;
+                        if (true == classNameToNameSpace.ContainsKey(type.Name))
+                        {
+                            NameSpaceInfo info = classNameToNameSpace[type.Name];
+
+                            if (level > info.level)
+                            {
+                                needUpdate = true;
+                            }
+                        }
+                        else
+                        {
+                            needUpdate = true;
+                        }
+                        
+                        if (true == needUpdate)
+                        {
+                            classNameToNameSpace[type.Name] = new NameSpaceInfo(type.Namespace, level);
+                        }
                     }
                 }
             }
 
-            internal Dictionary<string, string> classNameToNameSpace = new Dictionary<string, string>();
+            public string GetNameSpace(string nameSpace)
+            {
+                NameSpaceInfo ret;
+
+                classNameToNameSpace.TryGetValue(nameSpace, out ret);
+
+                return ret?.nameSpace;
+            }
+
+            private class NameSpaceInfo
+            {
+                internal NameSpaceInfo(string nameSpace, int level)
+                {
+                    this.nameSpace = nameSpace;
+                    this.level = level;
+                }
+
+                internal string nameSpace;
+                internal int level;
+            }
+
+            private Dictionary<string, NameSpaceInfo> classNameToNameSpace = new Dictionary<string, NameSpaceInfo>();
         }
 
         static private Dictionary<string, XmlnsInfo> xmlnsNameToInfo = new Dictionary<string, XmlnsInfo>();
@@ -79,6 +118,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                             {
                                 string clrNamespace = definitionAttribute.GetProperty("ClrNamespace").GetValue(attr, null) as string;
                                 string xmlNamespace = definitionAttribute.GetProperty("XmlNamespace").GetValue(attr, null) as string;
+                                int level = int.Parse(definitionAttribute.GetProperty("Level").GetValue(attr, null) as string);
 
                                 XmlnsInfo xmlsInfo = null;
 
@@ -92,7 +132,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                                     xmlnsNameToInfo.Add(xmlNamespace, xmlsInfo);
                                 }
 
-                                xmlsInfo.Add(ass, clrNamespace);
+                                xmlsInfo.Add(ass, clrNamespace, level);
                             }
                         }
                         catch (Exception e)
@@ -424,8 +464,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
             if (null != xmlnsInfo)
             {
-                string nameSpace = null;
-                xmlnsInfo.classNameToNameSpace.TryGetValue(className, out nameSpace);
+                string nameSpace = xmlnsInfo.GetNameSpace(className);
 
                 if (null != nameSpace)
                 {
