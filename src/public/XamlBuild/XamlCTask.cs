@@ -43,9 +43,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         public MethodDefinition InitCompForType { get; private set; }
         internal bool ReadOnly { get; set; }
 
-        private void PrintParam(string logFileName, out IList<Exception> thrownExceptions)
+        private void PrintParam(string logFileName)
         {
-            thrownExceptions = null;
             FileStream stream = File.Create(logFileName);
 
             string str = "Assembly is " + Assembly + "\n";
@@ -331,7 +330,13 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
                     string clrNamespace = definitionAttribute.GetProperty("ClrNamespace").GetValue(obj, null) as string;
                     string xmlNamespace = definitionAttribute.GetProperty("XmlNamespace").GetValue(obj, null) as string;
-                    int level = int.Parse(definitionAttribute.GetProperty("Level").GetValue(obj, null) as string);
+
+                    int level = 0;
+                    System.Reflection.PropertyInfo propertyOfLevel = definitionAttribute.GetProperty("Level");
+                    if (null != propertyOfLevel)
+                    {
+                        level = int.Parse(propertyOfLevel.GetValue(obj, null) as string);
+                    }
 
                     XmlnsDefinitionAttribute attribute = new XmlnsDefinitionAttribute(xmlNamespace, clrNamespace, level);
                     attribute.AssemblyName = assemblyName;

@@ -118,7 +118,13 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                             {
                                 string clrNamespace = definitionAttribute.GetProperty("ClrNamespace").GetValue(attr, null) as string;
                                 string xmlNamespace = definitionAttribute.GetProperty("XmlNamespace").GetValue(attr, null) as string;
-                                int level = int.Parse(definitionAttribute.GetProperty("Level").GetValue(attr, null) as string);
+
+                                int level = 0;
+                                System.Reflection.PropertyInfo propertyOfLevel = definitionAttribute.GetProperty("Level");
+                                if (null != propertyOfLevel)
+                                {
+                                    level = int.Parse(propertyOfLevel.GetValue(attr, null) as string);
+                                }
 
                                 XmlnsInfo xmlsInfo = null;
 
