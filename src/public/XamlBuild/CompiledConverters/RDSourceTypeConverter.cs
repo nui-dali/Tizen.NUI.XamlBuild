@@ -9,7 +9,7 @@ using static Mono.Cecil.Cil.OpCodes;
 
 using Tizen.NUI.Xaml.Build.Tasks;
 using Tizen.NUI.Xaml;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 
 namespace Tizen.NUI.Xaml.Core.XamlC
 {

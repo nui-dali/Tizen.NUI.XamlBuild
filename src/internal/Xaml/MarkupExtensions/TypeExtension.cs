@@ -1,5 +1,5 @@
 using System;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 
 namespace Tizen.NUI.Xaml
 {

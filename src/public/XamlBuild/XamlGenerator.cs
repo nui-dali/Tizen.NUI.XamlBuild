@@ -8,7 +8,7 @@ using System.Xml;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Microsoft.CSharp;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 using Tizen.NUI.Xaml;
 
 namespace Tizen.NUI.Xaml.Build.Tasks
@@ -96,7 +96,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                         try
                         {
                             Assembly ass = Assembly.LoadFrom(p);
-                            definitionAttribute = ass.GetType("Tizen.NUI.XamlBinding.XmlnsDefinitionAttribute");
+                            definitionAttribute = ass.GetType("Tizen.NUI.XmlnsDefinitionAttribute");
 
                             if (null != definitionAttribute)
                             {
@@ -361,7 +361,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
 				var find_invoke = new CodeMethodInvokeExpression(
 					new CodeMethodReferenceExpression(
-                        new CodeTypeReferenceExpression(new CodeTypeReference($"global::Tizen.NUI.XamlBinding.NameScopeExtensions")),
+                        new CodeTypeReferenceExpression(new CodeTypeReference($"global::Tizen.NUI.Binding.NameScopeExtensions")),
                         "FindByName", namedField.Type),
 					new CodeThisReferenceExpression(), new CodePrimitiveExpression(namedField.Name));
 

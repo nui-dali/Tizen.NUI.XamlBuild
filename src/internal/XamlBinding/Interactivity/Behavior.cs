@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     internal abstract class Behavior : BindableObject, IAttachedObject
     {

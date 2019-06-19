@@ -1,7 +1,7 @@
 using System.ComponentModel;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     [EditorBrowsable(EditorBrowsableState.Never)]
     internal interface IDynamicResourceHandler

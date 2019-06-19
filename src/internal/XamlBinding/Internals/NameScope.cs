@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Xml;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 using Tizen.NUI.Xaml;
 
-namespace Tizen.NUI.XamlBinding.Internals
+namespace Tizen.NUI.Binding.Internals
 {
     [EditorBrowsable(EditorBrowsableState.Never)]
     internal class NameScope : INameScope

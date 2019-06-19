@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Reflection;
 using Tizen.NUI.StyleSheets;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     [ContentProperty("Setters")]
     internal sealed class Style : IStyle
     {
-        internal const string StyleClassPrefix = "Tizen.NUI.XamlBinding.StyleClass.";
+        internal const string StyleClassPrefix = "Tizen.NUI.Binding.StyleClass.";
 
         readonly BindableProperty _basedOnResourceProperty = BindableProperty.CreateAttached("BasedOnResource", typeof(Style), typeof(Style), default(Style),
             propertyChanged: OnBasedOnResourceChanged);

@@ -3,7 +3,7 @@ using System.IO;
 using System.Reflection;
 using Tizen.NUI;
 using System.Xml;
-using Tizen.NUI.XamlBinding.Internals;
+using Tizen.NUI.Binding.Internals;
 
 // [assembly:Dependency(typeof(Tizen.NUI.Xaml.ResourcesLoader))]
 namespace Tizen.NUI.Xaml

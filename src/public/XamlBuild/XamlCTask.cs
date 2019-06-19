@@ -8,7 +8,7 @@ using System.Xml;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 
 using static Microsoft.Build.Framework.MessageImportance;
 using static Mono.Cecil.Cil.OpCodes;
@@ -20,12 +20,12 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         internal const string nuiAssemblyName = "Tizen.NUI";
         internal const string nuiNameSpace = "Tizen.NUI";
 
-        internal const string xamlAssemblyName = "Tizen.NUI.Xaml";
+        internal const string xamlAssemblyName = "Tizen.NUI";
         internal const string xamlNameSpace = "Tizen.NUI.Xaml";
 
-        internal const string bindingAssemblyName = "Tizen.NUI.Xaml";
-        internal const string bindingNameSpace = "Tizen.NUI.XamlBinding";
-        internal const string bindingInternalNameSpace = "Tizen.NUI.XamlBinding.Internals";
+        internal const string bindingAssemblyName = "Tizen.NUI";
+        internal const string bindingNameSpace = "Tizen.NUI.Binding";
+        internal const string bindingInternalNameSpace = "Tizen.NUI.Binding.Internals";
 
         bool hasCompiledXamlResources;
         public bool KeepXamlResources { get; set; }
@@ -386,7 +386,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                         try
                         {
                             System.Reflection.Assembly assembly = System.Reflection.Assembly.LoadFrom(p);
-                            Type definitionAttribute = assembly.GetType(bindingNameSpace + ".XmlnsDefinitionAttribute");
+                            Type definitionAttribute = assembly.GetType("Tizen.NUI.XmlnsDefinitionAttribute");
 
                             if (null != definitionAttribute)
                             {
@@ -637,12 +637,12 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
                     //First using the ResourceLoader
                     //var nop = Instruction.Create(Nop);
-                    //var getResourceProvider = module.ImportPropertyGetterReference((tizenNUIAssemblyName, "Tizen.NUI.XamlBinding.Internals", "ResourceLoader"), "ResourceProvider", isStatic: true);
+                    //var getResourceProvider = module.ImportPropertyGetterReference((tizenNUIAssemblyName, "Tizen.NUI.Binding.Internals", "ResourceLoader"), "ResourceProvider", isStatic: true);
                     //il.Emit(Call, getResourceProvider);
                     //il.Emit(Brfalse, nop);
                     //               il.Emit(Call, getResourceProvider);
 
-                    //               //var getResourceProvider123 = module.ImportPropertyGetterReference((tizenNUIAssemblyName, "Tizen.NUI.XamlBinding.Internals", "ResourceLoader"), "ResourceProvider123", isStatic: true);
+                    //               //var getResourceProvider123 = module.ImportPropertyGetterReference((tizenNUIAssemblyName, "Tizen.NUI.Binding.Internals", "ResourceLoader"), "ResourceProvider123", isStatic: true);
                     //               //il.Emit(Call, getResourceProvider123);
 
                     //               il.Emit(Ldtoken, module.ImportReference(initComp.DeclaringType));

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Xml;
-using Tizen.NUI.XamlBinding.Internals;
+using Tizen.NUI.Binding.Internals;
 
 namespace Tizen.NUI.Xaml
 {

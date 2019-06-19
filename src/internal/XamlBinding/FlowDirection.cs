@@ -1,6 +1,6 @@
 using System;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     [TypeConverter(typeof(FlowDirectionConverter))]
     internal enum FlowDirection

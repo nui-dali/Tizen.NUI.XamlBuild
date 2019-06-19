@@ -8,7 +8,7 @@ using Tizen.NUI.Xaml.Build.Tasks;
 using Tizen.NUI.Xaml;
 
 using static System.String;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 
 namespace Tizen.NUI.Xaml.Core.XamlC
 {
@@ -36,7 +36,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 				var parent = node.Parent?.Parent as IElementNode ?? (node.Parent?.Parent as IListNode)?.Parent as IElementNode;
 				if (   (node.Parent as ElementNode)?.XmlType.NamespaceUri == XamlParser.XFUri
 				    && (   (node.Parent as ElementNode)?.XmlType.Name == nameof(Setter)
-				        || (node.Parent as ElementNode)?.XmlType.Name == nameof(PropertyCondition))) {
+				        || (node.Parent as ElementNode)?.XmlType.Name == nameof(XamlPropertyCondition))) {
 					if (parent.XmlType.NamespaceUri == XamlParser.XFUri &&
 					    (   parent.XmlType.Name == nameof(Trigger)
 					     || parent.XmlType.Name == nameof(DataTrigger)

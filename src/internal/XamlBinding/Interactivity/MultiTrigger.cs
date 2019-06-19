@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     [ContentProperty("Setters")]
     internal sealed class MultiTrigger : TriggerBase

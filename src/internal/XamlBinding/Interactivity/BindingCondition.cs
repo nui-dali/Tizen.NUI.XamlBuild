@@ -1,7 +1,7 @@
 using System;
 using Tizen.NUI.Xaml;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     [ProvideCompiled("Tizen.NUI.Xaml.Core.XamlC.PassthroughValueProvider")]
     [AcceptEmptyServiceProvider]

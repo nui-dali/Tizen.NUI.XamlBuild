@@ -5,12 +5,12 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Xml;
-using Tizen.NUI.XamlBinding.Internals;
+using Tizen.NUI.Binding.Internals;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     /// <summary>
-    /// Provides the base class for all Tizen.NUI.XamlBinding hierarchal elements. This class contains all the methods and properties required to represent an element in the Tizen.NUI.XamlBinding hierarchy.
+    /// Provides the base class for all Tizen.NUI.Binding hierarchal elements. This class contains all the methods and properties required to represent an element in the Tizen.NUI.Binding hierarchy.
     /// </summary>
     [EditorBrowsable(EditorBrowsableState.Never)]
     internal abstract partial class Element : BindableObject, IElement, INameScope, IElementController

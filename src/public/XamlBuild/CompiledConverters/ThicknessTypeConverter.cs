@@ -4,7 +4,7 @@ using System.Linq;
 
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 using Tizen.NUI.Xaml;
 using Tizen.NUI.Xaml.Build.Tasks;
 

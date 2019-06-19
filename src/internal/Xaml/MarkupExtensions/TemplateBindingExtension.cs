@@ -1,5 +1,5 @@
 using System;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 
 namespace Tizen.NUI.Xaml
 {
@@ -10,7 +10,7 @@ namespace Tizen.NUI.Xaml
         internal TemplateBindingExtension()
         {
             Mode = BindingMode.Default;
-            Path = Tizen.NUI.XamlBinding.Binding.SelfPath;
+            Path = Tizen.NUI.Binding.Binding.SelfPath;
         }
 
         public string Path { get; set; }

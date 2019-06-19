@@ -9,12 +9,12 @@
 
 using System;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     [AttributeUsage(AttributeTargets.Class)]
     internal sealed class ContentPropertyAttribute : Attribute
     {
-        internal static string[] ContentPropertyTypes = { "Tizen.NUI.XamlBinding.ContentPropertyAttribute", "System.Windows.Markup.ContentPropertyAttribute" };
+        internal static string[] ContentPropertyTypes = { "Tizen.NUI.Binding.ContentPropertyAttribute", "System.Windows.Markup.ContentPropertyAttribute" };
 
         public ContentPropertyAttribute(string name)
         {

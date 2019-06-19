@@ -6,8 +6,8 @@ using System.Xml;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
-using Tizen.NUI.XamlBinding;
-using Tizen.NUI.XamlBinding.Internals;
+using Tizen.NUI.Binding;
+using Tizen.NUI.Binding.Internals;
 
 using Tizen.NUI.Xaml;
 
@@ -48,8 +48,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 		public bool IsResourceDictionary(ElementNode node)
 		{
 			var parentVar = Context.Variables[(IElementNode)node];
-			return parentVar.VariableType.FullName == "Tizen.NUI.XamlBinding.ResourceDictionary"
-				|| parentVar.VariableType.Resolve().BaseType?.FullName == "Tizen.NUI.XamlBinding.ResourceDictionary";
+			return parentVar.VariableType.FullName == "Tizen.NUI.Binding.ResourceDictionary"
+				|| parentVar.VariableType.Resolve().BaseType?.FullName == "Tizen.NUI.Binding.ResourceDictionary";
 		}
 
 		ModuleDefinition Module { get; }
@@ -840,7 +840,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			var elementType = parent.VariableType;
 			var module = context.Body.Method.Module;
 			TypeReference eventDeclaringTypeRef;
-			var eventinfo = elementType.GetEvent(ed => ed.Name == localName, out eventDeclaringTypeRef);
+
+            var eventinfo = elementType.GetEvent(ed => ed.Name == localName, out eventDeclaringTypeRef);
 
 //			IL_0007:  ldloc.0 
 //			IL_0008:  ldarg.0 
@@ -873,8 +874,42 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			//check if the handler signature matches the Invoke signature;
 			var invoke = module.ImportReference(eventinfo.EventType.ResolveCached().GetMethods().First(md => md.Name == "Invoke"));
 			invoke = invoke.ResolveGenericParameters(eventinfo.EventType, module);
-			if (!handler.ReturnType.InheritsFromOrImplements(invoke.ReturnType))
-				throw new XamlParseException($"Signature (return type) of EventHandler \"{context.Body.Method.DeclaringType.FullName}.{value}\" doesn't match the event type", iXmlLineInfo);
+            if (!handler.ReturnType.InheritsFromOrImplements(invoke.ReturnType))
+            {
+                TypeDefinition realType = eventinfo.EventType.ResolveCached();
+
+                GenericInstanceType genericInstanceType = eventinfo.EventType as GenericInstanceType;
+
+                if (null != genericInstanceType
+                    && genericInstanceType.GenericArguments.Count == realType.GenericParameters.Count)
+                {
+                    Dictionary<string, TypeReference> dict = new Dictionary<string, TypeReference>();
+
+                    for (int i = 0; i < realType.GenericParameters.Count; i++)
+                    {
+                        string p = realType.GenericParameters[i].Name;
+                        TypeReference type = genericInstanceType.GenericArguments[i];
+
+                        dict.Add(p, type);
+                    }
+
+                    if (dict.ContainsKey(invoke.ReturnType.Name))
+                    {
+                        invoke.ReturnType = dict[invoke.ReturnType.Name];
+                    }
+
+                    for (int i = 0; i < invoke.Parameters.Count; i++)
+                    {
+                        if (dict.ContainsKey(invoke.Parameters[i].ParameterType.Name))
+                        {
+                            invoke.Parameters[i].ParameterType = dict[invoke.Parameters[i].ParameterType.Name];
+                        }
+                    }
+                }
+            }
+
+            if (!handler.ReturnType.InheritsFromOrImplements(invoke.ReturnType))
+                throw new XamlParseException($"Signature (return type) of EventHandler \"{context.Body.Method.DeclaringType.FullName}.{value}\" doesn't match the event type", iXmlLineInfo);
 			if (invoke.Parameters.Count != handler.Parameters.Count)
 				throw new XamlParseException($"Signature (number of arguments) of EventHandler \"{context.Body.Method.DeclaringType.FullName}.{value}\" doesn't match the event type", iXmlLineInfo);
 			if (!invoke.ContainsGenericParameter)
@@ -1224,8 +1259,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 		static Dictionary<VariableDefinition, IList<string>> resourceNamesInUse = new Dictionary<VariableDefinition, IList<string>>();
 		static bool CanAddToResourceDictionary(VariableDefinition parent, TypeReference collectionType, IElementNode node, IXmlLineInfo lineInfo, ILContext context)
 		{
-			if (   collectionType.FullName != "Tizen.NUI.XamlBinding.ResourceDictionary"
-				&& collectionType.ResolveCached().BaseType?.FullName != "Tizen.NUI.XamlBinding.ResourceDictionary")
+			if (   collectionType.FullName != "Tizen.NUI.Binding.ResourceDictionary"
+				&& collectionType.ResolveCached().BaseType?.FullName != "Tizen.NUI.Binding.ResourceDictionary")
 				return false;
 
 

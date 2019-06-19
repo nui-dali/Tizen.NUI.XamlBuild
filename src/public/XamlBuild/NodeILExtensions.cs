@@ -5,7 +5,7 @@ using System.Linq;
 using System.Xml;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 using Tizen.NUI.Xaml;
 
 using static Mono.Cecil.Cil.Instruction;

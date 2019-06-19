@@ -4,10 +4,10 @@ using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.ComponentModel;
-using Tizen.NUI.XamlBinding.Internals;
+using Tizen.NUI.Binding.Internals;
 using Tizen.NUI.Xaml;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     /// <summary>
     /// A BindableProperty is a backing store for properties allowing bindings on BindableObject.

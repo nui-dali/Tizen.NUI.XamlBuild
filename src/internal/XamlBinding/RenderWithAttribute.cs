@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     [AttributeUsage(AttributeTargets.Class)]
     internal sealed class RenderWithAttribute : Attribute

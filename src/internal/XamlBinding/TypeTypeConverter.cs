@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using Tizen.NUI.Xaml;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     [Xaml.ProvideCompiled("Tizen.NUI.Xaml.Core.XamlC.TypeTypeConverter")]
     [Xaml.TypeConversion(typeof(Type))]

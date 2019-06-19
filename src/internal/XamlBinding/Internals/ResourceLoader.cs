@@ -3,7 +3,7 @@ using System.IO;
 using System.Reflection;
 using Tizen.NUI.Xaml;
 
-namespace Tizen.NUI.XamlBinding.Internals
+namespace Tizen.NUI.Binding.Internals
 {
     internal static class ResourceLoader
     {

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     internal interface IControlTemplated
     {

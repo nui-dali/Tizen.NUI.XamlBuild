@@ -5,10 +5,10 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
-using Tizen.NUI.XamlBinding.Internals;
+using Tizen.NUI.Binding.Internals;
 using Tizen.NUI.Xaml;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     [Xaml.ProvideCompiled("Tizen.NUI.Xaml.Core.XamlC.BindablePropertyConverter")]
     [Xaml.TypeConversion(typeof(BindableProperty))]

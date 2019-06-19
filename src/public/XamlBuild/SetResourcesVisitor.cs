@@ -70,8 +70,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 		bool IsResourceDictionary(IElementNode node)
 		{
 			var parentVar = Context.Variables[(IElementNode)node];
-			return parentVar.VariableType.FullName == "Tizen.NUI.XamlBinding.ResourceDictionary"
-                || parentVar.VariableType.ResolveCached().BaseType?.FullName == "Tizen.NUI.XamlBinding.ResourceDictionary";
+			return parentVar.VariableType.FullName == "Tizen.NUI.Binding.ResourceDictionary"
+                || parentVar.VariableType.ResolveCached().BaseType?.FullName == "Tizen.NUI.Binding.ResourceDictionary";
 		}
 
 		public bool SkipChildren(INode node, INode parentNode)

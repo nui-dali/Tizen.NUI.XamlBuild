@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Tizen.NUI.XamlBinding.Internals
+namespace Tizen.NUI.Binding.Internals
 {
     [EditorBrowsable(EditorBrowsableState.Never)]
     internal class DynamicResource

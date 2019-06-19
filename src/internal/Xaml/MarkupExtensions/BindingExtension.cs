@@ -1,6 +1,6 @@
 using System;
-using Tizen.NUI.XamlBinding.Internals;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding.Internals;
+using Tizen.NUI.Binding;
 
 namespace Tizen.NUI.Xaml
 {
@@ -8,7 +8,7 @@ namespace Tizen.NUI.Xaml
     [AcceptEmptyServiceProvider]
     internal sealed class BindingExtension : IMarkupExtension<BindingBase>
     {
-		public string Path { get; set; } = Tizen.NUI.XamlBinding.Binding.SelfPath;
+		public string Path { get; set; } = Tizen.NUI.Binding.Binding.SelfPath;
 		public BindingMode Mode { get; set; } = BindingMode.Default;
 
         public IValueConverter Converter { get; set; }
@@ -30,7 +30,7 @@ namespace Tizen.NUI.Xaml
         BindingBase IMarkupExtension<BindingBase>.ProvideValue(IServiceProvider serviceProvider)
         {
             if (TypedBinding == null)
-                return new Tizen.NUI.XamlBinding.Binding(Path, Mode, Converter, ConverterParameter, StringFormat, Source)
+                return new Tizen.NUI.Binding.Binding(Path, Mode, Converter, ConverterParameter, StringFormat, Source)
 				{
 				    UpdateSourceEventName = UpdateSourceEventName,
                     FallbackValue = FallbackValue,

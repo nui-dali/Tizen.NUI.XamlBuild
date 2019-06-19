@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     // Previewer uses reflection to bind to this method; Removal or modification of visibility will break previewer.
     internal static class Registrar
@@ -14,7 +14,7 @@ namespace Tizen.NUI.XamlBinding
     }
 }
 
-namespace Tizen.NUI.XamlBinding.Internals
+namespace Tizen.NUI.Binding.Internals
 {
     /// <summary>
     /// For internal use.

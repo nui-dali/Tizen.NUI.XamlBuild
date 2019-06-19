@@ -31,7 +31,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using Tizen.NUI.Xaml.Internals;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 
 namespace Tizen.NUI.Xaml
 {

@@ -1,22 +1,22 @@
 using System;
 using System.ComponentModel;
 using System.Reflection;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 
 namespace Tizen.NUI.Xaml
 {
 	[ProvideCompiled("Tizen.NUI.Xaml.Core.XamlC.PassthroughValueProvider")]
 	[AcceptEmptyServiceProvider]
-	internal sealed class PropertyCondition : Condition, IValueProvider
+	internal sealed class XamlPropertyCondition : Condition, IValueProvider
 	{
 		readonly BindableProperty _stateProperty;
 
 		BindableProperty _property;
 		object _triggerValue;
 
-		public PropertyCondition()
+		public XamlPropertyCondition()
 		{
-			_stateProperty = BindableProperty.CreateAttached("State", typeof(bool), typeof(PropertyCondition), false, propertyChanged: OnStatePropertyChanged);
+			_stateProperty = BindableProperty.CreateAttached("State", typeof(bool), typeof(XamlPropertyCondition), false, propertyChanged: OnStatePropertyChanged);
 		}
 
 		public BindableProperty Property

@@ -25,8 +25,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 		public bool IsResourceDictionary(ElementNode node)
 		{
 			var parentVar = Context.Variables[(IElementNode)node];
-			return parentVar.VariableType.FullName == "Tizen.NUI.XamlBinding.ResourceDictionary"
-                || parentVar.VariableType.Resolve().BaseType?.FullName == "Tizen.NUI.XamlBinding.ResourceDictionary";
+			return parentVar.VariableType.FullName == "Tizen.NUI.Binding.ResourceDictionary"
+                || parentVar.VariableType.Resolve().BaseType?.FullName == "Tizen.NUI.Binding.ResourceDictionary";
 		}
 
 		public void Visit(ValueNode node, INode parentNode)

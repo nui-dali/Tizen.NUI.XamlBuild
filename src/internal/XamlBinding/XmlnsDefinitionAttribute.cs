@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.ComponentModel;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI
 {
     [AttributeUsage(AttributeTargets.Assembly, AllowMultiple = true)]
     [DebuggerDisplay("{XmlNamespace}, {ClrNamespace}, {AssemblyName}")]

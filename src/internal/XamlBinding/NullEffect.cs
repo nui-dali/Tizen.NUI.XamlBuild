@@ -1,4 +1,4 @@
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     internal class NullEffect : Effect
     {

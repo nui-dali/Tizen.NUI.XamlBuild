@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     [Xaml.ProvideCompiled("Tizen.NUI.Core.XamlC.ListStringTypeConverter")]
     [Xaml.TypeConversion(typeof(List<string>))]

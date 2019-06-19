@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     /// <summary>
     /// Template that specifies a group of styles and effects for controls.

@@ -4,9 +4,9 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Collections.Generic;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 
-namespace Tizen.NUI.XamlBinding.Internals
+namespace Tizen.NUI.Binding.Internals
 {
     //FIXME: need a better name for this, and share with Binding, so we can share more unittests
     [EditorBrowsable(EditorBrowsableState.Never)]

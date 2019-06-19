@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Xml;
-using Tizen.NUI.XamlBinding.Internals;
+using Tizen.NUI.Binding.Internals;
 using Tizen.NUI.Xaml;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     [ContentProperty("Value")]
     [ProvideCompiled("Tizen.NUI.Core.XamlC.SetterValueProvider")]
@@ -74,7 +74,7 @@ namespace Tizen.NUI.XamlBinding
                 return;
 
             object actual = target.GetValue(Property);
-            if (!Equals(actual, Value) && !(Value is Tizen.NUI.XamlBinding.Binding) && !(Value is DynamicResource))
+            if (!Equals(actual, Value) && !(Value is Tizen.NUI.Binding.Binding) && !(Value is DynamicResource))
             {
                 //Do not reset default value if the value has been changed
                 _originalValues.Remove(target);

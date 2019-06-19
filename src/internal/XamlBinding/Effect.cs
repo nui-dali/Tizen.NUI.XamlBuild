@@ -1,8 +1,8 @@
 using System;
 using System.ComponentModel;
-using Tizen.NUI.XamlBinding.Internals;
+using Tizen.NUI.Binding.Internals;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     /// <summary>
     /// A collection of styles and properties that can be added to an element at run time.
@@ -38,7 +38,7 @@ namespace Tizen.NUI.XamlBinding
         public static Effect Resolve(string name)
         {
             Effect result = null;
-            if (Tizen.NUI.XamlBinding.Internals.Registrar.Effects.TryGetValue(name, out Type effectType))
+            if (Tizen.NUI.Binding.Internals.Registrar.Effects.TryGetValue(name, out Type effectType))
             {
                 result = (Effect)DependencyResolver.ResolveOrCreate(effectType);
             }

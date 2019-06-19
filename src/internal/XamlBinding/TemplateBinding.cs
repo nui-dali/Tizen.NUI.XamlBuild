@@ -1,7 +1,7 @@
 using System;
 using System.Globalization;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     internal class TemplateBinding : BindingBase
     {

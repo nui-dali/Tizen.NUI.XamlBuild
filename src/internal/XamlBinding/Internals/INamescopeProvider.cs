@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Tizen.NUI.XamlBinding.Internals
+namespace Tizen.NUI.Binding.Internals
 {
     interface INameScopeProvider
     {

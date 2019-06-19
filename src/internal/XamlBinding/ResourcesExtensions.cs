@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Tizen.NUI.Binding;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     internal class Application : Element, IResourcesProvider
     {

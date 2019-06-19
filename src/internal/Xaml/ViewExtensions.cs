@@ -28,7 +28,7 @@
 using System;
 using System.Reflection;
 using System.ComponentModel;
-using Tizen.NUI.XamlBinding;
+using Tizen.NUI.Binding;
 
 namespace Tizen.NUI.Xaml
 {

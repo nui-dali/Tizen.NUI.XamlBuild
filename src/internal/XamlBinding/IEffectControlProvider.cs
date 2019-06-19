@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     /// <summary>
     /// When implemented in a renderer, registers a platform-specific effect on an element.

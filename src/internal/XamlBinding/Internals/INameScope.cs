@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel;
 using System.Xml;
 
-namespace Tizen.NUI.XamlBinding.Internals
+namespace Tizen.NUI.Binding.Internals
 {
     [EditorBrowsable(EditorBrowsableState.Never)]
     internal interface INameScope

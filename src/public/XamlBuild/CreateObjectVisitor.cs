@@ -33,8 +33,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 		public bool IsResourceDictionary(ElementNode node)
 		{
 			var parentVar = Context.Variables[(IElementNode)node];
-			return parentVar.VariableType.FullName == "Tizen.NUI.XamlBinding.ResourceDictionary"
-                || parentVar.VariableType.Resolve().BaseType?.FullName == "Tizen.NUI.XamlBinding.ResourceDictionary";
+			return parentVar.VariableType.FullName == "Tizen.NUI.Binding.ResourceDictionary"
+                || parentVar.VariableType.Resolve().BaseType?.FullName == "Tizen.NUI.Binding.ResourceDictionary";
 		}
 
 		public void Visit(ValueNode node, INode parentNode)
@@ -128,7 +128,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 																					 pd.CustomAttributes.Any(
 																						 ca =>
 																							 ca.AttributeType.FullName ==
-                                                                                             "Tizen.NUI.XamlBinding.ParameterAttribute")));
+                                                                                             "Tizen.NUI.Binding.ParameterAttribute")));
 			}
 			string missingCtorParameter = null;
 			if (parameterizedCtorInfo != null && ValidateCtorArguments(parameterizedCtorInfo, node, out missingCtorParameter)) {
@@ -250,7 +250,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			foreach (var parameter in ctorinfo.Parameters)
 			{
 				var propname =
-					parameter.CustomAttributes.First(ca => ca.AttributeType.FullName == "Tizen.NUI.XamlBinding.ParameterAttribute")
+					parameter.CustomAttributes.First(ca => ca.AttributeType.FullName == "Tizen.NUI.Binding.ParameterAttribute")
 						.ConstructorArguments.First()
 						.Value as string;
 				if (!enode.Properties.ContainsKey(new XmlName("", propname))) {
@@ -266,7 +266,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			foreach (var parameter in ctorinfo.Parameters)
 			{
 				var propname =
-					parameter.CustomAttributes.First(ca => ca.AttributeType.FullName == "Tizen.NUI.XamlBinding.ParameterAttribute")
+					parameter.CustomAttributes.First(ca => ca.AttributeType.FullName == "Tizen.NUI.Binding.ParameterAttribute")
 						.ConstructorArguments.First()
 						.Value as string;
 				var node = enode.Properties[new XmlName("", propname)];

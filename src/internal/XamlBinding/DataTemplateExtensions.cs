@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     [EditorBrowsable(EditorBrowsableState.Never)]
     internal static class DataTemplateExtensions

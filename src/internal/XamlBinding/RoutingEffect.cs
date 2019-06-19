@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace Tizen.NUI.XamlBinding
+namespace Tizen.NUI.Binding
 {
     internal class RoutingEffect : Effect
     {
