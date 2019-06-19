@@ -397,7 +397,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 										  ? TypeArgumentsParser.ParseExpression(typeArguments, nsmgr, null)
 										  : null);
 
-				var access = MemberAttributes.Private;
+				var access = MemberAttributes.Public;
 				if (fieldModifier != null) {
 					switch (fieldModifier.ToLowerInvariant()) {
 						default:
