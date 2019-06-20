@@ -95,7 +95,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                     {
                         try
                         {
-                            Assembly ass = Assembly.LoadFrom(p);
+                            byte[] fileData = File.ReadAllBytes(p);
+                            Assembly ass = Assembly.Load(fileData);
                             definitionAttribute = ass.GetType("Tizen.NUI.XmlnsDefinitionAttribute");
 
                             if (null != definitionAttribute)
@@ -113,7 +114,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                     {
                         try
                         {
-                            Assembly ass = Assembly.LoadFrom(p);
+                            byte[] fileData = File.ReadAllBytes(p);
+                            Assembly ass = Assembly.Load(fileData);
+
                             foreach (var attr in ass.GetCustomAttributes(definitionAttribute))
                             {
                                 string clrNamespace = definitionAttribute.GetProperty("ClrNamespace").GetValue(attr, null) as string;

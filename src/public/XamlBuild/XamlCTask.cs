@@ -313,7 +313,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         {
             try
             {
-                System.Reflection.Assembly assembly = System.Reflection.Assembly.LoadFrom(p);
+                byte[] fileData = File.ReadAllBytes(p);
+                System.Reflection.Assembly assembly = System.Reflection.Assembly.Load(fileData);
 
                 foreach (object obj in assembly.GetCustomAttributes(definitionAttribute, false))
                 {
@@ -385,7 +386,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                     {
                         try
                         {
-                            System.Reflection.Assembly assembly = System.Reflection.Assembly.LoadFrom(p);
+                            byte[] fileData = File.ReadAllBytes(p);
+                            System.Reflection.Assembly assembly = System.Reflection.Assembly.Load(fileData);
+
                             Type definitionAttribute = assembly.GetType("Tizen.NUI.XmlnsDefinitionAttribute");
 
                             if (null != definitionAttribute)
