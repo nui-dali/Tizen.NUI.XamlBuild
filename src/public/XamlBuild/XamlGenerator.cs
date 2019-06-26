@@ -8,6 +8,7 @@ using System.Xml;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Utilities;
 using Microsoft.CSharp;
+using Mono.Cecil;
 using Tizen.NUI.Binding;
 using Tizen.NUI.Xaml;
 
@@ -21,11 +22,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
         private class XmlnsInfo
         {
-            public void Add(Assembly assembly, string nameSpace, int level)
+            public void Add(ModuleDefinition module, string nameSpace, int level)
             {
-                Type[] types = assembly.GetTypes();
-
-                foreach (Type type in types)
+                foreach (TypeDefinition type in module.Types)
                 {
                     if (type.Namespace == nameSpace
                         &&
@@ -88,45 +87,36 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             {
                 if (!string.IsNullOrEmpty(value))
                 {
-                    Type definitionAttribute = null;
+                    List<ModuleDefinition> assemblyList = new List<ModuleDefinition>();
 
                     var paths = value.Replace("//", "/").Split(';');
                     foreach (var p in paths)
                     {
-                        try
-                        {
-                            byte[] fileData = File.ReadAllBytes(p);
-                            Assembly ass = Assembly.Load(fileData);
-                            definitionAttribute = ass.GetType("Tizen.NUI.XmlnsDefinitionAttribute");
+                        ModuleDefinition module = ModuleDefinition.ReadModule(p);
 
-                            if (null != definitionAttribute)
+                        foreach (var attr in module.Assembly.CustomAttributes)
+                        {
+                            if (attr.AttributeType.FullName == "Tizen.NUI.XmlnsDefinitionAttribute")
                             {
-                                break;
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            int temp = 0;
-                        }
-                    }
-
-                    foreach (var p in paths)
-                    {
-                        try
-                        {
-                            byte[] fileData = File.ReadAllBytes(p);
-                            Assembly ass = Assembly.Load(fileData);
-
-                            foreach (var attr in ass.GetCustomAttributes(definitionAttribute))
-                            {
-                                string clrNamespace = definitionAttribute.GetProperty("ClrNamespace").GetValue(attr, null) as string;
-                                string xmlNamespace = definitionAttribute.GetProperty("XmlNamespace").GetValue(attr, null) as string;
+                                string xmlNamespace = attr.ConstructorArguments[0].Value as string;
+                                string clrNamespace = attr.ConstructorArguments[1].Value as string;
 
                                 int level = 0;
-                                System.Reflection.PropertyInfo propertyOfLevel = definitionAttribute.GetProperty("Level");
-                                if (null != propertyOfLevel)
+                                string assemblyName = module.Assembly.FullName;
+
+                                if (true == attr.HasProperties)
                                 {
-                                    level = int.Parse(propertyOfLevel.GetValue(attr, null) as string);
+                                    foreach (var property in attr.Properties)
+                                    {
+                                        if ("Level" == property.Name)
+                                        {
+                                            level = int.Parse(property.Argument.Value.ToString());
+                                        }
+                                        if ("AssemblyName" == property.Name)
+                                        {
+                                            assemblyName = property.Argument.Value as string;
+                                        }
+                                    }
                                 }
 
                                 XmlnsInfo xmlsInfo = null;
@@ -141,12 +131,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                                     xmlnsNameToInfo.Add(xmlNamespace, xmlsInfo);
                                 }
 
-                                xmlsInfo.Add(ass, clrNamespace, level);
+                                xmlsInfo.Add(module, clrNamespace, level);
                             }
-                        }
-                        catch (Exception e)
-                        {
-                            int temp = 0;
                         }
                     }
                 }

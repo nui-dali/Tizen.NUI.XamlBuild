@@ -47,7 +47,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			//At this point, all MarkupNodes are expanded to ElementNodes
 		}
 
-		public void Visit(ElementNode node, INode parentNode)
+        private TypeDefinition baseTypeDefiniation = null;
+
+        public void Visit(ElementNode node, INode parentNode)
 		{
 			var typeref = Module.ImportReference(node.XmlType.GetTypeReference(Module, node));
 			TypeDefinition typedef = typeref.ResolveCached();
@@ -176,7 +178,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 //					IL_0006:  stloc.0 
 					Context.IL.Emit(OpCodes.Newobj, ctor);
 					Context.IL.Emit(OpCodes.Stloc, vardef);
-				} else if (ctorInfo != null && node.Properties.ContainsKey(XmlName.xArguments) &&
+                } else if (ctorInfo != null && node.Properties.ContainsKey(XmlName.xArguments) &&
 						   !node.Properties.ContainsKey(XmlName.xFactoryMethod) && ctorInfo.MatchXArguments(node, typeref, Module, Context)) {
 //					IL_0008:  ldloca.s 1
 //					IL_000a:  ldc.i4.1 
@@ -193,7 +195,35 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 					Context.IL.Emit(OpCodes.Initobj, Module.ImportReference(typedef));
 				}
 
-				if (typeref.FullName == "Tizen.NUI.Xaml.ArrayExtension") {
+                if (null == baseTypeDefiniation)
+                {
+                    TypeDefinition parentTypeDefiniation = typedef.BaseType as TypeDefinition;
+
+                    while (null != parentTypeDefiniation)
+                    {
+                        if ("Tizen.NUI.Binding.BindableObject" == parentTypeDefiniation.FullName)
+                        {
+                            baseTypeDefiniation = parentTypeDefiniation;
+                            break;
+                        }
+                        else
+                        {
+                            parentTypeDefiniation = parentTypeDefiniation.BaseType as TypeDefinition;
+                        }
+                    }
+                }
+
+                if (null != baseTypeDefiniation && typedef.InheritsFromOrImplements(baseTypeDefiniation))
+                {
+                    var field = baseTypeDefiniation.Properties.SingleOrDefault(fd => fd.Name == "IsCreateByXaml");
+                    if (field == null)
+                        return;
+
+                    ValueNode value = new ValueNode("true", node.NamespaceResolver);
+                    Set(Context.Variables[node], "IsCreateByXaml", value, null);
+                }
+
+                if (typeref.FullName == "Tizen.NUI.Xaml.ArrayExtension") {
 					var visitor = new SetPropertiesVisitor(Context);
 					foreach (var cnode in node.Properties.Values.ToList())
 						cnode.Accept(visitor, node);
@@ -222,7 +252,40 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			}
 		}
 
-		public void Visit(RootNode node, INode parentNode)
+        private void Set(VariableDefinition parent, string localName, INode node, IXmlLineInfo iXmlLineInfo)
+        {
+            var module = Context.Body.Method.Module;
+            TypeReference declaringTypeReference;
+            var property = parent.VariableType.GetProperty(pd => pd.Name == localName, out declaringTypeReference);
+            var propertySetter = property.SetMethod;
+
+            module.ImportReference(parent.VariableType.ResolveCached());
+            var propertySetterRef = module.ImportReference(module.ImportReference(propertySetter).ResolveGenericParameters(declaringTypeReference, module));
+            propertySetterRef.ImportTypes(module);
+            var propertyType = property.ResolveGenericPropertyType(declaringTypeReference, module);
+            var valueNode = node as ValueNode;
+            var elementNode = node as IElementNode;
+
+            if (parent.VariableType.IsValueType)
+                Context.IL.Emit(OpCodes.Ldloca, parent);
+            else
+                Context.IL.Emit(OpCodes.Ldloc, parent);
+
+            if (valueNode != null)
+            {
+                foreach (var instruction in valueNode.PushConvertedValue(Context, propertyType, new ICustomAttributeProvider[] { property, propertyType.ResolveCached() }, valueNode.PushServiceProvider(Context, propertyRef: property), false, true))
+                {
+                    Context.IL.Append(instruction);
+                }
+
+                if (parent.VariableType.IsValueType)
+                    Context.IL.Emit(OpCodes.Call, propertySetterRef);
+                else
+                    Context.IL.Emit(OpCodes.Callvirt, propertySetterRef);
+            }
+        }
+
+        public void Visit(RootNode node, INode parentNode)
 		{
 //			IL_0013:  ldarg.0 
 //			IL_0014:  stloc.3 

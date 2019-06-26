@@ -313,35 +313,37 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         {
             try
             {
-                byte[] fileData = File.ReadAllBytes(p);
-                System.Reflection.Assembly assembly = System.Reflection.Assembly.Load(fileData);
+                ModuleDefinition module = ModuleDefinition.ReadModule(p);
 
-                foreach (object obj in assembly.GetCustomAttributes(definitionAttribute, false))
+                foreach (var attr in module.Assembly.CustomAttributes)
                 {
-                    string assemblyName = definitionAttribute.GetProperty("AssemblyName").GetValue(obj, null) as string;
-                    if (null == assemblyName)
+                    if (attr.AttributeType.FullName == "Tizen.NUI.XmlnsDefinitionAttribute")
                     {
-                        assemblyName = assembly.FullName;
+                        string xmlNamespace = attr.ConstructorArguments[0].Value as string;
+                        string clrNamespace = attr.ConstructorArguments[1].Value as string;
+
+                        int level = 0;
+                        string assemblyName = module.Assembly.FullName;
+
+                        if (true == attr.HasProperties)
+                        {
+                            foreach (var property in attr.Properties)
+                            {
+                                if ("Level" == property.Name)
+                                {
+                                    level = int.Parse(property.Argument.Value.ToString());
+                                }
+                                if ("AssemblyName" == property.Name)
+                                {
+                                    assemblyName = property.Argument.Value as string;
+                                }
+                            }
+                        }
+
+                        XmlnsDefinitionAttribute attribute = new XmlnsDefinitionAttribute(xmlNamespace, clrNamespace, level);
+                        attribute.AssemblyName = assemblyName;
+                        s_xmlnsDefinitions.Add(attribute);
                     }
-
-                    if (typeof(XamlCTask).Assembly.GetName().Name == assembly.GetName().Name)
-                    {
-                        continue;
-                    }
-
-                    string clrNamespace = definitionAttribute.GetProperty("ClrNamespace").GetValue(obj, null) as string;
-                    string xmlNamespace = definitionAttribute.GetProperty("XmlNamespace").GetValue(obj, null) as string;
-
-                    int level = 0;
-                    System.Reflection.PropertyInfo propertyOfLevel = definitionAttribute.GetProperty("Level");
-                    if (null != propertyOfLevel)
-                    {
-                        level = int.Parse(propertyOfLevel.GetValue(obj, null) as string);
-                    }
-
-                    XmlnsDefinitionAttribute attribute = new XmlnsDefinitionAttribute(xmlNamespace, clrNamespace, level);
-                    attribute.AssemblyName = assemblyName;
-                    s_xmlnsDefinitions.Add(attribute);
                 }
             }
             catch (Exception e)
@@ -381,27 +383,6 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 if (!string.IsNullOrEmpty(ReferencePath))
                 {
                     var paths = ReferencePath.Replace("//", "/").Split(';');
-
-                    foreach (var p in paths)
-                    {
-                        try
-                        {
-                            byte[] fileData = File.ReadAllBytes(p);
-                            System.Reflection.Assembly assembly = System.Reflection.Assembly.Load(fileData);
-
-                            Type definitionAttribute = assembly.GetType("Tizen.NUI.XmlnsDefinitionAttribute");
-
-                            if (null != definitionAttribute)
-                            {
-                                this.definitionAttribute = definitionAttribute;
-                                break;
-                            }
-                        }
-                        catch (Exception e)
-                        {
-
-                        }
-                    }
 
                     foreach (var p in paths)
                     {
@@ -691,6 +672,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 rootnode.Accept(new ExpandMarkupsVisitor(visitorContext), null);
                 rootnode.Accept(new PruneIgnoredNodesVisitor(), null);
                 rootnode.Accept(new CreateObjectVisitor(visitorContext), null);
+
+                Set(visitorContext, visitorContext.Variables[rootnode], "IsCreateByXaml", new ValueNode("true", rootnode.NamespaceResolver), null);
+
                 rootnode.Accept(new SetNamescopesAndRegisterNamesVisitor(visitorContext), null);
                 rootnode.Accept(new SetFieldVisitor(visitorContext), null);
                 rootnode.Accept(new SetResourcesVisitor(visitorContext), null);
@@ -705,6 +689,39 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             {
                 exception = e;
                 return false;
+            }
+        }
+
+        private void Set(ILContext Context, VariableDefinition parent, string localName, INode node, IXmlLineInfo iXmlLineInfo)
+        {
+            var module = Context.Body.Method.Module;
+            TypeReference declaringTypeReference;
+            var property = parent.VariableType.GetProperty(pd => pd.Name == localName, out declaringTypeReference);
+            var propertySetter = property.SetMethod;
+
+            module.ImportReference(parent.VariableType.ResolveCached());
+            var propertySetterRef = module.ImportReference(module.ImportReference(propertySetter).ResolveGenericParameters(declaringTypeReference, module));
+            propertySetterRef.ImportTypes(module);
+            var propertyType = property.ResolveGenericPropertyType(declaringTypeReference, module);
+            var valueNode = node as ValueNode;
+            var elementNode = node as IElementNode;
+
+            if (parent.VariableType.IsValueType)
+                Context.IL.Emit(OpCodes.Ldloca, parent);
+            else
+                Context.IL.Emit(OpCodes.Ldloc, parent);
+
+            if (valueNode != null)
+            {
+                foreach (var instruction in valueNode.PushConvertedValue(Context, propertyType, new ICustomAttributeProvider[] { property, propertyType.ResolveCached() }, valueNode.PushServiceProvider(Context, propertyRef: property), false, true))
+                {
+                    Context.IL.Append(instruction);
+                }
+
+                if (parent.VariableType.IsValueType)
+                    Context.IL.Emit(OpCodes.Call, propertySetterRef);
+                else
+                    Context.IL.Emit(OpCodes.Callvirt, propertySetterRef);
             }
         }
 
