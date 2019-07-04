@@ -144,8 +144,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                     Context.IL.Append(AddToResourceDictionary(node, node, Context));
                 }
                 // Collection element, implicit content, or implicit collection element.
-                else if (parentVar.VariableType.ImplementsInterface(Module.ImportReference(("mscorlib", "System.Collections", "IEnumerable")))
-                         && parentVar.VariableType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module).Any())
+                else if (parentVar.VariableType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module).Any())
                 {
                     var elementType = parentVar.VariableType;
                     var adderTuple = elementType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module).First();
