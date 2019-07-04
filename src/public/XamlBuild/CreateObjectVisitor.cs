@@ -47,8 +47,6 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			//At this point, all MarkupNodes are expanded to ElementNodes
 		}
 
-        private TypeDefinition baseTypeDefiniation = null;
-
         public void Visit(ElementNode node, INode parentNode)
 		{
 			var typeref = Module.ImportReference(node.XmlType.GetTypeReference(Module, node));
@@ -195,27 +193,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 					Context.IL.Emit(OpCodes.Initobj, Module.ImportReference(typedef));
 				}
 
-                if (null == baseTypeDefiniation)
+                if (null != XamlCTask.BaseTypeDefiniation && typedef.InheritsFromOrImplements(XamlCTask.BaseTypeDefiniation))
                 {
-                    TypeDefinition parentTypeDefiniation = typedef.BaseType as TypeDefinition;
-
-                    while (null != parentTypeDefiniation)
-                    {
-                        if ("Tizen.NUI.Binding.BindableObject" == parentTypeDefiniation.FullName)
-                        {
-                            baseTypeDefiniation = parentTypeDefiniation;
-                            break;
-                        }
-                        else
-                        {
-                            parentTypeDefiniation = parentTypeDefiniation.BaseType as TypeDefinition;
-                        }
-                    }
-                }
-
-                if (null != baseTypeDefiniation && typedef.InheritsFromOrImplements(baseTypeDefiniation))
-                {
-                    var field = baseTypeDefiniation.Properties.SingleOrDefault(fd => fd.Name == "IsCreateByXaml");
+                    var field = XamlCTask.BaseTypeDefiniation.Properties.SingleOrDefault(fd => fd.Name == "IsCreateByXaml");
                     if (field == null)
                         return;
 

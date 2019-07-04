@@ -309,11 +309,25 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
         private Type definitionAttribute = null;
 
+        static private TypeDefinition baseTypeDefiniation = null;
+        static public TypeDefinition BaseTypeDefiniation
+        {
+            get
+            {
+                return baseTypeDefiniation;
+            }
+        }
+
         private void GatherAssemblyInfo(string p)
         {
             try
             {
                 ModuleDefinition module = ModuleDefinition.ReadModule(p);
+
+                if (null == baseTypeDefiniation)
+                {
+                    baseTypeDefiniation = module.GetType("Tizen.NUI.Binding.BindableObject");
+                }
 
                 foreach (var attr in module.Assembly.CustomAttributes)
                 {
