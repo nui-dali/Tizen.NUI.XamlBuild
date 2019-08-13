@@ -62,8 +62,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				return;
 			}
 
-			//if this is a MarkupExtension that can be compiled directly, compile and returns the value
-			var compiledMarkupExtensionName = typeref
+            //if this is a MarkupExtension that can be compiled directly, compile and returns the value
+            var compiledMarkupExtensionName = typeref
 				.GetCustomAttribute(Module, (XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "ProvideCompiledAttribute"))
 				?.ConstructorArguments?[0].Value as string;
 			Type compiledMarkupExtensionType;
@@ -136,12 +136,49 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 //				IL_0000:  ldstr "foo"
 				Context.IL.Append(PushCtorArguments(parameterizedCtorInfo, node));
 			}
-			ctorInfo = ctorInfo ?? typedef.Methods.FirstOrDefault(md => md.IsConstructor && !md.HasParameters && !md.IsStatic);
+
+            bool noParam = false;
+
+            if (null == ctorInfo)
+            {
+                noParam = true;
+            }
+
+            ctorInfo = ctorInfo ?? typedef.Methods.FirstOrDefault(md => md.IsConstructor && !md.HasParameters && !md.IsStatic);
+
+            if (null == ctorInfo)
+            {
+                ctorInfo = typedef.Methods.FirstOrDefault(md => md.IsConstructor && !md.IsStatic);
+                if (null != ctorInfo)
+                {
+                    bool areAllParamsDefault = true;
+
+                    foreach (ParameterDefinition parameter in ctorInfo.Parameters)
+                    {
+                        if (false == parameter.HasDefault)
+                        {
+                            areAllParamsDefault = false;
+                            break;
+                        }
+                    }
+
+                    if (false == areAllParamsDefault)
+                    {
+                        ctorInfo = null;
+                    }
+                }
+            }
+
 			if (parameterizedCtorInfo != null && ctorInfo == null)
 				//there was a parameterized ctor, we didn't use it
 				throw new XamlParseException($"The Property '{missingCtorParameter}' is required to create a '{typedef.FullName}' object.", node);
 			var ctorinforef = ctorInfo?.ResolveGenericParameters(typeref, Module);
-			var factorymethodinforef = factoryMethodInfo?.ResolveGenericParameters(typeref, Module);
+            if (true == noParam)
+            {
+                ctorinforef?.Parameters.Clear();
+            }
+
+            var factorymethodinforef = factoryMethodInfo?.ResolveGenericParameters(typeref, Module);
 			var implicitOperatorref = typedef.Methods.FirstOrDefault(md =>
 				md.IsPublic &&
 				md.IsStatic &&
