@@ -374,7 +374,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             {
                 var parameter = factoryCtorInfo.Parameters[i];
 
-                ValueNode arg = new ValueNode(parameter.Constant.ToString(), enode.NamespaceResolver);
+                ValueNode arg = new ValueNode(parameter.Constant?.ToString(), enode.NamespaceResolver);
 
                 if (arg != null)
                 {

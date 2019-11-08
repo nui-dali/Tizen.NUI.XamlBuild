@@ -163,89 +163,104 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
 			var implicitOperator = module.TypeSystem.String.GetImplicitOperatorTo(targetTypeRef, module);
 
-			//Obvious Built-in conversions
-			if (targetTypeRef.ResolveCached().BaseType != null && targetTypeRef.ResolveCached().BaseType.FullName == "System.Enum")
-				yield return PushParsedEnum(targetTypeRef, str, node);
-			else if (targetTypeRef.FullName == "System.Char")
-				yield return Instruction.Create(OpCodes.Ldc_I4, Char.Parse(str));
-			else if (targetTypeRef.FullName == "System.SByte")
-				yield return Instruction.Create(OpCodes.Ldc_I4, SByte.Parse(str, CultureInfo.InvariantCulture));
-			else if (targetTypeRef.FullName == "System.Int16")
-				yield return Instruction.Create(OpCodes.Ldc_I4, Int16.Parse(str, CultureInfo.InvariantCulture));
-			else if (targetTypeRef.FullName == "System.Int32")
-				yield return Instruction.Create(OpCodes.Ldc_I4, Int32.Parse(str, CultureInfo.InvariantCulture));
-			else if (targetTypeRef.FullName == "System.Int64")
-				yield return Instruction.Create(OpCodes.Ldc_I8, Int64.Parse(str, CultureInfo.InvariantCulture));
-			else if (targetTypeRef.FullName == "System.Byte")
-				yield return Instruction.Create(OpCodes.Ldc_I4, Byte.Parse(str, CultureInfo.InvariantCulture));
-			else if (targetTypeRef.FullName == "System.UInt16")
-				yield return Instruction.Create(OpCodes.Ldc_I4, unchecked((int)UInt16.Parse(str, CultureInfo.InvariantCulture)));
-			else if (targetTypeRef.FullName == "System.UInt32")
-				yield return Instruction.Create(OpCodes.Ldc_I4, unchecked((int)UInt32.Parse(str, CultureInfo.InvariantCulture)));
-			else if (targetTypeRef.FullName == "System.UInt64")
-				yield return Instruction.Create(OpCodes.Ldc_I8, unchecked((long)UInt64.Parse(str, CultureInfo.InvariantCulture)));
-			else if (targetTypeRef.FullName == "System.Single")
-				yield return Instruction.Create(OpCodes.Ldc_R4, Single.Parse(str, CultureInfo.InvariantCulture));
-			else if (targetTypeRef.FullName == "System.Double")
-				yield return Instruction.Create(OpCodes.Ldc_R8, Double.Parse(str, CultureInfo.InvariantCulture));
-			else if (targetTypeRef.FullName == "System.Boolean") {
-				if (Boolean.Parse(str))
-					yield return Instruction.Create(OpCodes.Ldc_I4_1);
-				else
-					yield return Instruction.Create(OpCodes.Ldc_I4_0);
-			} else if (targetTypeRef.FullName == "System.TimeSpan") {
-				var ts = TimeSpan.Parse(str, CultureInfo.InvariantCulture);
-				var ticks = ts.Ticks;
-				yield return Instruction.Create(OpCodes.Ldc_I8, ticks);
-				yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference(("mscorlib", "System", "TimeSpan"), parameterTypes: new[] { ("mscorlib", "System", "Int64") }));
-			} else if (targetTypeRef.FullName == "System.DateTime") {
-				var dt = DateTime.Parse(str, CultureInfo.InvariantCulture);
-				var ticks = dt.Ticks;
-				yield return Instruction.Create(OpCodes.Ldc_I8, ticks);
-				yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference(("mscorlib", "System", "DateTime"), parameterTypes: new[] { ("mscorlib", "System", "Int64") }));
-			} else if (targetTypeRef.FullName == "System.String" && str.StartsWith("{}", StringComparison.Ordinal))
-				yield return Instruction.Create(OpCodes.Ldstr, str.Substring(2));
-			else if (targetTypeRef.FullName == "System.String")
-				yield return Instruction.Create(OpCodes.Ldstr, str);
-			else if (targetTypeRef.FullName == "System.Object")
-				yield return Instruction.Create(OpCodes.Ldstr, str);
-			else if (targetTypeRef.FullName == "System.Decimal") {
-				decimal outdecimal;
-				if (decimal.TryParse(str, NumberStyles.Number, CultureInfo.InvariantCulture, out outdecimal)) {
-					var vardef = new VariableDefinition(module.ImportReference(("mscorlib", "System", "Decimal")));
-					context.Body.Variables.Add(vardef);
-					//Use an extra temp var so we can push the value to the stack, just like other cases
-//					IL_0003:  ldstr "adecimal"
-//					IL_0008:  ldc.i4.s 0x6f
-//					IL_000a:  call class [mscorlib]System.Globalization.CultureInfo class [mscorlib]System.Globalization.CultureInfo::get_InvariantCulture()
-//					IL_000f:  ldloca.s 0
-//					IL_0011:  call bool valuetype [mscorlib]System.Decimal::TryParse(string, valuetype [mscorlib]System.Globalization.NumberStyles, class [mscorlib]System.IFormatProvider, [out] valuetype [mscorlib]System.Decimal&)
-//					IL_0016:  pop
-					yield return Create(Ldstr, str);
-					yield return Create(Ldc_I4, 0x6f); //NumberStyles.Number
-					yield return Create(Call, module.ImportPropertyGetterReference(("mscorlib", "System.Globalization", "CultureInfo"),
-																				   propertyName: "InvariantCulture", isStatic: true));
-					yield return Create(Ldloca, vardef);
-					yield return Create(Call, module.ImportMethodReference(("mscorlib", "System", "Decimal"),
-																		   methodName: "TryParse",
-																		   parameterTypes: new[] {
-																			   ("mscorlib", "System", "String"),
-																			   ("mscorlib", "System.Globalization", "NumberStyles"),
-																			   ("mscorlib", "System", "IFormatProvider"),
-																			   ("mscorlib", "System", "Decimal"),
-																		   },
-																		   isStatic: true));
-					yield return Create(Pop);
-					yield return Create(Ldloc, vardef);
-				} else {
-					yield return Create(Ldc_I4_0);
-					yield return Create(Newobj, module.ImportCtorReference(("mscorlib", "System", "Decimal"), parameterTypes: new[] { ("mscorlib", "System", "Int32") }));
-				}
-			} else if (implicitOperator != null) {
-				yield return Create(Ldstr, node.Value as string);
-				yield return Create(Call, module.ImportReference(implicitOperator));
-			} else
-				yield return Create(Ldnull);
+            //Obvious Built-in conversions
+            if (str == null) //if default parameter is null, exception will throw
+                yield return Create(OpCodes.Ldnull);
+            else if (targetTypeRef.ResolveCached().BaseType != null && targetTypeRef.ResolveCached().BaseType.FullName == "System.Enum")
+                yield return PushParsedEnum(targetTypeRef, str, node);
+            else if (targetTypeRef.FullName == "System.Char")
+                yield return Instruction.Create(OpCodes.Ldc_I4, Char.Parse(str));
+            else if (targetTypeRef.FullName == "System.SByte")
+                yield return Instruction.Create(OpCodes.Ldc_I4, SByte.Parse(str, CultureInfo.InvariantCulture));
+            else if (targetTypeRef.FullName == "System.Int16")
+                yield return Instruction.Create(OpCodes.Ldc_I4, Int16.Parse(str, CultureInfo.InvariantCulture));
+            else if (targetTypeRef.FullName == "System.Int32")
+                yield return Instruction.Create(OpCodes.Ldc_I4, Int32.Parse(str, CultureInfo.InvariantCulture));
+            else if (targetTypeRef.FullName == "System.Int64")
+                yield return Instruction.Create(OpCodes.Ldc_I8, Int64.Parse(str, CultureInfo.InvariantCulture));
+            else if (targetTypeRef.FullName == "System.Byte")
+                yield return Instruction.Create(OpCodes.Ldc_I4, Byte.Parse(str, CultureInfo.InvariantCulture));
+            else if (targetTypeRef.FullName == "System.UInt16")
+                yield return Instruction.Create(OpCodes.Ldc_I4, unchecked((int)UInt16.Parse(str, CultureInfo.InvariantCulture)));
+            else if (targetTypeRef.FullName == "System.UInt32")
+                yield return Instruction.Create(OpCodes.Ldc_I4, unchecked((int)UInt32.Parse(str, CultureInfo.InvariantCulture)));
+            else if (targetTypeRef.FullName == "System.UInt64")
+                yield return Instruction.Create(OpCodes.Ldc_I8, unchecked((long)UInt64.Parse(str, CultureInfo.InvariantCulture)));
+            else if (targetTypeRef.FullName == "System.Single")
+                yield return Instruction.Create(OpCodes.Ldc_R4, Single.Parse(str, CultureInfo.InvariantCulture));
+            else if (targetTypeRef.FullName == "System.Double")
+                yield return Instruction.Create(OpCodes.Ldc_R8, Double.Parse(str, CultureInfo.InvariantCulture));
+            else if (targetTypeRef.FullName == "System.Boolean")
+            {
+                if (Boolean.Parse(str))
+                    yield return Instruction.Create(OpCodes.Ldc_I4_1);
+                else
+                    yield return Instruction.Create(OpCodes.Ldc_I4_0);
+            }
+            else if (targetTypeRef.FullName == "System.TimeSpan")
+            {
+                var ts = TimeSpan.Parse(str, CultureInfo.InvariantCulture);
+                var ticks = ts.Ticks;
+                yield return Instruction.Create(OpCodes.Ldc_I8, ticks);
+                yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference(("mscorlib", "System", "TimeSpan"), parameterTypes: new[] { ("mscorlib", "System", "Int64") }));
+            }
+            else if (targetTypeRef.FullName == "System.DateTime")
+            {
+                var dt = DateTime.Parse(str, CultureInfo.InvariantCulture);
+                var ticks = dt.Ticks;
+                yield return Instruction.Create(OpCodes.Ldc_I8, ticks);
+                yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference(("mscorlib", "System", "DateTime"), parameterTypes: new[] { ("mscorlib", "System", "Int64") }));
+            }
+            else if (targetTypeRef.FullName == "System.String" && str.StartsWith("{}", StringComparison.Ordinal))
+                yield return Instruction.Create(OpCodes.Ldstr, str.Substring(2));
+            else if (targetTypeRef.FullName == "System.String")
+                yield return Instruction.Create(OpCodes.Ldstr, str);
+            else if (targetTypeRef.FullName == "System.Object")
+                yield return Instruction.Create(OpCodes.Ldstr, str);
+            else if (targetTypeRef.FullName == "System.Decimal")
+            {
+                decimal outdecimal;
+                if (decimal.TryParse(str, NumberStyles.Number, CultureInfo.InvariantCulture, out outdecimal))
+                {
+                    var vardef = new VariableDefinition(module.ImportReference(("mscorlib", "System", "Decimal")));
+                    context.Body.Variables.Add(vardef);
+                    //Use an extra temp var so we can push the value to the stack, just like other cases
+                    //					IL_0003:  ldstr "adecimal"
+                    //					IL_0008:  ldc.i4.s 0x6f
+                    //					IL_000a:  call class [mscorlib]System.Globalization.CultureInfo class [mscorlib]System.Globalization.CultureInfo::get_InvariantCulture()
+                    //					IL_000f:  ldloca.s 0
+                    //					IL_0011:  call bool valuetype [mscorlib]System.Decimal::TryParse(string, valuetype [mscorlib]System.Globalization.NumberStyles, class [mscorlib]System.IFormatProvider, [out] valuetype [mscorlib]System.Decimal&)
+                    //					IL_0016:  pop
+                    yield return Create(Ldstr, str);
+                    yield return Create(Ldc_I4, 0x6f); //NumberStyles.Number
+                    yield return Create(Call, module.ImportPropertyGetterReference(("mscorlib", "System.Globalization", "CultureInfo"),
+                                                                                   propertyName: "InvariantCulture", isStatic: true));
+                    yield return Create(Ldloca, vardef);
+                    yield return Create(Call, module.ImportMethodReference(("mscorlib", "System", "Decimal"),
+                                                                           methodName: "TryParse",
+                                                                           parameterTypes: new[] {
+                                                                               ("mscorlib", "System", "String"),
+                                                                               ("mscorlib", "System.Globalization", "NumberStyles"),
+                                                                               ("mscorlib", "System", "IFormatProvider"),
+                                                                               ("mscorlib", "System", "Decimal"),
+                                                                           },
+                                                                           isStatic: true));
+                    yield return Create(Pop);
+                    yield return Create(Ldloc, vardef);
+                }
+                else
+                {
+                    yield return Create(Ldc_I4_0);
+                    yield return Create(Newobj, module.ImportCtorReference(("mscorlib", "System", "Decimal"), parameterTypes: new[] { ("mscorlib", "System", "Int32") }));
+                }
+            }
+            else if (implicitOperator != null)
+            {
+                yield return Create(Ldstr, node.Value as string);
+                yield return Create(Call, module.ImportReference(implicitOperator));
+            }
+            else
+                yield return Create(Ldnull);
 
 			if (isNullable)
 				yield return Create(Newobj, module.ImportReference(nullableCtor));
