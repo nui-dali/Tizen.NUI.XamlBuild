@@ -26,13 +26,13 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 
 			var rdNode = node.Parent as IElementNode;
 
-			var rootTargetPath = XamlCTask.GetPathForType(module, ((ILRootNode)rootNode).TypeReference);
+			var rootTargetPath = XamlTask.GetPathForType(module, ((ILRootNode)rootNode).TypeReference);
 			var uri = new Uri(value, UriKind.Relative);
 
 			var resourcePath = ResourceDictionary.RDSourceTypeConverter.GetResourcePath(uri, rootTargetPath);
 
 			//fail early
-			var resourceId = XamlCTask.GetResourceIdForPath(module, resourcePath);
+			var resourceId = XamlTask.GetResourceIdForPath(module, resourcePath);
 			if (resourceId == null)
 				throw new XamlParseException($"Resource '{value}' not found.", node);
 
@@ -56,7 +56,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 
 			foreach (var instruction in node.PushXmlLineInfo(context))
 				yield return instruction; //lineinfo
-			yield return Create(Callvirt, module.ImportMethodReference((XamlCTask.bindingAssemblyName, XamlCTask.bindingNameSpace, "ResourceDictionary"),
+			yield return Create(Callvirt, module.ImportMethodReference((XamlTask.bindingAssemblyName, XamlTask.bindingNameSpace, "ResourceDictionary"),
 			                                                           methodName: "SetAndLoadSource",
 			                                                           parameterTypes: new[] { ("System", "System", "Uri"), ("mscorlib", "System", "String"), ("mscorlib", "System.Reflection", "Assembly"), ("System.Xml.ReaderWriter", "System.Xml", "IXmlLineInfo") }));
 			//ldloc the stored uri as return value
@@ -66,7 +66,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 		internal static string GetPathForType(ModuleDefinition module, TypeReference type)
 		{
 			foreach (var ca in type.Module.GetCustomAttributes()) {
-				if (!TypeRefComparer.Default.Equals(ca.AttributeType, module.ImportReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "XamlResourceIdAttribute"))))
+				if (!TypeRefComparer.Default.Equals(ca.AttributeType, module.ImportReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "XamlResourceIdAttribute"))))
 					continue;
 				if (!TypeRefComparer.Default.Equals(ca.ConstructorArguments[2].Value as TypeReference, type))
 					continue;

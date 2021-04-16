@@ -19,6 +19,16 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 	[LoadInSeparateAppDomain]
     public abstract class XamlTask : MarshalByRefObject, ITask
 	{
+		internal const string nuiAssemblyName = "Tizen.NUI";
+		internal const string nuiNameSpace = "Tizen.NUI";
+
+		internal const string xamlAssemblyName = "Tizen.NUI";
+		internal const string xamlNameSpace = "Tizen.NUI.Xaml";
+
+		internal const string bindingAssemblyName = "Tizen.NUI";
+		internal const string bindingNameSpace = "Tizen.NUI.Binding";
+		internal const string bindingInternalNameSpace = "Tizen.NUI.Binding.Internals";
+
 		[Required]
 		public string Assembly { get; set; }
 		public string DependencyPaths { get; set; }
@@ -66,6 +76,37 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			}
 			return rootnode;
 		}
+
+		internal static string GetResourceIdForPath(ModuleDefinition module, string path)
+		{
+			foreach (var ca in module.GetCustomAttributes())
+			{
+				if (!TypeRefComparer.Default.Equals(ca.AttributeType, module.ImportReference((xamlAssemblyName, xamlNameSpace, "XamlResourceIdAttribute"))))
+					continue;
+				if (ca.ConstructorArguments[1].Value as string != path)
+					continue;
+				return ca.ConstructorArguments[0].Value as string;
+			}
+			return null;
+		}
+
+		internal static string GetPathForType(ModuleDefinition module, TypeReference type)
+		{
+			foreach (var ca in type.Module.GetCustomAttributes())
+			{
+				if (!TypeRefComparer.Default.Equals(ca.AttributeType, module.ImportReference((xamlAssemblyName, xamlNameSpace, "XamlResourceIdAttribute"))))
+					continue;
+				if (!TypeRefComparer.Default.Equals(ca.ConstructorArguments[2].Value as TypeReference, type))
+					continue;
+				return ca.ConstructorArguments[1].Value as string;
+			}
+			return null;
+		}
+
+		internal static IList<XmlnsDefinitionAttribute> s_xmlnsDefinitions
+		{
+			get;
+		} = new List<XmlnsDefinitionAttribute>();
 	}
 
 	static class CecilExtensions
@@ -108,7 +149,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 		static TypeReference GetTypeForResourceId(ModuleDefinition module, string resourceId)
 		{
 			foreach (var ca in module.GetCustomAttributes()) {
-				if (!TypeRefComparer.Default.Equals(ca.AttributeType, module.ImportReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "XamlResourceIdAttribute"))))
+				if (!TypeRefComparer.Default.Equals(ca.AttributeType, module.ImportReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "XamlResourceIdAttribute"))))
 					continue;
 				if (ca.ConstructorArguments[0].Value as string != resourceId)
 					continue;

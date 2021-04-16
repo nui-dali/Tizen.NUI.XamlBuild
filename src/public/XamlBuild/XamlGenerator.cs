@@ -209,7 +209,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				if (!ParseXaml(reader))
 					return false;
 
-			GenerateCode();
+			GenerateCode(OutputFile);
 
 			return true;
 		}
@@ -278,10 +278,10 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 						new CodeAttributeArgument(new CodePrimitiveExpression("Tizen.NUI.Xaml.Build.Tasks.XamlG")),
 						new CodeAttributeArgument(new CodePrimitiveExpression($"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}")));
 
-		void GenerateCode()
+		void GenerateCode(string outFilePath)
 		{
 			//Create the target directory if required
-			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(OutputFile));
+			Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outFilePath));
 
 			var ccu = new CodeCompileUnit();
 			ccu.AssemblyCustomAttributes.Add(
@@ -342,8 +342,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
 			//Create and initialize fields
 			initcomp.Statements.Add(new CodeMethodInvokeExpression(
-				new CodeTypeReferenceExpression(new CodeTypeReference($"global::{typeof(Extensions).FullName}")),
-				"LoadFromXaml", new CodeThisReferenceExpression(), new CodeTypeOfExpression(declType.Name)));
+				new CodeTypeReferenceExpression(new CodeTypeReference($"global::Tizen.NUI.EXaml.EXamlExtensions")),
+				"LoadFromEXamlPath", new CodeThisReferenceExpression(), new CodeTypeOfExpression(declType.Name)));
 
 			foreach (var namedField in NamedFields) {
 				declType.Members.Add(namedField);
@@ -362,7 +362,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
 		writeAndExit:
 			//write the result
-			using (var writer = new StreamWriter(OutputFile))
+			using (var writer = new StreamWriter(outFilePath))
 				Provider.GenerateCodeFromCompileUnit(ccu, writer, new CodeGeneratorOptions());
 		}
 

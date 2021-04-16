@@ -782,13 +782,13 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			if (CanSetBinding(bpRef, valueNode, context))
 				return SetBinding(parent, bpRef, valueNode as IElementNode, iXmlLineInfo, context);
 
-			//If it's a BP, SetValue ()
-			if (CanSetValue(bpRef, attached, valueNode, iXmlLineInfo, context))
-				return SetValue(parent, bpRef, valueNode, iXmlLineInfo, context);
-
 			//If it's a property, set it
 			if (CanSet(parent, localName, valueNode, context))
 				return Set(parent, localName, valueNode, iXmlLineInfo, context);
+
+			//If it's a BP, SetValue ()
+			if (CanSetValue(bpRef, attached, valueNode, iXmlLineInfo, context))
+				return SetValue(parent, bpRef, valueNode, iXmlLineInfo, context);
 
 			//If it's an already initialized property, add to it
 			if (CanAdd(parent, propertyName, valueNode, iXmlLineInfo, context))
@@ -1017,7 +1017,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				return false;
 
 			var valueNode = node as ValueNode;
-			if (valueNode != null && valueNode.CanConvertValue(context, bpRef))
+			if (valueNode != null && valueNode.CanConvertValue(context.Body.Method.Module, bpRef))
 				return true;
 
 			var elementNode = node as IElementNode;
@@ -1124,7 +1124,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				return false;
 
 			var valueNode = node as ValueNode;
-			if (valueNode != null && valueNode.CanConvertValue(context, propertyType, new ICustomAttributeProvider[] { property, propertyType.ResolveCached()}))
+			if (valueNode != null && valueNode.CanConvertValue(context.Body.Method.Module, propertyType, new ICustomAttributeProvider[] { property, propertyType.ResolveCached()}))
 				return true;
 
 			var elementNode = node as IElementNode;
@@ -1486,21 +1486,6 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
 			Context.IL.Append(SetPropertyValue(variableDefinition, new XmlName("", runTimeName), node, Context, node));
 			return true;
-		}
-	}
-
-	class VariableDefinitionReference
-	{
-		public VariableDefinitionReference(VariableDefinition vardef)
-		{
-			VariableDefinition = vardef;
-		}
-
-		public VariableDefinition VariableDefinition { get; set; }
-
-		public static implicit operator VariableDefinition(VariableDefinitionReference vardefref)
-		{
-			return vardefref.VariableDefinition;
 		}
 	}
 }

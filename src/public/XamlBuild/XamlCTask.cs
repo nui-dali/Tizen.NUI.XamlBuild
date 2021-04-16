@@ -1,3 +1,19 @@
+/*
+ * Copyright(c) 2021 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,7 +25,8 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 
 using Tizen.NUI.Binding;
-
+using Tizen.NUI.EXaml;
+using Tizen.NUI.EXaml.Build.Tasks;
 using static Microsoft.Build.Framework.MessageImportance;
 using static Mono.Cecil.Cil.OpCodes;
 
@@ -17,16 +34,6 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 {
     public class XamlCTask : XamlTask
     {
-        internal const string nuiAssemblyName = "Tizen.NUI";
-        internal const string nuiNameSpace = "Tizen.NUI";
-
-        internal const string xamlAssemblyName = "Tizen.NUI";
-        internal const string xamlNameSpace = "Tizen.NUI.Xaml";
-
-        internal const string bindingAssemblyName = "Tizen.NUI";
-        internal const string bindingNameSpace = "Tizen.NUI.Binding";
-        internal const string bindingInternalNameSpace = "Tizen.NUI.Binding.Internals";
-
         bool hasCompiledXamlResources;
         public bool KeepXamlResources { get; set; }
         public bool OptimizeIL { get; set; }
@@ -37,11 +44,15 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         public bool CompileByDefault { get; set; }
         public bool ForceCompile { get; set; }
 
+        public bool UseInjection { get; set; }
+
         public IAssemblyResolver DefaultAssemblyResolver { get; set; }
 
         public string Type { get; set; }
         public MethodDefinition InitCompForType { get; private set; }
         internal bool ReadOnly { get; set; }
+
+        public string outputRootPath { get; set; }
 
         private void PrintParam(string logFileName)
         {
@@ -59,253 +70,6 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
             stream.Close();
         }
-
-        public bool ExecuteExternXamlFile(out IList<Exception> thrownExceptions, string xamlFilePath)
-        {
-            Console.WriteLine("Assembly is " + Assembly);
-
-            thrownExceptions = null;
-            LoggingHelper.LogMessage(Normal, $"{new string(' ', 0)}Compiling Xaml, assembly: {Assembly}");
-            var skipassembly = !CompileByDefault;
-            bool success = true;
-
-            if (!File.Exists(Assembly))
-            {
-                LoggingHelper.LogMessage(Normal, $"{new string(' ', 2)}Assembly file not found. Skipping XamlC.");
-                return true;
-            }
-
-            var resolver = DefaultAssemblyResolver ?? new XamlCAssemblyResolver();
-            if (resolver is XamlCAssemblyResolver xamlCResolver)
-            {
-                if (!string.IsNullOrEmpty(DependencyPaths))
-                {
-                    foreach (var dep in DependencyPaths.Split(';'))
-                    {
-                        LoggingHelper.LogMessage(Low, $"{new string(' ', 2)}Adding searchpath {dep}");
-                        xamlCResolver.AddSearchDirectory(dep);
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(ReferencePath))
-                {
-                    var paths = ReferencePath.Replace("//", "/").Split(';');
-                    foreach (var p in paths)
-                    {
-                        var searchpath = System.IO.Path.GetDirectoryName(p);
-                        LoggingHelper.LogMessage(Low, $"{new string(' ', 2)}Adding searchpath {searchpath}");
-                        xamlCResolver.AddSearchDirectory(searchpath);
-                    }
-                }
-            }
-            else
-                LoggingHelper.LogMessage(Low, $"{new string(' ', 2)}Ignoring dependency and reference paths due to an unsupported resolver");
-
-            var debug = DebugSymbols || (!string.IsNullOrEmpty(DebugType) && DebugType.ToLowerInvariant() != "none");
-
-            var readerParameters = new ReaderParameters
-            {
-                AssemblyResolver = resolver,
-                ReadWrite = !ReadOnly,
-                ReadSymbols = debug,
-            };
-
-            using (var assemblyDefinition = AssemblyDefinition.ReadAssembly(System.IO.Path.GetFullPath(Assembly), readerParameters))
-            {
-                CustomAttribute xamlcAttr;
-                if (assemblyDefinition.HasCustomAttributes &&
-                    (xamlcAttr =
-                        assemblyDefinition.CustomAttributes.FirstOrDefault(
-                            ca => ca.AttributeType.FullName == "Tizen.NUI.Xaml.XamlCompilationAttribute")) != null)
-                {
-                    var options = (XamlCompilationOptions)xamlcAttr.ConstructorArguments[0].Value;
-                    if ((options & XamlCompilationOptions.Skip) == XamlCompilationOptions.Skip)
-                        skipassembly = true;
-                    if ((options & XamlCompilationOptions.Compile) == XamlCompilationOptions.Compile)
-                        skipassembly = false;
-                }
-
-                foreach (var module in assemblyDefinition.Modules)
-                {
-                    var skipmodule = skipassembly;
-                    if (module.HasCustomAttributes &&
-                        (xamlcAttr =
-                            module.CustomAttributes.FirstOrDefault(
-                                ca => ca.AttributeType.FullName == "Tizen.NUI.Xaml.XamlCompilationAttribute")) != null)
-                    {
-                        var options = (XamlCompilationOptions)xamlcAttr.ConstructorArguments[0].Value;
-                        if ((options & XamlCompilationOptions.Skip) == XamlCompilationOptions.Skip)
-                            skipmodule = true;
-                        if ((options & XamlCompilationOptions.Compile) == XamlCompilationOptions.Compile)
-                            skipmodule = false;
-                    }
-
-                    LoggingHelper.LogMessage(Low, $"{new string(' ', 2)}Module: {module.Name}");
-                    var resourcesToPrune = new List<EmbeddedResource>();
-                    foreach (var resource in module.Resources.OfType<EmbeddedResource>())
-                    {
-                        LoggingHelper.LogMessage(Low, $"{new string(' ', 4)}Resource: {resource.Name}");
-                        string classname;
-                        if (!resource.IsXaml(module, out classname))
-                        {
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}skipped.");
-                            continue;
-                        }
-                        TypeDefinition typeDef = module.GetType(classname);
-                        if (typeDef == null)
-                        {
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}no type found... skipped.");
-                            continue;
-                        }
-                        var skiptype = skipmodule;
-                        if (typeDef.HasCustomAttributes &&
-                            (xamlcAttr =
-                                typeDef.CustomAttributes.FirstOrDefault(
-                                    ca => ca.AttributeType.FullName == "Tizen.NUI.Xaml.XamlCompilationAttribute")) != null)
-                        {
-                            var options = (XamlCompilationOptions)xamlcAttr.ConstructorArguments[0].Value;
-                            if ((options & XamlCompilationOptions.Skip) == XamlCompilationOptions.Skip)
-                                skiptype = true;
-                            if ((options & XamlCompilationOptions.Compile) == XamlCompilationOptions.Compile)
-                                skiptype = false;
-                        }
-
-                        if (Type != null)
-                            skiptype = !(Type == classname);
-
-                        if (skiptype && !ForceCompile)
-                        {
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}has XamlCompilationAttribute set to Skip and not Compile... skipped.");
-                            continue;
-                        }
-
-                        var initComp = typeDef.Methods.FirstOrDefault(md => md.Name == "InitializeComponent");
-                        if (initComp == null)
-                        {
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}no InitializeComponent found... skipped.");
-                            continue;
-                        }
-
-                        var initCompRuntime = typeDef.Methods.FirstOrDefault(md => md.Name == "__InitComponentRuntime");
-                        if (initCompRuntime != null)
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}__InitComponentRuntime already exists... not creating");
-                        else
-                        {
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Creating empty {typeDef.Name}.__InitComponentRuntime");
-                            initCompRuntime = new MethodDefinition("__InitComponentRuntime", initComp.Attributes, initComp.ReturnType);
-                            initCompRuntime.Body.InitLocals = true;
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Copying body of InitializeComponent to __InitComponentRuntime");
-                            initCompRuntime.Body = new MethodBody(initCompRuntime);
-                            var iCRIl = initCompRuntime.Body.GetILProcessor();
-                            foreach (var instr in initComp.Body.Instructions)
-                                iCRIl.Append(instr);
-                            initComp.Body.Instructions.Clear();
-                            initComp.Body.GetILProcessor().Emit(OpCodes.Ret);
-                            initComp.Body.InitLocals = true;
-                            typeDef.Methods.Add(initCompRuntime);
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
-                        }
-
-                        LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Parsing Xaml");
-
-                        Stream externXamlFileStream = File.Open(xamlFilePath, FileMode.Open);
-                        var rootnode = ParseXaml(externXamlFileStream, typeDef);
-                        externXamlFileStream.Close();
-
-                        if (rootnode == null)
-                        {
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
-                            continue;
-                        }
-                        LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
-
-                        hasCompiledXamlResources = true;
-
-                        LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Replacing {0}.InitializeComponent ()");
-                        Exception e;
-                        if (!TryCoreCompile(initComp, initCompRuntime, rootnode, out e))
-                        {
-                            success = false;
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
-                            (thrownExceptions = thrownExceptions ?? new List<Exception>()).Add(e);
-                            if (e is XamlParseException xpe)
-                                LoggingHelper.LogError(null, null, null, xamlFilePath, xpe.XmlInfo.LineNumber, xpe.XmlInfo.LinePosition, 0, 0, xpe.Message, xpe.HelpLink, xpe.Source);
-                            else if (e is XmlException xe)
-                                LoggingHelper.LogError(null, null, null, xamlFilePath, xe.LineNumber, xe.LinePosition, 0, 0, xe.Message, xe.HelpLink, xe.Source);
-                            else
-                                LoggingHelper.LogError(null, null, null, xamlFilePath, 0, 0, 0, 0, e.Message, e.HelpLink, e.Source);
-                            LoggingHelper.LogMessage(Low, e.StackTrace);
-                            continue;
-                        }
-                        if (Type != null)
-                            InitCompForType = initComp;
-
-                        LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
-
-                        if (OptimizeIL)
-                        {
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Optimizing IL");
-                            initComp.Body.Optimize();
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
-                        }
-
-#pragma warning disable 0618
-                        if (OutputGeneratedILAsCode)
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Decompiling option has been removed. Use a 3rd party decompiler to admire the beauty of the IL generated");
-#pragma warning restore 0618
-                        resourcesToPrune.Add(resource);
-                    }
-                    if (hasCompiledXamlResources)
-                    {
-                        LoggingHelper.LogMessage(Low, $"{new string(' ', 4)}Changing the module MVID");
-                        module.Mvid = Guid.NewGuid();
-                        LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}done.");
-                    }
-                    if (!KeepXamlResources)
-                    {
-                        if (resourcesToPrune.Any())
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 4)}Removing compiled xaml resources");
-                        foreach (var resource in resourcesToPrune)
-                        {
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Removing {resource.Name}");
-                            module.Resources.Remove(resource);
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
-                        }
-                    }
-                }
-
-                if (!hasCompiledXamlResources)
-                {
-                    LoggingHelper.LogMessage(Low, $"{new string(' ', 0)}No compiled resources. Skipping writing assembly.");
-                    return success;
-                }
-
-                if (ReadOnly)
-                    return success;
-
-                LoggingHelper.LogMessage(Low, $"{new string(' ', 0)}Writing the assembly");
-                try
-                {
-                    assemblyDefinition.Write(new WriterParameters
-                    {
-                        WriteSymbols = debug,
-                    });
-                    LoggingHelper.LogMessage(Low, $"{new string(' ', 2)}done.");
-                }
-                catch (Exception e)
-                {
-                    LoggingHelper.LogMessage(Low, $"{new string(' ', 2)}failed.");
-                    LoggingHelper.LogErrorFromException(e);
-                    (thrownExceptions = thrownExceptions ?? new List<Exception>()).Add(e);
-                    LoggingHelper.LogMessage(Low, e.StackTrace);
-                    success = false;
-                }
-            }
-            return success;
-        }
-
-        internal static IList<XmlnsDefinitionAttribute> s_xmlnsDefinitions = new List<XmlnsDefinitionAttribute>();
 
         private Type definitionAttribute = null;
 
@@ -368,7 +132,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
         public override bool Execute(out IList<Exception> thrownExceptions)
         {
-            Console.WriteLine("Assembly is " + Assembly);
+            LoggingHelper.LogWarning("Assembly is " + Assembly);
 
             thrownExceptions = null;
 
@@ -378,8 +142,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
             if (!File.Exists(Assembly))
             {
-                LoggingHelper.LogMessage(Normal, $"{new string(' ', 2)}Assembly file not found. Skipping XamlC.");
-                return true;
+                throw new Exception(String.Format("Assembly file {0} is not exist", Assembly));
+                //LoggingHelper.LogMessage(Normal, $"{new string(' ', 2)}Assembly file not found. Skipping XamlC.");
+                //return true;
             }
 
             var resolver = DefaultAssemblyResolver ?? new XamlCAssemblyResolver();
@@ -489,82 +254,15 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                             continue;
                         }
 
-                        var initComp = typeDef.Methods.FirstOrDefault(md => md.Name == "InitializeComponent");
-                        if (initComp == null)
+                        if (UseInjection)
                         {
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}no InitializeComponent found... skipped.");
-                            continue;
+                            success = DoInjection(typeDef, resource, out thrownExceptions);
                         }
-
-                        CustomAttribute xamlFilePathAttr;
-                        var xamlFilePath = typeDef.HasCustomAttributes && (xamlFilePathAttr = typeDef.CustomAttributes.FirstOrDefault(ca => ca.AttributeType.FullName == "Tizen.NUI.Xaml.XamlFilePathAttribute")) != null ?
-                                                  (string)xamlFilePathAttr.ConstructorArguments[0].Value :
-                                                  resource.Name;
-
-                        var initCompRuntime = typeDef.Methods.FirstOrDefault(md => md.Name == "__InitComponentRuntime");
-                        if (initCompRuntime != null)
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}__InitComponentRuntime already exists... not creating");
                         else
                         {
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Creating empty {typeDef.Name}.__InitComponentRuntime");
-                            initCompRuntime = new MethodDefinition("__InitComponentRuntime", initComp.Attributes, initComp.ReturnType);
-                            initCompRuntime.Body.InitLocals = true;
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Copying body of InitializeComponent to __InitComponentRuntime");
-                            initCompRuntime.Body = new MethodBody(initCompRuntime);
-                            var iCRIl = initCompRuntime.Body.GetILProcessor();
-                            foreach (var instr in initComp.Body.Instructions)
-                                iCRIl.Append(instr);
-                            initComp.Body.Instructions.Clear();
-                            initComp.Body.GetILProcessor().Emit(OpCodes.Ret);
-                            initComp.Body.InitLocals = true;
-                            typeDef.Methods.Add(initCompRuntime);
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
+                            success = GenerateEXaml(typeDef, resource, out thrownExceptions);
                         }
 
-                        LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Parsing Xaml");
-                        var rootnode = ParseXaml(resource.GetResourceStream(), typeDef);
-                        if (rootnode == null)
-                        {
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
-                            continue;
-                        }
-                        LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
-
-                        hasCompiledXamlResources = true;
-
-                        LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Replacing {0}.InitializeComponent ()");
-                        Exception e;
-                        if (!TryCoreCompile(initComp, initCompRuntime, rootnode, out e))
-                        {
-                            success = false;
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
-                            (thrownExceptions = thrownExceptions ?? new List<Exception>()).Add(e);
-                            if (e is XamlParseException xpe)
-                                LoggingHelper.LogError(null, null, null, xamlFilePath, xpe.XmlInfo.LineNumber, xpe.XmlInfo.LinePosition, 0, 0, xpe.Message, xpe.HelpLink, xpe.Source);
-                            else if (e is XmlException xe)
-                                LoggingHelper.LogError(null, null, null, xamlFilePath, xe.LineNumber, xe.LinePosition, 0, 0, xe.Message, xe.HelpLink, xe.Source);
-                            else
-                                LoggingHelper.LogError(null, null, null, xamlFilePath, 0, 0, 0, 0, e.Message, e.HelpLink, e.Source);
-                            LoggingHelper.LogMessage(Low, e.StackTrace);
-                            continue;
-                        }
-                        if (Type != null)
-                            InitCompForType = initComp;
-
-                        LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
-
-                        if (OptimizeIL)
-                        {
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Optimizing IL");
-                            initComp.Body.Optimize();
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
-                        }
-
-#pragma warning disable 0618
-                        if (OutputGeneratedILAsCode)
-                            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Decompiling option has been removed. Use a 3rd party decompiler to admire the beauty of the IL generated");
-#pragma warning restore 0618
                         resourcesToPrune.Add(resource);
                     }
                     if (hasCompiledXamlResources)
@@ -614,6 +312,156 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 }
             }
             return success;
+        }
+
+        bool DoInjection(TypeDefinition typeDef, EmbeddedResource resource, out IList<Exception> thrownExceptions)
+        {
+            thrownExceptions = null;
+
+            var initComp = typeDef.Methods.FirstOrDefault(md => md.Name == "InitializeComponent");
+            if (initComp == null)
+            {
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}no InitializeComponent found... skipped.");
+                return false;
+            }
+
+            CustomAttribute xamlFilePathAttr;
+            var xamlFilePath = typeDef.HasCustomAttributes && (xamlFilePathAttr = typeDef.CustomAttributes.FirstOrDefault(ca => ca.AttributeType.FullName == "Tizen.NUI.Xaml.XamlFilePathAttribute")) != null ?
+                                      (string)xamlFilePathAttr.ConstructorArguments[0].Value :
+                                      resource.Name;
+
+            var initCompRuntime = typeDef.Methods.FirstOrDefault(md => md.Name == "__InitComponentRuntime");
+            if (initCompRuntime != null)
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}__InitComponentRuntime already exists... not creating");
+            else
+            {
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Creating empty {typeDef.Name}.__InitComponentRuntime");
+                initCompRuntime = new MethodDefinition("__InitComponentRuntime", initComp.Attributes, initComp.ReturnType);
+                initCompRuntime.Body.InitLocals = true;
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Copying body of InitializeComponent to __InitComponentRuntime");
+                initCompRuntime.Body = new MethodBody(initCompRuntime);
+                var iCRIl = initCompRuntime.Body.GetILProcessor();
+                foreach (var instr in initComp.Body.Instructions)
+                    iCRIl.Append(instr);
+                initComp.Body.Instructions.Clear();
+                initComp.Body.GetILProcessor().Emit(OpCodes.Ret);
+                initComp.Body.InitLocals = true;
+                typeDef.Methods.Add(initCompRuntime);
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
+            }
+
+            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Parsing Xaml");
+            var rootnode = ParseXaml(resource.GetResourceStream(), typeDef);
+            if (rootnode == null)
+            {
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
+                return false;
+            }
+            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
+
+            hasCompiledXamlResources = true;
+
+            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Replacing {0}.InitializeComponent ()");
+            Exception e;
+            if (!TryCoreCompile(initComp, initCompRuntime, rootnode, out e))
+            {
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
+                (thrownExceptions = thrownExceptions ?? new List<Exception>()).Add(e);
+                if (e is XamlParseException xpe)
+                    LoggingHelper.LogError(null, null, null, xamlFilePath, xpe.XmlInfo.LineNumber, xpe.XmlInfo.LinePosition, 0, 0, xpe.Message, xpe.HelpLink, xpe.Source);
+                else if (e is XmlException xe)
+                    LoggingHelper.LogError(null, null, null, xamlFilePath, xe.LineNumber, xe.LinePosition, 0, 0, xe.Message, xe.HelpLink, xe.Source);
+                else
+                    LoggingHelper.LogError(null, null, null, xamlFilePath, 0, 0, 0, 0, e.Message, e.HelpLink, e.Source);
+
+                if (null != e.StackTrace)
+                {
+                    LoggingHelper.LogMessage(Low, e.StackTrace);
+                }
+
+                return false;
+            }
+            if (Type != null)
+                InitCompForType = initComp;
+
+            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
+
+            if (OptimizeIL)
+            {
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Optimizing IL");
+                initComp.Body.Optimize();
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
+            }
+
+#pragma warning disable 0618
+            if (OutputGeneratedILAsCode)
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Decompiling option has been removed. Use a 3rd party decompiler to admire the beauty of the IL generated");
+#pragma warning restore 0618
+
+            return true;
+        }
+
+        bool GenerateEXaml(TypeDefinition typeDef, EmbeddedResource resource, out IList<Exception> thrownExceptions)
+        {
+            thrownExceptions = null;
+
+            ModuleDefinition module = typeDef.Module;
+
+            CustomAttribute xamlFilePathAttr;
+            var xamlFilePath = typeDef.HasCustomAttributes && (xamlFilePathAttr = typeDef.CustomAttributes.FirstOrDefault(ca => ca.AttributeType.FullName == "Tizen.NUI.Xaml.XamlFilePathAttribute")) != null ?
+                                      (string)xamlFilePathAttr.ConstructorArguments[0].Value :
+                                      resource.Name;
+
+            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Parsing Xaml");
+            var rootnode = ParseXaml(resource.GetResourceStream(), typeDef);
+            if (rootnode == null)
+            {
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
+                return false;
+            }
+            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
+
+            hasCompiledXamlResources = true;
+
+            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Replacing {0}.InitializeComponent ()");
+            Exception e;
+            
+            EXamlOperation.Clear();
+
+            if (!TryCoreCompile(typeDef, rootnode, out e))
+            {
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
+                (thrownExceptions = thrownExceptions ?? new List<Exception>()).Add(e);
+                if (e is XamlParseException xpe)
+                    LoggingHelper.LogError(null, null, null, xamlFilePath, xpe.XmlInfo.LineNumber, xpe.XmlInfo.LinePosition, 0, 0, xpe.Message, xpe.HelpLink, xpe.Source);
+                else if (e is XmlException xe)
+                    LoggingHelper.LogError(null, null, null, xamlFilePath, xe.LineNumber, xe.LinePosition, 0, 0, xe.Message, xe.HelpLink, xe.Source);
+                else
+                    LoggingHelper.LogError(null, null, null, xamlFilePath, 0, 0, 0, 0, e.Message, e.HelpLink, e.Source);
+
+                if (null != e.StackTrace)
+                {
+                    LoggingHelper.LogMessage(Low, e.StackTrace);
+                }
+
+                return false;
+            }
+            else
+            {
+                if (xamlFilePath.EndsWith(".xaml"))
+                {
+                    var examlFilePath = xamlFilePath.Substring(0, xamlFilePath.Length - ".xaml".Length) + ".examl";
+                    if (!File.Exists(examlFilePath))
+                    {
+                        examlFilePath = outputRootPath + examlFilePath;
+                    }
+
+                    EXamlOperation.WriteOpertions(examlFilePath);
+                }
+            }
+
+            return true;
         }
 
         bool TryCoreCompile(MethodDefinition initComp, MethodDefinition initCompRuntime, ILRootNode rootnode, out Exception exception)
@@ -701,7 +549,54 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             }
             catch (Exception e)
             {
-                exception = e;
+                XamlParseException xamlParseException = e as XamlParseException;
+                if (null != xamlParseException)
+                {
+                    XamlParseException ret = new XamlParseException(xamlParseException.Message + "\n" + ReferencePath, xamlParseException.XmlInfo, xamlParseException.InnerException);
+                    exception = ret;
+                }
+                else
+                {
+                    exception = e;
+                }
+
+                return false;
+            }
+        }
+
+        bool TryCoreCompile(TypeDefinition typeDef, ILRootNode rootnode, out Exception exception)
+        {
+            try
+            {
+                var visitorContext = new EXamlContext(typeDef);
+
+                visitorContext.Values[rootnode] = new EXamlCreateObject(null, rootnode.TypeReference);
+
+                rootnode.Accept(new XamlNodeVisitor((node, parent) => node.Parent = parent), null);
+                rootnode.Accept(new EXamlExpandMarkupsVisitor(visitorContext), null);
+                rootnode.Accept(new PruneIgnoredNodesVisitor(), null);
+                rootnode.Accept(new EXamlCreateObjectVisitor(visitorContext), null);
+                rootnode.Accept(new EXamlSetNamescopesAndRegisterNamesVisitor(visitorContext), null);
+                rootnode.Accept(new EXamlSetFieldVisitor(visitorContext), null);
+                rootnode.Accept(new EXamlSetResourcesVisitor(visitorContext), null);
+                rootnode.Accept(new EXamlSetPropertiesVisitor(visitorContext, true), null);
+
+                exception = null;
+                return true;
+            }
+            catch (Exception e)
+            {
+                XamlParseException xamlParseException = e as XamlParseException;
+                if (null != xamlParseException)
+                {
+                    XamlParseException ret = new XamlParseException(xamlParseException.Message + "\n" + ReferencePath, xamlParseException.XmlInfo, xamlParseException.InnerException);
+                    exception = ret;
+                }
+                else
+                {
+                    exception = e;
+                }
+
                 return false;
             }
         }

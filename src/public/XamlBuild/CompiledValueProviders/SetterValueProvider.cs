@@ -42,7 +42,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 				yield return instruction;
 
 			//set the value
-			yield return Instruction.Create(OpCodes.Callvirt, module.ImportPropertySetterReference((XamlCTask.bindingAssemblyName, XamlCTask.bindingNameSpace, "Setter"), propertyName: "Value"));
+			yield return Instruction.Create(OpCodes.Callvirt, module.ImportPropertySetterReference((XamlTask.bindingAssemblyName, XamlTask.bindingNameSpace, "Setter"), propertyName: "Value"));
 		}
 
 		static bool SetterValueIsCollection(FieldReference bindablePropertyReference, ModuleDefinition module, BaseNode node, ILContext context)

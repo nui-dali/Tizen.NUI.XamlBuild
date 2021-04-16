@@ -1,6 +1,7 @@
 using System;
 using Tizen.NUI.Binding.Internals;
 using Tizen.NUI.Binding;
+using Tizen.NUI.EXaml;
 
 namespace Tizen.NUI.Xaml
 {
@@ -8,6 +9,11 @@ namespace Tizen.NUI.Xaml
     internal class ReferenceExtension : IMarkupExtension
     {
         public string Name { get; set; }
+
+        public object ProvideValue()
+        {
+            return EXamlRegisterXName.GetObjectByXName(Name);
+        }
 
         public object ProvideValue(IServiceProvider serviceProvider)
         {

@@ -6,20 +6,19 @@ using Mono.Cecil.Cil;
 
 using Tizen.NUI.Xaml;
 
-namespace Tizen.NUI.Xaml.Build.Tasks
+namespace Tizen.NUI.EXaml.Build.Tasks
 {
-	class ILContext
+	class EXamlContext
 	{
-		public ILContext(ILProcessor il, MethodBody body, ModuleDefinition module, FieldDefinition parentContextValues = null)
+		public EXamlContext(TypeDefinition type, FieldDefinition parentContextValues = null)
 		{
-			IL = il;
-			Body = body;
 			Values = new Dictionary<INode, object>();
 			Variables = new Dictionary<IElementNode, VariableDefinition>();
 			Scopes = new Dictionary<INode, Tuple<VariableDefinition, IList<string>>>();
 			TypeExtensions = new Dictionary<INode, TypeReference>();
 			ParentContextValues = parentContextValues;
-			Module = module;
+			Type = type;
+			Module = type.Module;
 		}
 
 		public Dictionary<INode, object> Values { get; private set; }
@@ -34,9 +33,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
 		public object Root { get; set; } //FieldDefinition or VariableDefinition
 
-		public ILProcessor IL { get; private set; }
+		public INode RootNode { get; set; }
 
-		public MethodBody Body { get; private set; }
+		public TypeDefinition Type;
 
 		public ModuleDefinition Module { get; private set; }
 	}

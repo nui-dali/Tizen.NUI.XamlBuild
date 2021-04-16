@@ -17,7 +17,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
             foreach (var d in args)
                 yield return Instruction.Create(OpCodes.Ldc_I4, d);
 
-            yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference((XamlCTask.nuiAssemblyName, XamlCTask.nuiNameSpace, "Size"),
+            yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference((XamlTask.nuiAssemblyName, XamlTask.nuiNameSpace, "Size"),
                 parameterTypes: args.Select(a => ("mscorlib", "System", "Double")).ToArray()));
         }
 
@@ -27,13 +27,25 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 
             if (!string.IsNullOrEmpty(value))
             {
-                double x, y, z;
                 var thickness = value.Split(',');
 
-                if (double.TryParse(thickness[0], NumberStyles.Number, CultureInfo.InvariantCulture, out x) &&
-                            double.TryParse(thickness[1], NumberStyles.Number, CultureInfo.InvariantCulture, out y) &&
-                            double.TryParse(thickness[2], NumberStyles.Number, CultureInfo.InvariantCulture, out z))
-                    return GenerateIL(module, x, y, z);
+                if (3 == thickness.Length)
+                {
+                    double x, y, z;
+
+                    if (double.TryParse(thickness[0], NumberStyles.Number, CultureInfo.InvariantCulture, out x) &&
+                                double.TryParse(thickness[1], NumberStyles.Number, CultureInfo.InvariantCulture, out y) &&
+                                double.TryParse(thickness[2], NumberStyles.Number, CultureInfo.InvariantCulture, out z))
+                        return GenerateIL(module, x, y, z);
+                }
+                else if (2 == thickness.Length)
+                {
+                    double x, y;
+
+                    if (double.TryParse(thickness[0], NumberStyles.Number, CultureInfo.InvariantCulture, out x) &&
+                                double.TryParse(thickness[1], NumberStyles.Number, CultureInfo.InvariantCulture, out y))
+                        return GenerateIL(module, x, y);
+                }
             }
 
             throw new XamlParseException($"Cannot convert \"{value}\" into Size", node);
@@ -47,7 +59,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
             foreach (var d in args)
                 yield return Instruction.Create(OpCodes.Ldc_I4, d);
 
-            yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference((XamlCTask.nuiAssemblyName, XamlCTask.nuiNameSpace, "Size2D"),
+            yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference((XamlTask.nuiAssemblyName, XamlTask.nuiNameSpace, "Size2D"),
                 parameterTypes: args.Select(a => ("mscorlib", "System", "Int32")).ToArray()));
         }
 

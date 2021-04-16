@@ -15,11 +15,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 		static void GatherXmlnsDefinitionAttributes()
 		{
 			//this could be extended to look for [XmlnsDefinition] in all assemblies
-			var assemblies = new [] {
-				typeof(Element).Assembly,
-				typeof(XamlLoader).Assembly,
-			};
-            s_xmlnsDefinitions = Tizen.NUI.Xaml.Build.Tasks.XamlCTask.s_xmlnsDefinitions.OrderByDescending(a => a.Level).ToList(); ;
+            s_xmlnsDefinitions = XamlTask.s_xmlnsDefinitions.OrderByDescending(a => a.Level).ToList(); ;
         }
 
 		public static TypeReference GetTypeReference(string xmlType, ModuleDefinition module, BaseNode node)
