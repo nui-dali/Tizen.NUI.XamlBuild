@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -51,6 +52,22 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 					return true;
 				var toType = typeConvAttribute.ConstructorArguments.First().Value as TypeReference;
 				return toType.InheritsFromOrImplements(targetTypeRef);
+			}
+
+			if (targetTypeRef.FullName == "System.String")
+            {
+				return true;
+            }
+
+			var implicitOperator = targetTypeRef.GetImplicitOperatorTo(module.ImportReference(node.Value.GetType()), module);
+			if (implicitOperator != null)
+            {
+				return true;
+            }
+
+			if (true == targetTypeRef.IsInterface(typeof(IList).FullName))
+			{
+				return false;
 			}
 
 			///No reason to return false

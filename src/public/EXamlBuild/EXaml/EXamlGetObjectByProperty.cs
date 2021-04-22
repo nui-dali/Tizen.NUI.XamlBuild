@@ -17,25 +17,22 @@
 using Mono.Cecil;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
 using System.Text;
-using Tizen.NUI.Binding;
+using Tizen.NUI.Xaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
 {
-    //use **
-    internal class EXamlSetBinding : EXamlOperation
+    //use ``
+    internal class EXamlGetObjectByProperty : EXamlOperation
     {
         internal override string Write()
         {
-            if (Instance.IsValid)
+            if (instance.IsValid)
             {
                 string ret = "";
-                ret += String.Format("%({0} {1} {2})%\n",
-                    GetValueString(Instance),
-                    GetValueString(definedBindableProperties.IndexOf(BindableProperty.Resolve())),
-                    GetValueString(Value));
+                ret += String.Format("`({0} {1})`\n",
+                       GetValueString(instance),
+                       GetValueString(propertyName));
                 return ret;
             }
             else
@@ -44,29 +41,28 @@ namespace Tizen.NUI.EXaml
             }
         }
 
-        public EXamlSetBinding(EXamlCreateObject @object, FieldReference bindableProperty, object binding)
+        internal EXamlGetObjectByProperty(EXamlCreateObject instance, string propertyName)
         {
-            Instance = @object;
-            BindableProperty = bindableProperty;
-            Value = binding;
+            this.instance = instance;
+            this.propertyName = propertyName;
+            objects.Add(this);
+
             EXamlOperation.eXamlOperations.Add(this);
-
-            Instance.AddBindableProperty(bindableProperty);
         }
 
-        public EXamlCreateObject Instance
+        internal static int GetIndex(EXamlGetObjectByProperty eXamlObjectFromProperty)
         {
-            get;
+            return objects.IndexOf(eXamlObjectFromProperty);
         }
 
-        public FieldReference BindableProperty
+        internal static void ClearList()
         {
-            get;
+            objects.Clear();
         }
 
-        public object Value
-        {
-            get;
-        }
+        private static List<EXamlGetObjectByProperty> objects = new List<EXamlGetObjectByProperty>();
+
+        private EXamlCreateObject instance;
+        private string propertyName;
     }
 }
