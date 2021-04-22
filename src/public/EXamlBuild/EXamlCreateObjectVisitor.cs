@@ -1,3 +1,19 @@
+/*
+ * Copyright(c) 2021 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -241,7 +257,33 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 					}
 					else
 					{
-						Context.Values[node] = new EXamlCreateObject(null, typeref);
+						bool canConvertCollectionItem = false;
+
+						if (node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null)
+						{
+							var valueNode = node.CollectionItems.First() as ValueNode;
+
+							if (valueNode.CanConvertValue(Context.Module, typeref, (TypeReference)null))
+                            {
+								var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { typeref.Resolve() });
+								if (null != converterType)
+								{
+									var converterValue = new EXamlValueConverterFromString(converterType.Resolve(), valueNode.Value as string);
+									Context.Values[node] = new EXamlCreateObject(converterValue, typeref);
+								}
+								else
+								{
+									Context.Values[node] = valueNode.GetBaseValue(typeref);
+								}
+
+								canConvertCollectionItem = true;
+							}
+						}
+						
+						if (false == canConvertCollectionItem)
+						{
+							Context.Values[node] = new EXamlCreateObject(null, typeref);
+						}
 					}
                 }
 				else if (ctorInfo != null && node.Properties.ContainsKey(XmlName.xArguments) &&

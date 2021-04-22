@@ -1,3 +1,19 @@
+/*
+ * Copyright(c) 2021 Samsung Electronics Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -184,26 +200,19 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 				if (parentNode is IElementNode && ((IElementNode)parentNode).SkipProperties.Contains (propertyName))
 					return;
 				var elementType = parent.VariableType;
-				var localname = parentList.XmlName.LocalName;
+				localName = parentList.XmlName.LocalName;
 
-				//Fang: Need to deal
-				//TypeReference propertyType;
-				//Context.IL.Append(GetPropertyValue(parent, parentList.XmlName, Context, node, out propertyType));
+				if (Context.Values[parentList.Parent] is EXamlCreateObject)
+				{
+					if (localName.Contains('.'))
+                    {
+						int index = localName.LastIndexOf('.');
+						localName = localName.Substring(index + 1);
+                    }
 
-				//if (CanAddToResourceDictionary(parent, propertyType, node, node, Context)) {
-				//	Context.IL.Append(AddToResourceDictionary(node, node, Context));
-				//	return;
-				//} 
-				//var adderTuple = propertyType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module).FirstOrDefault();
-				//if (adderTuple == null)
-				//	throw new XamlParseException($"Can not Add() elements to {parent.VariableType}.{localname}", node);
-				//var adderRef = Module.ImportReference(adderTuple.Item1);
-				//adderRef = Module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, Module));
-
-				//Context.IL.Emit(OpCodes.Ldloc, vardef);
-				//Context.IL.Emit(OpCodes.Callvirt, adderRef);
-				//if (adderRef.ReturnType.FullName != "System.Void")
-				//		Context.IL.Emit(OpCodes.Pop);
+					var getObjectByProperty = new EXamlGetObjectByProperty(Context.Values[parentList.Parent] as EXamlCreateObject, localName);
+					new EXamlAddToCollectionProperty(getObjectByProperty, Context.Values[node]);
+				}
 			}
 		}
 
@@ -421,8 +430,10 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 				SetValue(parent, bpRef, valueNode, iXmlLineInfo, context);
 			}
 			//If it's an already initialized property, add to it
-			//if (CanAdd(parent, propertyName, valueNode, iXmlLineInfo, context))
-			//	return Add(parent, propertyName, valueNode, iXmlLineInfo, context);
+			else if (CanAdd(parent, propertyName, valueNode, iXmlLineInfo, context))
+			{
+				Add(parent, localName, valueNode, iXmlLineInfo, context);
+			}
 			else
 			{
 				throw new XamlParseException($"No property, bindable property, or event found for '{localName}', or mismatching type between value and property.", iXmlLineInfo);
@@ -781,12 +792,6 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             if (valueNode != null)
             {
 				var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { property, propertyType.ResolveCached() });
-				//foreach (var instruction in valueNode.PushConvertedValue(context, propertyType, new ICustomAttributeProvider[] { property, propertyType.ResolveCached() }, valueNode.PushServiceProvider(context, propertyRef: property), false, true))
-				//    yield return instruction;
-				//if (parent.Type.IsValueType)
-				//    yield return Instruction.Create(OpCodes.Call, propertySetterRef);
-				//else
-				//    yield return Instruction.Create(OpCodes.Callvirt, propertySetterRef);
 				if (null != converterType)
 				{
 					var converterValue = new EXamlValueConverterFromString(converterType.Resolve(), valueNode.Value as string);
@@ -900,37 +905,48 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			throw new XamlParseException("resources in ResourceDictionary require a x:Key attribute", lineInfo);
 		}
 
-		static void Add(EXamlCreateObject parent, XmlName propertyName, INode node, IXmlLineInfo iXmlLineInfo, EXamlContext context)
+		static void Add(EXamlCreateObject parent, string propertyName, INode node, IXmlLineInfo iXmlLineInfo, EXamlContext context)
 		{
-			//Fang: Need to deal
-			//var module = context.Module;
-			//var elementNode = node as IElementNode;
-			//var vardef = context.Variables [elementNode];
+            //Fang: Need to deal
+            var module = context.Module;
+			var elementNode = node as IElementNode;
 
-			//TypeReference propertyType;
-			//foreach (var instruction in GetPropertyValue(parent, propertyName, context, iXmlLineInfo, out propertyType))
-			//	yield return instruction;
+			TypeReference declaringTypeReference;
+			var property = parent.Type.GetProperty(pd => pd.Name == propertyName, out declaringTypeReference);
+			TypeReference propertyType = property.PropertyType;
 
-			//if (CanAddToResourceDictionary(parent, propertyType, elementNode, iXmlLineInfo, context)) {
-			//	foreach (var instruction in AddToResourceDictionary(elementNode, iXmlLineInfo, context))
-			//		yield return instruction;
-			//	yield break;
-			//}
+			if (null != elementNode && CanAddToResourceDictionary(parent, propertyType, elementNode, iXmlLineInfo, context))
+            {
+				//Fang: Need to deal
+				throw new XamlParseException(String.Format("Can't add {0} to {1}.{2}", node.ToString(), parent.Type.FullName, propertyName), iXmlLineInfo);
+            }
 
-			//var adderTuple = propertyType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, module).FirstOrDefault();
-			//var adderRef = module.ImportReference(adderTuple.Item1);
-			//adderRef = module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, module));
-			//var childType = GetParameterType(adderRef.Parameters[0]);
-			//var implicitOperator = vardef.VariableType.GetImplicitOperatorTo(childType, module);
+            var adderTuple = propertyType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, module).FirstOrDefault();
+            var adderRef = module.ImportReference(adderTuple.Item1);
+            adderRef = module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, module));
+            var childType = GetParameterType(adderRef.Parameters[0]);
 
-			//yield return Instruction.Create(OpCodes.Ldloc, vardef);
-			//if (implicitOperator != null)
-			//	yield return Instruction.Create(OpCodes.Call, module.ImportReference(implicitOperator));
-			//if (implicitOperator == null && vardef.VariableType.IsValueType && !childType.IsValueType)
-			//	yield return Instruction.Create(OpCodes.Box, vardef.VariableType);
-			//yield return Instruction.Create(OpCodes.Callvirt, adderRef);
-			//if (adderRef.ReturnType.FullName != "System.Void")
-			//	yield return Instruction.Create(OpCodes.Pop);
+			var valueNode = node as ValueNode;
+
+			if (null != valueNode)
+            {
+				if (true == valueNode.CanConvertValue(module, childType, (TypeReference)null))
+                {
+					var obj = new EXamlGetObjectByProperty(parent, propertyName);
+
+					var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { property, childType.ResolveCached() });
+					if (null != converterType)
+					{
+						var converterValue = new EXamlValueConverterFromString(converterType.Resolve(), valueNode.Value as string);
+						context.Values[node] = new EXamlCreateObject(converterValue, propertyType);
+					}
+					else
+					{
+						context.Values[node] = valueNode.GetBaseValue(childType);
+					}
+					new EXamlAddToCollectionProperty(obj, context.Values[node]);
+				}
+            }
 		}
 
 		static IEnumerable<Instruction> AddToResourceDictionary(IElementNode node, IXmlLineInfo lineInfo, EXamlContext context)

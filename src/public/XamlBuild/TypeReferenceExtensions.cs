@@ -172,6 +172,42 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			"System.Collections.Generic.IReadOnlyList`1",
 		};
 
+		public static bool IsInterface(this TypeReference typeRef, string interfaceTypeName)
+        {
+			if (null == typeRef)
+			{
+				return false;
+			}
+			else
+			{
+				var typeDef = typeRef.ResolveCached();
+
+				if (null == typeDef)
+				{
+					return false;
+				}
+				else
+				{
+					foreach (var @interface in typeDef.Interfaces)
+					{
+						if (InheritsFromOrImplements(@interface.InterfaceType, interfaceTypeName)
+							||
+							InheritsFromOrImplements(@interface.InterfaceType.Resolve(), interfaceTypeName))
+						{
+							return true;
+						}
+					}
+
+					return false;
+				}
+			}
+		}
+
+		public static bool IsInterface(this TypeReference typeRef, Type interfaceType)
+        {
+			return IsInterface(typeRef, interfaceType.FullName);
+		}
+
 		public static bool InheritsFromOrImplements(this TypeReference typeRef, string typeFullName)
         {
 			if (null == typeRef)
