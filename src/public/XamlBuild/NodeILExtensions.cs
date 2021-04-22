@@ -6,6 +6,7 @@ using System.Xml;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Tizen.NUI.Binding;
+using Tizen.NUI.EXaml;
 using Tizen.NUI.Xaml;
 
 using static Mono.Cecil.Cil.Instruction;
@@ -15,7 +16,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 {
 	static class NodeILExtensions
 	{
-		public static bool CanConvertValue(this ValueNode node, ILContext context, TypeReference targetTypeRef, IEnumerable<ICustomAttributeProvider> attributeProviders)
+		public static bool CanConvertValue(this ValueNode node, ModuleDefinition module, TypeReference targetTypeRef, IEnumerable<ICustomAttributeProvider> attributeProviders)
 		{
 			TypeReference typeConverter = null;
 			foreach (var attributeProvider in attributeProviders) {
@@ -29,25 +30,23 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				}
 			}
 
-			return node.CanConvertValue(context, targetTypeRef, typeConverter);
+			return node.CanConvertValue(module, targetTypeRef, typeConverter);
 		}
 
-		public static bool CanConvertValue(this ValueNode node, ILContext context, FieldReference bpRef)
+		public static bool CanConvertValue(this ValueNode node, ModuleDefinition module, FieldReference bpRef)
 		{
-			var module = context.Body.Method.Module;
 			var targetTypeRef = bpRef.GetBindablePropertyType(node, module);
 			var typeConverter = bpRef.GetBindablePropertyTypeConverter(module);
-			return node.CanConvertValue(context, targetTypeRef, typeConverter);
+			return node.CanConvertValue(module, targetTypeRef, typeConverter);
 		}
 
-		public static bool CanConvertValue(this ValueNode node, ILContext context, TypeReference targetTypeRef, TypeReference typeConverter)
+		public static bool CanConvertValue(this ValueNode node, ModuleDefinition module, TypeReference targetTypeRef, TypeReference typeConverter)
 		{
 			var str = (string)node.Value;
-			var module = context.Body.Method.Module;
 
 			//If there's a [TypeConverter], use it
 			if (typeConverter != null && str != null) {
-				var typeConvAttribute = typeConverter.GetCustomAttribute(module, (XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "TypeConversionAttribute"));
+				var typeConvAttribute = typeConverter.GetCustomAttribute(module, (XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "TypeConversionAttribute"));
 				if (typeConvAttribute == null) //trust the unattributed TypeConverter
 					return true;
 				var toType = typeConvAttribute.ConstructorArguments.First().Value as TypeReference;
@@ -56,6 +55,181 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
 			///No reason to return false
 			return true;
+		}
+
+		public static object GetBaseValue(this ValueNode node, TypeReference targetTypeRef)
+        {
+			var str = (string)node.Value;
+
+			//Obvious Built-in conversions
+			if (str == null) //if default parameter is null, exception will throw
+				return null;
+			else if (targetTypeRef.ResolveCached().BaseType != null && targetTypeRef.ResolveCached().BaseType.FullName == "System.Enum")
+				return GetParsedEnum(targetTypeRef, str, node);
+			else if (targetTypeRef.FullName == "System.Char")
+				return Char.Parse(str);
+			else if (targetTypeRef.FullName == "System.SByte")
+				return SByte.Parse(str, CultureInfo.InvariantCulture);
+			else if (targetTypeRef.FullName == "System.Int16")
+				return Int16.Parse(str, CultureInfo.InvariantCulture);
+			else if (targetTypeRef.FullName == "System.Int32")
+				return Int32.Parse(str, CultureInfo.InvariantCulture);
+			else if (targetTypeRef.FullName == "System.Int64")
+				return Int64.Parse(str, CultureInfo.InvariantCulture);
+			else if (targetTypeRef.FullName == "System.Byte")
+				return Byte.Parse(str, CultureInfo.InvariantCulture);
+			else if (targetTypeRef.FullName == "System.UInt16")
+				return unchecked((int)UInt16.Parse(str, CultureInfo.InvariantCulture));
+			else if (targetTypeRef.FullName == "System.UInt32")
+				return unchecked((int)UInt32.Parse(str, CultureInfo.InvariantCulture));
+			else if (targetTypeRef.FullName == "System.UInt64")
+				return unchecked((long)UInt64.Parse(str, CultureInfo.InvariantCulture));
+			else if (targetTypeRef.FullName == "System.Single")
+				return Single.Parse(str, CultureInfo.InvariantCulture);
+			else if (targetTypeRef.FullName == "System.Double")
+				return Double.Parse(str, CultureInfo.InvariantCulture);
+			else if (targetTypeRef.FullName == "System.Boolean")
+			{
+				if (Boolean.Parse(str))
+					return true;
+				else
+					return false;
+			}
+			else if (targetTypeRef.FullName == "System.TimeSpan")
+			{
+				var ts = TimeSpan.Parse(str, CultureInfo.InvariantCulture);
+				return ts;
+			}
+			else if (targetTypeRef.FullName == "System.DateTime")
+			{
+				var dt = DateTime.Parse(str, CultureInfo.InvariantCulture);
+				return dt;
+			}
+			else if (targetTypeRef.FullName == "System.String" && str.StartsWith("{}", StringComparison.Ordinal))
+				return str.Substring(2);
+			else if (targetTypeRef.FullName == "System.String")
+				return str;
+			else if (targetTypeRef.FullName == "System.Object")
+				return str;
+			else if (targetTypeRef.FullName == "System.Decimal")
+			{
+				decimal outdecimal;
+				if (decimal.TryParse(str, NumberStyles.Number, CultureInfo.InvariantCulture, out outdecimal))
+				{
+					return outdecimal;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			var originalTypeRef = targetTypeRef;
+			var module = targetTypeRef.Resolve().Module;
+
+			var isNullable = false;
+			MethodReference nullableCtor = null;
+			if (targetTypeRef.ResolveCached().FullName == "System.Nullable`1")
+			{
+				var nullableTypeRef = targetTypeRef;
+				targetTypeRef = ((GenericInstanceType)targetTypeRef).GenericArguments[0];
+				isNullable = true;
+				nullableCtor = originalTypeRef.GetMethods(md => md.IsConstructor && md.Parameters.Count == 1, module).Single().Item1;
+				nullableCtor = nullableCtor.ResolveGenericParameters(nullableTypeRef, module);
+			}
+
+			var implicitOperator = module.TypeSystem.String.GetImplicitOperatorTo(targetTypeRef, module);
+
+			if (implicitOperator != null)
+			{
+				//Fang: Need to deal
+				//yield return Create(Ldstr, node.Value as string);
+				//yield return Create(Call, module.ImportReference(implicitOperator));
+			}
+			else
+			{
+				bool isNotNull = false;
+
+				var targetType = targetTypeRef.ResolveCached();
+
+				foreach (var method in targetType.Methods.Where(a => a.Name == "op_Implicit"))
+				{
+					TypeReference typeReference = null;
+
+					if (method.Parameters[0].ParameterType.IsGenericParameter)
+					{
+						var genericType = targetTypeRef as GenericInstanceType;
+
+						if (null != genericType)
+						{
+							for (int i = 0; i < targetType.GenericParameters.Count; i++)
+							{
+								if (method.Parameters[0].ParameterType == targetType.GenericParameters[i])
+								{
+									typeReference = genericType.GenericArguments[i];
+								}
+							}
+						}
+					}
+					else
+					{
+						typeReference = method.Parameters[0].ParameterType;
+					}
+
+					if (null != typeReference)
+					{
+						isNotNull = true;
+						if (typeReference.ResolveCached().FullName == "System.Nullable`1")
+						{
+							var genericType = typeReference as GenericInstanceType;
+							typeReference = genericType.GenericArguments[0];
+						}
+
+						//Fang: Need to deal nullable type
+						//TypeReference convertType = null;
+						//var insList = PushConvertedValue(node, context, typeReference, convertType, pushServiceProvider, boxValueTypes, unboxValueTypes);
+
+						//foreach (var ins in insList)
+						//{
+						//	yield return ins;
+						//}
+					}
+				}
+
+				if (!isNotNull)
+				{
+					return null;
+				}
+			}
+
+			if (isNullable)
+			{
+				//yield return Create(Newobj, module.ImportReference(nullableCtor));
+			}
+			//if (originalTypeRef.IsValueType && boxValueTypes)
+			//{
+			//	yield return Create(Box, module.ImportReference(originalTypeRef));
+			//}
+			return null;
+		}
+
+		public static TypeReference GetConverterType(this ValueNode node, IEnumerable<ICustomAttributeProvider> attributeProviders)
+        {
+			TypeReference typeConverter = null;
+			foreach (var attributeProvider in attributeProviders)
+			{
+				CustomAttribute typeConverterAttribute;
+				if (
+					(typeConverterAttribute =
+						attributeProvider.CustomAttributes.FirstOrDefault(
+							cad => TypeConverterAttribute.TypeConvertersType.Contains(cad.AttributeType.FullName))) != null)
+				{
+					typeConverter = typeConverterAttribute.ConstructorArguments[0].Value as TypeReference;
+					break;
+				}
+			}
+
+			return typeConverter;
 		}
 
 		public static IEnumerable<Instruction> PushConvertedValue(this ValueNode node, ILContext context,
@@ -98,7 +272,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			var str = (string)node.Value;
 
             //If the TypeConverter has a ProvideCompiledAttribute that can be resolved, shortcut this
-			var compiledConverterName = typeConverter?.GetCustomAttribute(module, (XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "ProvideCompiledAttribute"))?.ConstructorArguments?.First().Value as string;
+			var compiledConverterName = typeConverter?.GetCustomAttribute(module, (XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "ProvideCompiledAttribute"))?.ConstructorArguments?.First().Value as string;
 
             if (null == compiledConverterName)
             {
@@ -121,10 +295,10 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			//If there's a [TypeConverter], use it
 			if (typeConverter != null)
 			{
-				var isExtendedConverter = typeConverter.ImplementsInterface(module.ImportReference((XamlCTask.bindingAssemblyName, XamlCTask.bindingNameSpace, "IExtendedTypeConverter")));
+				var isExtendedConverter = typeConverter.ImplementsInterface(module.ImportReference((XamlTask.bindingAssemblyName, XamlTask.bindingNameSpace, "IExtendedTypeConverter")));
 				var typeConverterCtorRef = module.ImportCtorReference(typeConverter, paramCount: 0);
 				var convertFromInvariantStringDefinition = isExtendedConverter
-					? module.ImportReference((XamlCTask.bindingAssemblyName, XamlCTask.bindingNameSpace, "IExtendedTypeConverter"))
+					? module.ImportReference((XamlTask.bindingAssemblyName, XamlTask.bindingNameSpace, "IExtendedTypeConverter"))
 						.ResolveCached()
 						.Methods.FirstOrDefault(md => md.Name == "ConvertFromInvariantString" && md.Parameters.Count == 2)
 					: typeConverter.ResolveCached()
@@ -260,12 +434,73 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 yield return Create(Call, module.ImportReference(implicitOperator));
             }
             else
-                yield return Create(Ldnull);
+            {
+                bool isNotNull = false;
+
+                var targetType = targetTypeRef.ResolveCached();
+
+                foreach (var method in targetType.Methods.Where(a => a.Name == "op_Implicit"))
+                {
+                    TypeReference typeReference = null;
+
+                    if (method.Parameters[0].ParameterType.IsGenericParameter)
+                    {
+                        var genericType = targetTypeRef as GenericInstanceType;
+
+                        if (null != genericType)
+                        {
+                            for (int i = 0; i < targetType.GenericParameters.Count; i++)
+                            {
+                                if (method.Parameters[0].ParameterType == targetType.GenericParameters[i])
+                                {
+                                    typeReference = genericType.GenericArguments[i];
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        typeReference = method.Parameters[0].ParameterType;
+                    }
+
+                    if (null != typeReference)
+                    {
+                        isNotNull = true;
+                        if (typeReference.ResolveCached().FullName == "System.Nullable`1")
+                        {
+                            var genericType = typeReference as GenericInstanceType;
+                            typeReference = genericType.GenericArguments[0];
+                        }
+
+                        TypeReference convertType = null;
+                        var insList = PushConvertedValue(node, context, typeReference, convertType, pushServiceProvider, boxValueTypes, unboxValueTypes);
+
+                        foreach (var ins in insList)
+                        {
+                            yield return ins;
+                        }
+                    }
+                }
+
+                if (!isNotNull)
+                {
+                    yield return Create(Ldnull);
+                }
+            }
 
 			if (isNullable)
 				yield return Create(Newobj, module.ImportReference(nullableCtor));
 			if (originalTypeRef.IsValueType && boxValueTypes)
 				yield return Create(Box, module.ImportReference(originalTypeRef));
+        }
+
+		static object GetParsedEnum(TypeReference enumRef, string value, IXmlLineInfo lineInfo)
+		{
+			var enumDef = enumRef.ResolveCached();
+			if (!enumDef.IsEnum)
+				throw new InvalidOperationException();
+
+			return new EXamlCreateObject(value, enumRef);
 		}
 
 		static Instruction PushParsedEnum(TypeReference enumRef, string value, IXmlLineInfo lineInfo)
@@ -364,13 +599,13 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			if (xmlLineInfo.HasLineInfo()) {
 				yield return Create(Ldc_I4, xmlLineInfo.LineNumber);
 				yield return Create(Ldc_I4, xmlLineInfo.LinePosition);
-				ctor = module.ImportCtorReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "XmlLineInfo"), parameterTypes: new[] {
+				ctor = module.ImportCtorReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "XmlLineInfo"), parameterTypes: new[] {
 					("mscorlib", "System", "Int32"),
 					("mscorlib", "System", "Int32"),
 				});
 			}
 			else
-				ctor = module.ImportCtorReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "XmlLineInfo"), parameterTypes: null);
+				ctor = module.ImportCtorReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "XmlLineInfo"), parameterTypes: null);
 			yield return Create(Newobj, ctor);
 		}
 
@@ -494,20 +729,20 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			yield break;
 #endif
 
-			var addService = module.ImportMethodReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "XamlServiceProvider"),
+			var addService = module.ImportMethodReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "XamlServiceProvider"),
 														  methodName: "Add",
 														  parameterTypes: new[] {
 															  ("mscorlib", "System", "Type"),
 															  ("mscorlib", "System", "Object"),
 														  });
 
-			yield return Create(Newobj, module.ImportCtorReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "XamlServiceProvider"), parameterTypes: null));
+			yield return Create(Newobj, module.ImportCtorReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "XamlServiceProvider"), parameterTypes: null));
 
 			//Add a SimpleValueTargetProvider and register it as IProvideValueTarget and IReferenceProvider
 			var pushParentIl = node.PushParentObjectsArray(context).ToList();
 			if (pushParentIl[pushParentIl.Count - 1].OpCode != Ldnull) {
 				yield return Create(Dup); //Keep the serviceProvider on the stack
-				yield return Create(Ldtoken, module.ImportReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "IProvideValueTarget")));
+				yield return Create(Ldtoken, module.ImportReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "IProvideValueTarget")));
 				yield return Create(Call, module.ImportMethodReference(("mscorlib", "System", "Type"), methodName: "GetTypeFromHandle", parameterTypes: new[] { ("mscorlib", "System", "RuntimeTypeHandle") }, isStatic: true));
 
 				foreach (var instruction in pushParentIl)
@@ -516,7 +751,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				foreach (var instruction in PushTargetProperty(bpRef, propertyRef, declaringTypeReference, module))
 					yield return instruction;
 
-				yield return Create(Newobj, module.ImportCtorReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "SimpleValueTargetProvider"), paramCount: 2));
+				yield return Create(Newobj, module.ImportCtorReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "SimpleValueTargetProvider"), paramCount: 2));
 				//store the provider so we can register it again with a different key
 				yield return Create(Dup);
 				var refProvider = new VariableDefinition(module.ImportReference(("mscorlib", "System", "Object")));
@@ -525,7 +760,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				yield return Create(Callvirt, addService);
 
 				yield return Create(Dup); //Keep the serviceProvider on the stack
-				yield return Create(Ldtoken, module.ImportReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "IReferenceProvider")));
+				yield return Create(Ldtoken, module.ImportReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "IReferenceProvider")));
 				yield return Create(Call, module.ImportMethodReference(("mscorlib", "System", "Type"), methodName: "GetTypeFromHandle", parameterTypes: new[] { ("mscorlib", "System", "RuntimeTypeHandle") }, isStatic: true));
 				yield return Create(Ldloc, refProvider);
 				yield return Create(Callvirt, addService);
@@ -534,14 +769,14 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			//Add a XamlTypeResolver
 			if (node.NamespaceResolver != null) {
 				yield return Create(Dup); //Duplicate the serviceProvider
-				yield return Create(Ldtoken, module.ImportReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "IXamlTypeResolver")));
+				yield return Create(Ldtoken, module.ImportReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "IXamlTypeResolver")));
 				yield return Create(Call, module.ImportMethodReference(("mscorlib", "System", "Type"), methodName: "GetTypeFromHandle", parameterTypes: new[] { ("mscorlib", "System", "RuntimeTypeHandle") }, isStatic: true));
-				yield return Create(Newobj, module.ImportCtorReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "XmlNamespaceResolver"), parameterTypes: null));
+				yield return Create(Newobj, module.ImportCtorReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "XmlNamespaceResolver"), parameterTypes: null));
 				foreach (var kvp in node.NamespaceResolver.GetNamespacesInScope(XmlNamespaceScope.ExcludeXml)) {
 					yield return Create(Dup); //dup the resolver
 					yield return Create(Ldstr, kvp.Key);
 					yield return Create(Ldstr, kvp.Value);
-					yield return Create(Callvirt, module.ImportMethodReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "XmlNamespaceResolver"),
+					yield return Create(Callvirt, module.ImportMethodReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "XmlNamespaceResolver"),
 																			   methodName: "Add",
 																			   parameterTypes: new[] {
 																				   ("mscorlib", "System", "String"),
@@ -552,17 +787,17 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				yield return Create(Call, module.ImportMethodReference(("mscorlib", "System", "Type"), methodName: "GetTypeFromHandle", parameterTypes: new[] { ("mscorlib", "System", "RuntimeTypeHandle") }, isStatic: true));
 				yield return Create(Call, module.ImportMethodReference(("mscorlib", "System.Reflection", "IntrospectionExtensions"), methodName: "GetTypeInfo", parameterTypes: new[] { ("mscorlib", "System", "Type") }, isStatic: true));
 				yield return Create(Callvirt, module.ImportPropertyGetterReference(("mscorlib", "System.Reflection", "TypeInfo"), propertyName: "Assembly", flatten: true));
-				yield return Create(Newobj, module.ImportCtorReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "XamlTypeResolver"), paramCount: 2));
+				yield return Create(Newobj, module.ImportCtorReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "XamlTypeResolver"), paramCount: 2));
 				yield return Create(Callvirt, addService);
 			}
 
 			if (node is IXmlLineInfo) {
 				yield return Create(Dup); //Duplicate the serviceProvider
-				yield return Create(Ldtoken, module.ImportReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "IXmlLineInfoProvider")));
+				yield return Create(Ldtoken, module.ImportReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "IXmlLineInfoProvider")));
 				yield return Create(Call, module.ImportMethodReference(("mscorlib", "System", "Type"), methodName: "GetTypeFromHandle", parameterTypes: new[] { ("mscorlib", "System", "RuntimeTypeHandle") }, isStatic: true));
 				foreach (var instruction in node.PushXmlLineInfo(context))
 					yield return instruction;
-				yield return Create(Newobj, module.ImportCtorReference((XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "XmlLineInfoProvider"), parameterTypes: new[] { ("System.Xml.ReaderWriter", "System.Xml", "IXmlLineInfo") }));
+				yield return Create(Newobj, module.ImportCtorReference((XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "XmlLineInfoProvider"), parameterTypes: new[] { ("System.Xml.ReaderWriter", "System.Xml", "IXmlLineInfo") }));
 				yield return Create(Callvirt, addService);
 			}
 		}

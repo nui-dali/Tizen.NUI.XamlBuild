@@ -172,6 +172,31 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			"System.Collections.Generic.IReadOnlyList`1",
 		};
 
+		public static bool InheritsFromOrImplements(this TypeReference typeRef, string typeFullName)
+        {
+			if (null == typeRef)
+            {
+				return false;
+            }
+			else if (typeRef.FullName == typeFullName)
+			{
+				return true;
+			}
+			else
+            {
+				var typeDef = typeRef.ResolveCached();
+
+				if (null == typeDef)
+                {
+					return false;
+                }
+				else
+                {
+					return InheritsFromOrImplements(typeDef.BaseType, typeFullName);
+                }
+            }
+        }
+
 		public static bool InheritsFromOrImplements(this TypeReference typeRef, TypeReference baseClass)
 		{
 			if (TypeRefComparer.Default.Equals(typeRef, baseClass))

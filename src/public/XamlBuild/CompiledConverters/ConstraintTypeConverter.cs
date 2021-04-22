@@ -24,7 +24,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 				throw new XamlParseException($"Cannot convert \"{value}\" into {typeof(Constraint)}", node);
 
 			yield return Create(Ldc_R8, size);
-			yield return Create(Call, module.ImportMethodReference((XamlCTask.nuiAssemblyName, XamlCTask.nuiNameSpace, "Constraint"),
+			yield return Create(Call, module.ImportMethodReference((XamlTask.nuiAssemblyName, XamlTask.nuiNameSpace, "Constraint"),
 																   methodName: "Constant",
 																   parameterTypes: new[] { ("mscorlib", "System", "Double") },
 																   isStatic: true));

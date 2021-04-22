@@ -1,17 +1,18 @@
 using System.Linq;
 using Mono.Cecil.Cil;
 using Tizen.NUI.Xaml;
+using Tizen.NUI.Xaml.Build.Tasks;
 
-namespace Tizen.NUI.Xaml.Build.Tasks
+namespace Tizen.NUI.EXaml.Build.Tasks
 {
-	class SetFieldVisitor : IXamlNodeVisitor
+	class EXamlSetFieldVisitor : IXamlNodeVisitor
 	{
-		public SetFieldVisitor(ILContext context)
+		public EXamlSetFieldVisitor(EXamlContext context)
 		{
 			Context = context;
 		}
 
-		public ILContext Context { get; }
+		public EXamlContext Context { get; }
 
 		public TreeVisitingMode VisitingMode => TreeVisitingMode.TopDown;
 		public bool StopOnDataTemplate => true;
@@ -28,14 +29,15 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
 		public void Visit(ValueNode node, INode parentNode)
 		{
-			if (!IsXNameProperty(node, parentNode))
-				return;
-			var field = Context.Body.Method.DeclaringType.Fields.SingleOrDefault(fd => fd.Name == (string)node.Value);
-			if (field == null)
-				return;
-			Context.IL.Emit(OpCodes.Ldarg_0);
-			Context.IL.Emit(OpCodes.Ldloc, Context.Variables[(IElementNode)parentNode]);
-			Context.IL.Emit(OpCodes.Stfld, field);
+            //Fang: Need to deal set field
+			//if (!IsXNameProperty(node, parentNode))
+			//	return;
+			//var field = Context.Body.Method.DeclaringType.Fields.SingleOrDefault(fd => fd.Name == (string)node.Value);
+			//if (field == null)
+			//	return;
+			//Context.IL.Emit(OpCodes.Ldarg_0);
+			//Context.IL.Emit(OpCodes.Ldloc, Context.Variables[(IElementNode)parentNode]);
+			//Context.IL.Emit(OpCodes.Stfld, field);
 		}
 
 		public void Visit(MarkupNode node, INode parentNode)

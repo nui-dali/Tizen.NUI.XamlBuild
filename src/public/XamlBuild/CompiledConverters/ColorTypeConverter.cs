@@ -87,7 +87,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
             foreach (var d in args)
                 yield return Instruction.Create(OpCodes.Ldc_R8, d);
 
-            yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference((XamlCTask.nuiAssemblyName, XamlCTask.nuiNameSpace, "Color"),
+            yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference((XamlTask.nuiAssemblyName, XamlTask.nuiNameSpace, "Color"),
                 parameterTypes: args.Select(a => ("mscorlib", "System", "Single")).ToArray()));
         }
 

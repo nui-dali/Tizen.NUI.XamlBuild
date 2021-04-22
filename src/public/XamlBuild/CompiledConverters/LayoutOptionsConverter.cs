@@ -26,7 +26,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 				if (parts.Length == 1 || (parts.Length == 2 && parts [0] == "LayoutOptions")) {
 					var options = parts [parts.Length - 1];
 
-					var fieldReference = module.ImportFieldReference((XamlCTask.bindingAssemblyName, XamlCTask.bindingNameSpace, "LayoutOptions"),
+					var fieldReference = module.ImportFieldReference((XamlTask.bindingAssemblyName, XamlTask.bindingNameSpace, "LayoutOptions"),
 																	 fieldName: options,
 																	 isStatic: true);
 					if (fieldReference != null) {

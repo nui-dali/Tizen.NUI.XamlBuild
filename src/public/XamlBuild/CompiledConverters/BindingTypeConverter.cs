@@ -24,10 +24,10 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 			yield return Instruction.Create(OpCodes.Ldnull);
 			yield return Instruction.Create(OpCodes.Ldnull);
 			yield return Instruction.Create(OpCodes.Ldnull);
-			yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference((XamlCTask.bindingAssemblyName, XamlCTask.bindingNameSpace, "Binding"), parameterTypes: new[] {
+			yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference((XamlTask.bindingAssemblyName, XamlTask.bindingNameSpace, "Binding"), parameterTypes: new[] {
 				("mscorlib", "System", "String"),
-				(XamlCTask.bindingAssemblyName, XamlCTask.bindingNameSpace, "BindingMode"),
-				(XamlCTask.bindingAssemblyName, XamlCTask.bindingNameSpace, "IValueConverter"),
+				(XamlTask.bindingAssemblyName, XamlTask.bindingNameSpace, "BindingMode"),
+				(XamlTask.bindingAssemblyName, XamlTask.bindingNameSpace, "IValueConverter"),
 				("mscorlib", "System", "Object"),
 				("mscorlib", "System", "String"),
 				("mscorlib", "System", "Object")}));

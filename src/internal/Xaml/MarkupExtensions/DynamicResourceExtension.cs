@@ -1,6 +1,7 @@
 using System;
 using Tizen.NUI.Binding;
 using Tizen.NUI.Binding.Internals;
+using Tizen.NUI.EXaml;
 
 namespace Tizen.NUI.Xaml
 {
@@ -8,6 +9,18 @@ namespace Tizen.NUI.Xaml
     internal sealed class DynamicResourceExtension : IMarkupExtension<DynamicResource>
     {
         public string Key { get; set; }
+
+        public object ProvideValue()
+        {
+            if (null == Key)
+            {
+                return null;
+            }
+            else
+            {
+                return new DynamicResource(Key);
+            }
+        }
 
         public object ProvideValue(IServiceProvider serviceProvider)
         {

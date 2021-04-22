@@ -45,7 +45,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 		{
 			foreach (var d in args)
 				yield return Instruction.Create(OpCodes.Ldc_R8, d);
-			yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference((XamlCTask.bindingAssemblyName, XamlCTask.bindingNameSpace, "Thickness"), parameterTypes: args.Select(a => ("mscorlib", "System", "Double")).ToArray()));
+			yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference((XamlTask.bindingAssemblyName, XamlTask.bindingNameSpace, "Thickness"), parameterTypes: args.Select(a => ("mscorlib", "System", "Double")).ToArray()));
 		}
 	}
 	

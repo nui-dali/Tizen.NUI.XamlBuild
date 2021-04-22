@@ -2,12 +2,13 @@
 using Mono.Cecil;
 using Tizen.NUI.EXaml;
 using Tizen.NUI.Xaml;
+using Tizen.NUI.Xaml.Build.Tasks;
 
-namespace Tizen.NUI.Xaml.Build.Tasks
+namespace Tizen.NUI.EXaml.Build.Tasks
 {
 	static class MethodDefinitionExtensions
 	{
-		public static bool MatchXArguments(this MethodDefinition methodDef, ElementNode enode, TypeReference declaringTypeRef, ModuleDefinition module, ILContext context)
+		public static bool MatchXArguments(this MethodDefinition methodDef, ElementNode enode, TypeReference declaringTypeRef, ModuleDefinition module, EXamlContext context)
 		{
 			if (!enode.Properties.ContainsKey(XmlName.xArguments))
 				return !methodDef.HasParameters;
@@ -52,7 +53,17 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 					paramType = (declaringTypeRef as GenericInstanceType).GenericArguments[index];
 				}
 
-				var argType = context.Variables[arguments[i] as IElementNode].VariableType;
+				var argValue = context.Values[arguments[i]];
+				TypeReference argType = null;
+				if (argValue is EXamlCreateObject)
+				{
+					argType = (argValue as EXamlCreateObject).Type;
+				}
+				else
+				{
+					argType = paramType.Module.ImportReference(argValue.GetType());
+				}
+
 				if (!argType.InheritsFromOrImplements(paramType))
 					return false;
 			}

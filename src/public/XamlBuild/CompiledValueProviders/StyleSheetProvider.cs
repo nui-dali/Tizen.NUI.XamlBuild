@@ -43,7 +43,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 			if (styleNode != null) {
 				var style = (styleNode as ValueNode).Value as string;
 				yield return Create(Ldstr, style);
-				yield return Create(Call, module.ImportMethodReference((XamlCTask.xamlAssemblyName, "Tizen.NUI.StyleSheets", "StyleSheet"),
+				yield return Create(Call, module.ImportMethodReference((XamlTask.xamlAssemblyName, "Tizen.NUI.StyleSheets", "StyleSheet"),
 																	   methodName: "FromString",
 																	   parameterTypes: new[] { ("mscorlib", "System", "String") },
 																	   isStatic: true));
@@ -59,7 +59,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 
 				var resourcePath = ResourceDictionary.RDSourceTypeConverter.GetResourcePath(uri, rootTargetPath);
 				//fail early
-				var resourceId = XamlCTask.GetResourceIdForPath(module, resourcePath);
+				var resourceId = XamlTask.GetResourceIdForPath(module, resourcePath);
 				if (resourceId == null)
 					throw new XamlParseException($"Resource '{source}' not found.", node);
 
@@ -73,14 +73,14 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 				foreach (var instruction in node.PushXmlLineInfo(context))
 					yield return instruction; //lineinfo
 
-				yield return Create(Call, module.ImportMethodReference((XamlCTask.xamlAssemblyName, "Tizen.NUI.StyleSheets", "StyleSheet"),
+				yield return Create(Call, module.ImportMethodReference((XamlTask.xamlAssemblyName, "Tizen.NUI.StyleSheets", "StyleSheet"),
 																	   methodName: "FromAssemblyResource",
 																	   parameterTypes: new[] { ("mscorlib", "System.Reflection", "Assembly"), ("mscorlib", "System", "String"), ("System.Xml.ReaderWriter", "System.Xml", "IXmlLineInfo") },
 																	   isStatic: true));
 			}
 
 			//the variable is of type `object`. fix that
-			var vardef = new VariableDefinition(module.ImportReference((XamlCTask.xamlAssemblyName, "Tizen.NUI.StyleSheets", "StyleSheet")));
+			var vardef = new VariableDefinition(module.ImportReference((XamlTask.xamlAssemblyName, "Tizen.NUI.StyleSheets", "StyleSheet")));
 			yield return Create(Stloc, vardef);
 			vardefref.VariableDefinition = vardef;
 		}

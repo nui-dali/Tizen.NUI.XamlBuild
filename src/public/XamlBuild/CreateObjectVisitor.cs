@@ -395,8 +395,12 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
 			var arguments = new List<INode>();
 			var node = enode.Properties[XmlName.xArguments] as ElementNode;
-			if (node != null)
-				arguments.Add(node);
+            if (node != null)
+            {
+                node.Accept(new SetPropertiesVisitor(Context, true), null);
+                arguments.Add(node);
+            }
+
 			var list = enode.Properties[XmlName.xArguments] as ListNode;
 			if (list != null)
 			{
@@ -404,7 +408,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 					arguments.Add(n);
 			}
 
-			for (var i = 0; i < factoryCtorInfo.Parameters.Count; i++)
+            for (var i = 0; i < arguments.Count; i++)
 			{
 				var parameter = factoryCtorInfo.Parameters[i];
 				var arg = arguments[i];
@@ -422,7 +426,19 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 						yield return instruction;
 				}
 			}
-		}
+
+            for (var i = arguments.Count; i < factoryCtorInfo.Parameters.Count; i++)
+            {
+                var parameter = factoryCtorInfo.Parameters[i];
+                var arg = new ValueNode(parameter.Constant.ToString(), node.NamespaceResolver);
+
+                foreach (var instruction in arg.PushConvertedValue(Context,
+                        parameter.ParameterType,
+                        new ICustomAttributeProvider[] { parameter, parameter.ParameterType.ResolveCached() },
+                        enode.PushServiceProvider(Context), false, true))
+                    yield return instruction;
+            }
+        }
 
 		static bool IsXaml2009LanguagePrimitive(IElementNode node)
 		{

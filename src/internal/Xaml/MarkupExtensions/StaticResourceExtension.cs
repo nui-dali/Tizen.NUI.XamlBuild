@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Linq;
 using Tizen.NUI.Binding;
 using Tizen.NUI.Binding;
+using Tizen.NUI.EXaml;
 
 namespace Tizen.NUI.Xaml
 {
@@ -11,6 +12,19 @@ namespace Tizen.NUI.Xaml
     internal sealed class StaticResourceExtension : IMarkupExtension
     {
         public string Key { get; set; }
+
+        public object ProvideValue()
+        {
+            object ret = null;
+            EXamlAddToResourceDictionary.resourceDictionary.TryGetValue(Key, out ret);
+
+            if (null == ret)
+            {
+                throw new Exception(String.Format("Key {0} can't be find in Resource", Key));
+            }
+
+            return ret;
+        }
 
         public object ProvideValue(IServiceProvider serviceProvider)
         {
