@@ -11,7 +11,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 {
 	static class BindablePropertyReferenceExtensions
 	{
-		public static TypeReference GetBindablePropertyType(this FieldReference bpRef, IXmlLineInfo iXmlLineInfo, ModuleDefinition module)
+		public static TypeReference GetBindablePropertyType(this MemberReference bpRef, IXmlLineInfo iXmlLineInfo, ModuleDefinition module)
 		{
 			if (!bpRef.Name.EndsWith("Property", StringComparison.InvariantCulture))
 				throw new XamlParseException($"The name of the bindable property {bpRef.Name} does not ends with \"Property\". This is the kind of convention the world is build upon, a bit like Planck's constant.", iXmlLineInfo);
@@ -32,7 +32,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			return getter.ResolveGenericReturnType(declaringTypeRef, module);
 		}
 
-		public static TypeReference GetBindablePropertyTypeConverter(this FieldReference bpRef, ModuleDefinition module)
+		public static TypeReference GetBindablePropertyTypeConverter(this MemberReference bpRef, ModuleDefinition module)
 		{
 			TypeReference propertyDeclaringType;
 			var owner = bpRef.DeclaringType;

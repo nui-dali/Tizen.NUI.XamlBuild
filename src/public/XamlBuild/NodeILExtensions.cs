@@ -34,7 +34,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			return node.CanConvertValue(module, targetTypeRef, typeConverter);
 		}
 
-		public static bool CanConvertValue(this ValueNode node, ModuleDefinition module, FieldReference bpRef)
+		public static bool CanConvertValue(this ValueNode node, ModuleDefinition module, MemberReference bpRef)
 		{
 			var targetTypeRef = bpRef.GetBindablePropertyType(node, module);
 			var typeConverter = bpRef.GetBindablePropertyTypeConverter(module);

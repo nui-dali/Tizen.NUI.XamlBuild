@@ -130,17 +130,15 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
 			var localName = propertyName.LocalName;
 			TypeReference declaringTypeReference = null;
-			FieldReference bpRef = null;
-			var _ = false;
+
 			PropertyDefinition propertyRef = null;
 			if (parentNode is IElementNode && propertyName != XmlName.Empty) {
-				bpRef = GetBindablePropertyReference(Context.Values[parentNode] as EXamlCreateObject, propertyName.NamespaceURI, ref localName, out _, Context, node);
 				propertyRef = Context.Variables [(IElementNode)parentNode].VariableType.GetProperty(pd => pd.Name == localName, out declaringTypeReference);
 			}
 
 			if (vardef is EXamlCreateObject)
 			{
-				var realValue = ProvideValue(vardef as EXamlCreateObject, Context, Module, node, bpRef: bpRef, propertyRef: propertyRef, propertyDeclaringTypeRef: declaringTypeReference);
+				var realValue = ProvideValue(vardef as EXamlCreateObject, Context, Module, node, propertyRef: propertyRef, propertyDeclaringTypeRef: declaringTypeReference);
 				if (null != realValue && vardef != realValue)
 				{
 					(vardef as EXamlCreateObject).IsValid = false;
@@ -262,7 +260,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 		}
 
 		public static object ProvideValue(EXamlCreateObject instance, EXamlContext context,
-		                                  ModuleDefinition module, ElementNode node, FieldReference bpRef = null,
+		                                  ModuleDefinition module, ElementNode node,
 		                                  PropertyReference propertyRef = null, TypeReference propertyDeclaringTypeRef = null)
 		{
 			GenericInstanceType markupExtension;
@@ -458,7 +456,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 		//	throw new XamlParseException($"Property {localName} is not found or does not have an accessible getter", lineInfo);
 		//}
 
-		static FieldReference GetBindablePropertyReference(EXamlCreateObject parent, string namespaceURI, ref string localName, out bool attached, EXamlContext context, IXmlLineInfo iXmlLineInfo)
+		static MemberReference GetBindablePropertyReference(EXamlCreateObject parent, string namespaceURI, ref string localName, out bool attached, EXamlContext context, IXmlLineInfo iXmlLineInfo)
 		{
 			var module = context.Module;
 			TypeReference declaringTypeReference;
@@ -467,6 +465,18 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			var bpOwnerType = parent.GetType();
 			attached = GetNameAndTypeRef(ref bpOwnerType, namespaceURI, ref localName, context, iXmlLineInfo);
 			var name = $"{localName}Property";
+
+			PropertyReference prRef = bpOwnerType.GetProperty(p => p.Name == name &&
+														p.GetMethod.IsStatic && p.GetMethod.IsPublic,
+														out declaringTypeReference);
+
+			if (null != prRef)
+            {
+				//prRef = module.ImportReference(prRef.ResolveGenericParameters(declaringTypeReference));
+				prRef.PropertyType = module.ImportReference(prRef.PropertyType);
+				return prRef;
+			}
+
 			FieldReference bpRef = bpOwnerType.GetField(fd => fd.Name == name &&
 														fd.IsStatic &&
 														(fd.IsPublic || fd.IsAssembly), out declaringTypeReference);
@@ -567,7 +577,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			new EXamlAddEvent(parent, context.Values[context.RootNode] as EXamlCreateObject, localName, handler);
         }
 
-		static bool CanSetDynamicResource(FieldReference bpRef, INode valueNode, EXamlContext context)
+		static bool CanSetDynamicResource(MemberReference bpRef, INode valueNode, EXamlContext context)
 		{
 			if (bpRef == null)
 				return false;
@@ -582,7 +592,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			return valueInstance.GetType().FullName == typeof(DynamicResource).FullName;
 		}
 
-		static void SetDynamicResource(EXamlCreateObject parent, FieldReference bpRef, IElementNode elementNode, IXmlLineInfo iXmlLineInfo, EXamlContext context)
+		static void SetDynamicResource(EXamlCreateObject parent, MemberReference bpRef, IElementNode elementNode, IXmlLineInfo iXmlLineInfo, EXamlContext context)
 		{
 			var instance = context.Values[elementNode] as EXamlCreateObject;
 			if (null != instance)
@@ -597,7 +607,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			}
 		}
 
-		static bool CanSetBinding(FieldReference bpRef, INode valueNode, EXamlContext context)
+		static bool CanSetBinding(MemberReference bpRef, INode valueNode, EXamlContext context)
 		{
 			var module = context.Module;
 
@@ -618,12 +628,12 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			return valueInstance.GetType().InheritsFromOrImplements(XamlTask.bindingNameSpace + ".BindingBase");
 		}
 
-		static void SetBinding(EXamlCreateObject parent, FieldReference bpRef, IElementNode elementNode, IXmlLineInfo iXmlLineInfo, EXamlContext context)
+		static void SetBinding(EXamlCreateObject parent, MemberReference bpRef, IElementNode elementNode, IXmlLineInfo iXmlLineInfo, EXamlContext context)
 		{
 			new EXamlSetBinding(parent, bpRef, context.Values[elementNode]);
 		}
 
-		static bool CanSetValue(FieldReference bpRef, bool attached, INode node, IXmlLineInfo iXmlLineInfo, EXamlContext context)
+		static bool CanSetValue(MemberReference bpRef, bool attached, INode node, IXmlLineInfo iXmlLineInfo, EXamlContext context)
 		{
 			var module = context.Module;
 
@@ -660,7 +670,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			//return varValue.VariableType.InheritsFromOrImplements(bpTypeRef);
 		}
 
-		static bool CanGetValue(EXamlCreateObject parent, FieldReference bpRef, bool attached, IXmlLineInfo iXmlLineInfo, EXamlContext context, out TypeReference propertyType)
+		static bool CanGetValue(EXamlCreateObject parent, MemberReference bpRef, bool attached, IXmlLineInfo iXmlLineInfo, EXamlContext context, out TypeReference propertyType)
 		{
 			var module = context.Module;
 			propertyType = null;
@@ -675,7 +685,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			return true;
 		}
 
-		static void SetValue(EXamlCreateObject parent, FieldReference bpRef, INode node, IXmlLineInfo iXmlLineInfo, EXamlContext context)
+		static void SetValue(EXamlCreateObject parent, MemberReference bpRef, INode node, IXmlLineInfo iXmlLineInfo, EXamlContext context)
 		{
 			//Fang: need to deal set value to field;
 			var value = context.Values[node];
