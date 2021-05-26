@@ -162,10 +162,10 @@ namespace Tizen.NUI.EXaml
             get;
         } = new EXamlDefinitionList<EventDefinition>();
 
-        internal HashSet<FieldDefinition> BindableProperties
+        internal HashSet<IMemberDefinition> BindableProperties
         {
             get;
-        } = new HashSet<FieldDefinition>();
+        } = new HashSet<IMemberDefinition>();
 
         internal void AddProperty(TypeReference declareTypeRef, PropertyDefinition property)
         {
@@ -177,7 +177,7 @@ namespace Tizen.NUI.EXaml
             EventList.Add(declareTypeRef, eventDefinition);
         }
 
-        internal void AddBindableProperty(FieldReference bindalbeProperty)
+        internal void AddBindableProperty(MemberReference bindalbeProperty)
         {
             if (!BindableProperties.Contains(bindalbeProperty.Resolve()))
             {

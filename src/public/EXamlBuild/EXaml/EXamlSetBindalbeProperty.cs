@@ -49,7 +49,7 @@ namespace Tizen.NUI.EXaml
             return ret;
         }
 
-        public EXamlSetBindalbeProperty(EXamlCreateObject @object, FieldReference bindableProperty, object value)
+        public EXamlSetBindalbeProperty(EXamlCreateObject @object, MemberReference bindableProperty, object value)
         {
             Instance = @object;
             BindableProperty = bindableProperty;
@@ -66,7 +66,7 @@ namespace Tizen.NUI.EXaml
             private set;
         }
 
-        public FieldReference BindableProperty
+        public MemberReference BindableProperty
         {
             get;
             private set;

@@ -29,7 +29,7 @@ namespace Tizen.NUI.EXaml
     {
         internal override string Write()
         {
-            if (false == Parent.IsValid || false == Child.IsValid)
+            if (false == Parent.IsValid || false == (Child as EXamlCreateObject)?.IsValid)
             {
                 return "";
             }
@@ -42,7 +42,7 @@ namespace Tizen.NUI.EXaml
             return ret;
         }
 
-        public EXamlAddObject(EXamlCreateObject parent, EXamlCreateObject child, MethodDefinition addMethod)
+        public EXamlAddObject(EXamlCreateObject parent, object child, MethodDefinition addMethod)
         {
             Parent = parent;
             Child = child;
@@ -57,7 +57,7 @@ namespace Tizen.NUI.EXaml
             get;
         }
 
-        public EXamlCreateObject Child
+        public object Child
         {
             get;
         }

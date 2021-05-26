@@ -171,7 +171,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                     var adderTuple = elementType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module).First();
                     var adderRef = Module.ImportReference(adderTuple.Item1);
                     adderRef = Module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, Module));
-					new EXamlAddObject(parentVar, Context.Values[node] as EXamlCreateObject, adderRef.Resolve());
+					new EXamlAddObject(parentVar, Context.Values[node], adderRef.Resolve());
                 }
                 else if ((contentProperty = GetContentProperty(parentVar.GetType())) != null)
                 {

@@ -50,6 +50,11 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			var elementName = xmlType.Name;
 			var typeArguments = xmlType.TypeArguments;
 
+			if (elementName.Contains("-"))
+			{
+				elementName = elementName.Replace('-', '+');
+			}
+
 			var lookupAssemblies = new List<XmlnsDefinitionAttribute>();
 
 			var lookupNames = new List<string>();

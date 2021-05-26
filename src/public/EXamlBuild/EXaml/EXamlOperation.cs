@@ -222,7 +222,7 @@ namespace Tizen.NUI.EXaml
 
             foreach (var op in EXamlAddObject.eXamlAddObjectList)
             {
-                if (op.Parent.IsValid && op.Child.IsValid)
+                if (op.Parent.IsValid && (!(op.Child is EXamlCreateObject eXamlCreateObject) || eXamlCreateObject.IsValid))
                 {
                     GatherMethod((op.Method.DeclaringType, op.Method));
                 }
@@ -484,10 +484,10 @@ namespace Tizen.NUI.EXaml
             get;
         } = new EXamlDefinitionList<EventDefinition>();
 
-        internal static List<FieldDefinition> definedBindableProperties
+        internal static List<IMemberDefinition> definedBindableProperties
         {
             get;
-        } = new List<FieldDefinition>();
+        } = new List<IMemberDefinition>();
 
         internal static EXamlDefinitionList<MethodDefinition> definedMethods
         {

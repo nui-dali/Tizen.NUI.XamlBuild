@@ -44,7 +44,7 @@ namespace Tizen.NUI.EXaml
             }
         }
 
-        public EXamlSetDynamicResource(EXamlCreateObject @object, FieldReference bindalbeProperty, string key)
+        public EXamlSetDynamicResource(EXamlCreateObject @object, MemberReference bindalbeProperty, string key)
         {
             this.@object = @object;
             this.bindableProperty = bindalbeProperty;
@@ -55,7 +55,7 @@ namespace Tizen.NUI.EXaml
         }
 
         private EXamlCreateObject @object;
-        private FieldReference bindableProperty;
+        private MemberReference bindableProperty;
         private string key;
     }
 }

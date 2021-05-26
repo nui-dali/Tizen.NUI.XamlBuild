@@ -61,7 +61,26 @@ namespace Tizen.NUI.EXaml
                 if (null != this.instance.Instance)
                 {
                     var propertyInfo = this.instance.Instance.GetType().GetProperty(property.Name);
-                    propertyInfo.SetMethod.Invoke(this.instance.Instance, new object[] { value });
+
+                    if (value is EXamlCreateObject eXamlCreateObject && null != eXamlCreateObject.Instance)
+                    {
+                        if (eXamlCreateObject.Type.ResolveCached().IsEnum)
+                        {
+                            if (eXamlCreateObject.Type.FullName == typeof(BindingMode).FullName)
+                            {
+                                var realValue = Enum.Parse(typeof(BindingMode), eXamlCreateObject.Instance as string);
+                                propertyInfo.SetMethod.Invoke(this.instance.Instance, new object[] { realValue });
+                            }
+                        }
+                        else
+                        {
+                            propertyInfo.SetMethod.Invoke(this.instance.Instance, new object[] { eXamlCreateObject.Instance });
+                        }
+                    }
+                    else
+                    {
+                        propertyInfo.SetMethod.Invoke(this.instance.Instance, new object[] { value });
+                    }
                 }
 
                 this.instance.AddProperty(declareTypeRef, property);
