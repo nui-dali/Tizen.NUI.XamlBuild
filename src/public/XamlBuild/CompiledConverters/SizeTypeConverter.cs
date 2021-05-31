@@ -12,13 +12,13 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 {
     internal class SizeTypeConverter : ICompiledTypeConverter
     {
-        IEnumerable<Instruction> GenerateIL(ModuleDefinition module, params double[] args)
+        IEnumerable<Instruction> GenerateIL(ModuleDefinition module, params float[] args)
         {
             foreach (var d in args)
-                yield return Instruction.Create(OpCodes.Ldc_I4, d);
+                yield return Instruction.Create(OpCodes.Ldc_R4, d);
 
             yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference((XamlTask.nuiAssemblyName, XamlTask.nuiNameSpace, "Size"),
-                parameterTypes: args.Select(a => ("mscorlib", "System", "Double")).ToArray()));
+                parameterTypes: args.Select(a => ("mscorlib", "System", "Single")).ToArray()));
         }
 
         public IEnumerable<Instruction> ConvertFromString(string value, ILContext context, BaseNode node)
@@ -31,20 +31,20 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 
                 if (3 == thickness.Length)
                 {
-                    double x, y, z;
+                    float x, y, z;
 
-                    if (double.TryParse(thickness[0], NumberStyles.Number, CultureInfo.InvariantCulture, out x) &&
-                                double.TryParse(thickness[1], NumberStyles.Number, CultureInfo.InvariantCulture, out y) &&
-                                double.TryParse(thickness[2], NumberStyles.Number, CultureInfo.InvariantCulture, out z))
+                    if (float.TryParse(thickness[0], NumberStyles.Number, CultureInfo.InvariantCulture, out x) &&
+                                float.TryParse(thickness[1], NumberStyles.Number, CultureInfo.InvariantCulture, out y) &&
+                                float.TryParse(thickness[2], NumberStyles.Number, CultureInfo.InvariantCulture, out z))
                         return GenerateIL(module, x, y, z);
                 }
                 else if (2 == thickness.Length)
                 {
-                    double x, y;
+                    float x, y;
 
-                    if (double.TryParse(thickness[0], NumberStyles.Number, CultureInfo.InvariantCulture, out x) &&
-                                double.TryParse(thickness[1], NumberStyles.Number, CultureInfo.InvariantCulture, out y))
-                        return GenerateIL(module, x, y);
+                    if (float.TryParse(thickness[0], NumberStyles.Number, CultureInfo.InvariantCulture, out x) &&
+                                float.TryParse(thickness[1], NumberStyles.Number, CultureInfo.InvariantCulture, out y))
+                        return GenerateIL(module, x, y, 0);
                 }
             }
 

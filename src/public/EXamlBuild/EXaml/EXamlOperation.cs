@@ -575,12 +575,12 @@ namespace Tizen.NUI.EXaml
                     signBegin = signEnd = "k";
                     value = valueObject.ToString();
                 }
-                else if (paramType == typeof(Boolean))
+                else if (paramType == typeof(TimeSpan))
                 {
                     signBegin = signEnd = "l";
                     value = valueObject.ToString();
                 }
-                else if (paramType == typeof(TimeSpan))
+                else if (paramType == typeof(Boolean))
                 {
                     signBegin = signEnd = "m";
                     value = valueObject.ToString();

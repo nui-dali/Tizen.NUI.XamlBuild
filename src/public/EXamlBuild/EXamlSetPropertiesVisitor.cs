@@ -191,12 +191,12 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			else if (IsCollectionItem(node, parentNode) && parentNode is ListNode)
 			{
 				var parentList = (ListNode)parentNode;
-				var parent = Context.Variables[((IElementNode)parentNode.Parent)];
-
 				if (skips.Contains(parentList.XmlName))
 					return;
 				if (parentNode is IElementNode && ((IElementNode)parentNode).SkipProperties.Contains (propertyName))
 					return;
+
+				var parent = Context.Variables[((IElementNode)parentNode.Parent)];
 				var elementType = parent.VariableType;
 				localName = parentList.XmlName.LocalName;
 

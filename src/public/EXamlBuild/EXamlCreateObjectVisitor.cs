@@ -486,7 +486,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 					ret = 0;
 				break;
 			case "System.UInt32":
-				if (hasValue && int.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out int outuint))
+				if (hasValue && uint.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out uint outuint))
 					ret = outuint;
 				else
 					ret = 0;

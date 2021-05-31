@@ -35,12 +35,14 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 				arguments.Add(node);
 			else
             {
-				var valueNode = enode.Properties[XmlName.xArguments] as ValueNode;
-				var value = valueNode.Value as string;
-				if (value != null && value.Substring(0, "{x:Reference ".Length) == "{x:Reference ")
-                {
-					var elementName = value.Substring("{x:Reference ".Length);
-					elementName = elementName.Substring(0, elementName.Length - 1);
+				if (enode.Properties[XmlName.xArguments] is ValueNode valueNode)
+				{
+					var value = valueNode.Value as string;
+					if (value != null && value.Substring(0, "{x:Reference ".Length) == "{x:Reference ")
+					{
+						var elementName = value.Substring("{x:Reference ".Length);
+						elementName = elementName.Substring(0, elementName.Length - 1);
+					}
 				}
 			}
 
