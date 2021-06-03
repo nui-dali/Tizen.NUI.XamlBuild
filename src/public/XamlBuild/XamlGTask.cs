@@ -40,10 +40,10 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         }
 
         public override bool Execute()
-		{
+        {
             if (true == PrintReferenceAssemblies)
             {
-                PrintParam(@"G:\XamlG_Log.txt", "ReferencePath is " + ReferencePath);
+                PrintParam(@"XamlG_Log.txt", "ReferencePath is " + ReferencePath);
             }
 
             //PrintParam(@"G:\XamlG_Log.txt", "ReferencePath is " + ReferencePath);
