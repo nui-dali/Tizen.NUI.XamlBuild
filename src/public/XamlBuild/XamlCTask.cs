@@ -54,6 +54,25 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
         public string outputRootPath { get; set; }
 
+        public bool PrintReferenceAssemblies { get; set; }
+
+        private void PrintParam(string logFileName, string log)
+        {
+            FileStream stream = null;
+            if (false == File.Exists(logFileName))
+            {
+                stream = File.Create(logFileName);
+            }
+            else
+            {
+                stream = File.Open(logFileName, FileMode.Append);
+            }
+
+            byte[] buffer = System.Text.Encoding.Default.GetBytes(log + "\n");
+            stream.Write(buffer, 0, buffer.Length);
+            stream.Close();
+        }
+
         private void PrintParam(string logFileName)
         {
             FileStream stream = File.Create(logFileName);
@@ -132,6 +151,11 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
         public override bool Execute(out IList<Exception> thrownExceptions)
         {
+            if (true == PrintReferenceAssemblies)
+            {
+                PrintParam(@"XamlC_Log.txt", "ReferencePath is " + ReferencePath);
+            }
+
             LoggingHelper.LogWarning("Assembly is " + Assembly);
 
             thrownExceptions = null;
