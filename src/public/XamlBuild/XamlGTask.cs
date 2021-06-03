@@ -20,6 +20,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         public string DependencyPaths { get; set; }
         public string ReferencePath { get; set; }
         public bool AddXamlCompilationAttribute { get; set; }
+        public bool PrintReferenceAssemblies { get; set; }
 
         private void PrintParam(string logFileName, string log)
         {
@@ -40,6 +41,11 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
         public override bool Execute()
 		{
+            if (true == PrintReferenceAssemblies)
+            {
+                PrintParam(@"G:\XamlG_Log.txt", "ReferencePath is " + ReferencePath);
+            }
+
             //PrintParam(@"G:\XamlG_Log.txt", "ReferencePath is " + ReferencePath);
             bool success = true;
 			//Log.LogMessage(MessageImportance.Normal, "Generating code behind for XAML files");
