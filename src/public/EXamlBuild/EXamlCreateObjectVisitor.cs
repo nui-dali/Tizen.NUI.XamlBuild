@@ -378,7 +378,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			return true;
 		}
 
-		List<object> GetCtorXArguments(ElementNode enode)
+		List<object> GetCtorXArguments(ElementNode enode, int paramsCount)
 		{
 			if (!enode.Properties.ContainsKey(XmlName.xArguments))
 			{
@@ -402,9 +402,14 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 					arguments.Add(n);
 			}
 
-			for (var i = 0; i < arguments.Count; i++)
+			for (int i = 0; i < arguments.Count; i++)
 			{
 				argumentList.Add(Context.Values[arguments[i]]);
+			}
+
+			for (int i = arguments.Count; i < paramsCount; i++)
+			{
+				argumentList.Add(null);
 			}
 
 			return argumentList;
