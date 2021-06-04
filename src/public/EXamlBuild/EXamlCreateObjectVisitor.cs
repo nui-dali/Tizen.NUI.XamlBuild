@@ -408,9 +408,9 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			}
 
 			for (int i = arguments.Count; i < paramsCount; i++)
-            {
+			{
 				argumentList.Add(null);
-            }
+			}
 
 			return argumentList;
 		}
