@@ -113,6 +113,20 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 																			  md.Name == factoryMethod &&
 																			  md.IsStatic &&
 																			  md.MatchXArguments(node, typeref, Module, Context));
+				if (factoryMethodInfo == null)
+				{
+					var typeExtensionRef = Module.ImportReference(node.XmlType.GetTypeExtensionReference(Module, node));
+					typeExtensionRef = typeExtensionRef?.ResolveCached();
+
+					if (null != typeExtensionRef?.Resolve())
+                    {
+						factoryMethodInfo = typeExtensionRef.Resolve().AllMethods().FirstOrDefault(md => !md.IsConstructor &&
+																			  md.Name == factoryMethod &&
+																			  md.IsStatic &&
+																			  md.MatchXArguments(node, typeref, Module, Context));
+					}
+				}
+
 				if (factoryMethodInfo == null) {
 					throw new XamlParseException(
 						String.Format("No static method found for {0}::{1} ({2})", typedef.FullName, factoryMethod, null), node);

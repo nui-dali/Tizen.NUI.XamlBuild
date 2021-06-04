@@ -125,7 +125,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 				ctorInfo = factoryCtorInfo;
 				if (!typedef.IsValueType) //for ctor'ing typedefs, we first have to ldloca before the params
                 {
-					var argumentList = GetCtorXArguments(node);
+					var argumentList = GetCtorXArguments(node, factoryCtorInfo.Parameters.Count);
 					Context.Values[node] = new EXamlCreateObject(null, typedef, argumentList.ToArray());
 					return;
 				}
@@ -133,15 +133,35 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			else if (node.Properties.ContainsKey(XmlName.xFactoryMethod))
 			{
 				//Fang: Need to deal factory method
-				//var factoryMethod = (string)(node.Properties [XmlName.xFactoryMethod] as ValueNode).Value;
-				//factoryMethodInfo = typedef.AllMethods().FirstOrDefault(md => !md.IsConstructor &&
-				//															  md.Name == factoryMethod &&
-				//															  md.IsStatic &&
-				//															  md.MatchXArguments(node, typeref, Module, Context));
-				//if (factoryMethodInfo == null) {
-				//	throw new XamlParseException(
-				//		String.Format("No static method found for {0}::{1} ({2})", typedef.FullName, factoryMethod, null), node);
-				//}
+				var factoryMethod = (string)(node.Properties [XmlName.xFactoryMethod] as ValueNode).Value;
+                factoryMethodInfo = typedef.AllMethods().FirstOrDefault(md => !md.IsConstructor &&
+                                                                              md.Name == factoryMethod &&
+                                                                              md.IsStatic &&
+                                                                              md.MatchXArguments(node, typeref, Module, Context));
+
+				if (factoryMethodInfo == null)
+				{
+					typeref = Module.ImportReference(node.XmlType.GetTypeExtensionReference(Module, node));
+					typedef = typeref?.ResolveCached();
+
+					if (null != typedef)
+					{
+						factoryMethodInfo = typedef.AllMethods().FirstOrDefault(md => !md.IsConstructor &&
+																			  md.Name == factoryMethod &&
+																			  md.IsStatic &&
+																			  md.MatchXArguments(node, typeref, Module, Context));
+					}
+				}
+
+                if (factoryMethodInfo == null)
+                {
+                    throw new XamlParseException(
+                        String.Format("No static method found for {0}::{1} ({2})", typedef.FullName, factoryMethod, null), node);
+                }
+
+				var argumentList = GetCtorXArguments(node, factoryMethodInfo.Parameters.Count);
+				Context.Values[node] = new EXamlCreateObject(null, typedef.BaseType, factoryMethodInfo, argumentList.ToArray());
+				return;
 				//Context.IL.Append(PushCtorXArguments(factoryMethodInfo, node));
 			}
 
@@ -221,21 +241,23 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 				if (node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null &&
 					vardef.VariableType.IsValueType)
 				{
-					//Fang
-					//<Color>Purple</Color>
-					//Context.IL.Append(vnode.PushConvertedValue(Context, typeref, new ICustomAttributeProvider [] { typedef },
-					//	node.PushServiceProvider(Context), false, true));
-					//Context.IL.Emit(OpCodes.Stloc, vardef);
+					Context.Values[node] = vnode.GetBaseValue(typeref);
 				}
 				else if (node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null &&
 						   implicitOperatorref != null)
 				{
 					//Fang
-					//<FileImageSource>path.png</FileImageSource>
-					//var implicitOperator = Module.ImportReference(implicitOperatorref);
-					//Context.IL.Emit(OpCodes.Ldstr, ((ValueNode)(node.CollectionItems.First())).Value as string);
-					//Context.IL.Emit(OpCodes.Call, implicitOperator);
-					//Context.IL.Emit(OpCodes.Stloc, vardef);
+					var converterType = vnode.GetConverterType(new ICustomAttributeProvider[] { typeref.ResolveCached() });
+					if (null == converterType)
+                    {
+						var realValue = vnode.GetBaseValue(typeref);
+						Context.Values[node] = new EXamlCreateObject(realValue, typeref);
+					}
+					else
+                    {
+						var converterValue = new EXamlValueConverterFromString(converterType.Resolve(), vnode.Value as string);
+						Context.Values[node] = new EXamlCreateObject(converterValue, typeref);
+					}
 				}
 				else if (factorymethodinforef != null)
 				{
