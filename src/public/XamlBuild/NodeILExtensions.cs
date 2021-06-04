@@ -96,11 +96,11 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			else if (targetTypeRef.FullName == "System.Byte")
 				return Byte.Parse(str, CultureInfo.InvariantCulture);
 			else if (targetTypeRef.FullName == "System.UInt16")
-				return unchecked((int)UInt16.Parse(str, CultureInfo.InvariantCulture));
+				return UInt16.Parse(str, CultureInfo.InvariantCulture);
 			else if (targetTypeRef.FullName == "System.UInt32")
-				return unchecked((int)UInt32.Parse(str, CultureInfo.InvariantCulture));
+				return UInt32.Parse(str, CultureInfo.InvariantCulture);
 			else if (targetTypeRef.FullName == "System.UInt64")
-				return unchecked((long)UInt64.Parse(str, CultureInfo.InvariantCulture));
+				return UInt64.Parse(str, CultureInfo.InvariantCulture);
 			else if (targetTypeRef.FullName == "System.Single")
 				return Single.Parse(str, CultureInfo.InvariantCulture);
 			else if (targetTypeRef.FullName == "System.Double")
