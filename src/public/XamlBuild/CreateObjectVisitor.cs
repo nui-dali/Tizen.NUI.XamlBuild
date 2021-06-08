@@ -92,6 +92,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
 			MethodDefinition factoryCtorInfo = null;
 			MethodDefinition factoryMethodInfo = null;
+			TypeDefinition ownerTypeOfFactoryMethod = null;
 			MethodDefinition parameterizedCtorInfo = null;
 			MethodDefinition ctorInfo = null;
 
@@ -124,7 +125,17 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 																			  md.Name == factoryMethod &&
 																			  md.IsStatic &&
 																			  md.MatchXArguments(node, typeref, Module, Context));
+
+						if (null != factoryMethod)
+                        {
+							ownerTypeOfFactoryMethod = typeExtensionRef.ResolveCached();
+						}
 					}
+				}
+				else
+                {
+					ownerTypeOfFactoryMethod = typedef;
+
 				}
 
 				if (factoryMethodInfo == null) {
@@ -190,7 +201,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				throw new XamlParseException($"The Property '{missingCtorParameter}' is required to create a '{typedef.FullName}' object.", node);
 			var ctorinforef = ctorInfo?.ResolveGenericParameters(typeref, Module);
 
-            var factorymethodinforef = factoryMethodInfo?.ResolveGenericParameters(typeref, Module);
+            var factorymethodinforef = factoryMethodInfo?.ResolveGenericParameters(ownerTypeOfFactoryMethod, Module);
 			var implicitOperatorref = typedef.Methods.FirstOrDefault(md =>
 				md.IsPublic &&
 				md.IsStatic &&

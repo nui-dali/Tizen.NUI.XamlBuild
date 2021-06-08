@@ -141,15 +141,15 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
 				if (factoryMethodInfo == null)
 				{
-					typeref = Module.ImportReference(node.XmlType.GetTypeExtensionReference(Module, node));
-					typedef = typeref?.ResolveCached();
+					var typeExtensionRef = Module.ImportReference(node.XmlType.GetTypeExtensionReference(Module, node));
+					typeExtensionRef = typeExtensionRef?.ResolveCached();
 
-					if (null != typedef)
+					if (null != typeExtensionRef)
 					{
-						factoryMethodInfo = typedef.AllMethods().FirstOrDefault(md => !md.IsConstructor &&
+						factoryMethodInfo = typeExtensionRef.ResolveCached().AllMethods().FirstOrDefault(md => !md.IsConstructor &&
 																			  md.Name == factoryMethod &&
 																			  md.IsStatic &&
-																			  md.MatchXArguments(node, typeref, Module, Context));
+																			  md.MatchXArguments(node, typeExtensionRef, Module, Context));
 					}
 				}
 
@@ -160,7 +160,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 }
 
 				var argumentList = GetCtorXArguments(node, factoryMethodInfo.Parameters.Count);
-				Context.Values[node] = new EXamlCreateObject(null, typedef.BaseType, factoryMethodInfo, argumentList.ToArray());
+				Context.Values[node] = new EXamlCreateObject(null, typedef, factoryMethodInfo, argumentList.ToArray());
 				return;
 				//Context.IL.Append(PushCtorXArguments(factoryMethodInfo, node));
 			}
