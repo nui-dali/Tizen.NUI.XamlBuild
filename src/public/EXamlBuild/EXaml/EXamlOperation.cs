@@ -217,6 +217,11 @@ namespace Tizen.NUI.EXaml
                             GatherType(param.GetType());
                         }
                     }
+
+                    if (null != examlOp.XFactoryMethod)
+                    {
+                        GatherMethod((examlOp.XFactoryMethod.DeclaringType, examlOp.XFactoryMethod));
+                    }
                 }
             }
 
@@ -285,7 +290,15 @@ namespace Tizen.NUI.EXaml
                 {
                     int temp = 0;
                 }
-                ret += String.Format("(\"{0}\" \"{1}\")\n", typeIndex, method.Item2.Name);
+
+                string strForParam = "(";
+                foreach (var param in method.Item2.Parameters)
+                {
+                    strForParam += GetValueString(GetTypeIndex(param.ParameterType)) + " ";
+                }
+                strForParam += ")";
+
+                ret += String.Format("(\"{0}\" \"{1}\" {2})\n", typeIndex, method.Item2.Name, strForParam);
             }
             ret += ">\n";
 
@@ -458,7 +471,63 @@ namespace Tizen.NUI.EXaml
                 }
             }
 
-            return -1;
+            int ret = -1;
+            switch (typeReference.FullName)
+            {
+                case "System.SByte":
+                    ret = -2;
+                    break;
+                case "System.Int16":
+                    ret = -3;
+                    break;
+                case "System.Int32":
+                    ret = -4;
+                    break;
+                case "System.Int64":
+                    ret = -5;
+                    break;
+                case "System.Byte":
+                    ret = -6;
+                    break;
+                case "System.UInt16":
+                    ret = -7;
+                    break;
+                case "System.UInt32":
+                    ret = -8;
+                    break;
+                case "System.UInt64":
+                    ret = -9;
+                    break;
+                case "System.Boolean":
+                    ret = -10;
+                    break;
+                case "System.String":
+                    ret = -11;
+                    break;
+                case "System.Object":
+                    ret = -12;
+                    break;
+                case "System.Char":
+                    ret = -13;
+                    break;
+                case "System.Decimal":
+                    ret = -14;
+                    break;
+                case "System.Single":
+                    ret = -15;
+                    break;
+                case "System.Double":
+                    ret = -16;
+                    break;
+                case "System.TimeSpan":
+                    ret = -17;
+                    break;
+                case "System.Uri":
+                    ret = -18;
+                    break;
+            }
+            
+            return ret;
         }
 
         internal static int GetTypeIndex(Type type)

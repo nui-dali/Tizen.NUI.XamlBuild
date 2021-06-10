@@ -92,6 +92,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
 			MethodDefinition factoryCtorInfo = null;
 			MethodDefinition factoryMethodInfo = null;
+			TypeDefinition ownerTypeOfFactoryMethod = null;
 			MethodDefinition parameterizedCtorInfo = null;
 			MethodDefinition ctorInfo = null;
 
@@ -113,6 +114,30 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 																			  md.Name == factoryMethod &&
 																			  md.IsStatic &&
 																			  md.MatchXArguments(node, typeref, Module, Context));
+				if (factoryMethodInfo == null)
+				{
+					var typeExtensionRef = Module.ImportReference(node.XmlType.GetTypeExtensionReference(Module, node));
+					typeExtensionRef = typeExtensionRef?.ResolveCached();
+
+					if (null != typeExtensionRef?.Resolve())
+                    {
+						factoryMethodInfo = typeExtensionRef.Resolve().AllMethods().FirstOrDefault(md => !md.IsConstructor &&
+																			  md.Name == factoryMethod &&
+																			  md.IsStatic &&
+																			  md.MatchXArguments(node, typeref, Module, Context));
+
+						if (null != factoryMethod)
+                        {
+							ownerTypeOfFactoryMethod = typeExtensionRef.ResolveCached();
+						}
+					}
+				}
+				else
+                {
+					ownerTypeOfFactoryMethod = typedef;
+
+				}
+
 				if (factoryMethodInfo == null) {
 					throw new XamlParseException(
 						String.Format("No static method found for {0}::{1} ({2})", typedef.FullName, factoryMethod, null), node);
@@ -176,7 +201,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				throw new XamlParseException($"The Property '{missingCtorParameter}' is required to create a '{typedef.FullName}' object.", node);
 			var ctorinforef = ctorInfo?.ResolveGenericParameters(typeref, Module);
 
-            var factorymethodinforef = factoryMethodInfo?.ResolveGenericParameters(typeref, Module);
+            var factorymethodinforef = factoryMethodInfo?.ResolveGenericParameters(ownerTypeOfFactoryMethod, Module);
 			var implicitOperatorref = typedef.Methods.FirstOrDefault(md =>
 				md.IsPublic &&
 				md.IsStatic &&

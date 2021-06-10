@@ -51,6 +51,11 @@ namespace Tizen.NUI.EXaml
 
             ret += signBegin;
 
+            if (null != XFactoryMethod)
+            {
+                ret += "[" + GetValueString(definedMethods.IndexOf((XFactoryMethod.DeclaringType, XFactoryMethod))) + "] ";
+            }
+
             if (0 < paramsList.Count)
             {
                 ret += "(";
@@ -119,6 +124,31 @@ namespace Tizen.NUI.EXaml
             eXamlCreateObjects.Add(this);
         }
 
+        public EXamlCreateObject(object instance, TypeReference type, MethodDefinition xFactoryMethod, object[] @params = null)
+        {
+            if (null == type.Resolve())
+            {
+                throw new Exception("Type can't be null when create object");
+            }
+
+            Instance = instance;
+            Type = type;
+
+            if (null != @params)
+            {
+                foreach (var obj in @params)
+                {
+                    paramsList.Add(obj);
+                }
+            }
+
+            EXamlOperation.eXamlOperations.Add(this);
+
+            Index = eXamlCreateObjects.Count;
+            XFactoryMethod = xFactoryMethod;
+            eXamlCreateObjects.Add(this);
+        }
+
         internal bool IsValid
         {
             get;
@@ -137,6 +167,12 @@ namespace Tizen.NUI.EXaml
         }
 
         internal int Index
+        {
+            get;
+            set;
+        }
+
+        internal MethodDefinition XFactoryMethod
         {
             get;
             set;
