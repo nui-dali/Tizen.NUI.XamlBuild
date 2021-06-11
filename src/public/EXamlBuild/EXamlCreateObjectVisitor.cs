@@ -125,6 +125,9 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 				ctorInfo = factoryCtorInfo;
 				if (!typedef.IsValueType) //for ctor'ing typedefs, we first have to ldloca before the params
                 {
+					VariableDefinition vardef = new VariableDefinition(typeref);
+					Context.Variables[node] = vardef;
+
 					var argumentList = GetCtorXArguments(node, factoryCtorInfo.Parameters.Count);
 					Context.Values[node] = new EXamlCreateObject(null, typedef, argumentList.ToArray());
 					return;
@@ -158,6 +161,9 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                     throw new XamlParseException(
                         String.Format("No static method found for {0}::{1} ({2})", typedef.FullName, factoryMethod, null), node);
                 }
+
+				VariableDefinition vardef = new VariableDefinition(typeref);
+				Context.Variables[node] = vardef;
 
 				var argumentList = GetCtorXArguments(node, factoryMethodInfo.Parameters.Count);
 				Context.Values[node] = new EXamlCreateObject(null, typedef, factoryMethodInfo, argumentList.ToArray());
