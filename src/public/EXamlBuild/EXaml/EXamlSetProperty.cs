@@ -21,6 +21,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Tizen.NUI.Binding;
+using Tizen.NUI.Xaml;
 using Tizen.NUI.Xaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
@@ -64,7 +65,13 @@ namespace Tizen.NUI.EXaml
 
                     if (value is EXamlCreateObject eXamlCreateObject && null != eXamlCreateObject.Instance)
                     {
-                        if (eXamlCreateObject.Type.ResolveCached().IsEnum)
+                        if (this.instance.Instance is BindingExtension bindingExtension
+                            &&
+                            eXamlCreateObject.Type.FullName == typeof(BindingMode).FullName)
+                        {
+                            bindingExtension.ModeInEXaml = eXamlCreateObject;
+                        }
+                        else if (eXamlCreateObject.Type.ResolveCached().IsEnum)
                         {
                             if (eXamlCreateObject.Type.FullName == typeof(BindingMode).FullName)
                             {
