@@ -51,44 +51,65 @@ namespace Tizen.NUI.EXaml
 
             ret += signBegin;
 
-            if (null != XFactoryMethod)
-            {
-                ret += "[" + GetValueString(definedMethods.IndexOf((XFactoryMethod.DeclaringType, XFactoryMethod))) + "] ";
-            }
-
-            if (0 < paramsList.Count)
-            {
-                ret += "(";
-
-                foreach (var param in paramsList)
-                {
-                    ret += GetValueString(param);
-                }
-
-                ret += ")";
-            }
-
-            if (Instance is EXamlValueConverterFromString)
-            {
-                ret += "q(" + (Instance as EXamlValueConverterFromString).GetString() + ")q";
-            }
-            else if (true == Type.Resolve()?.IsEnum)
-            {
-                ret += String.Format("o({0} {1})o ",
-                    GetValueString(GetTypeIndex(Type)),
-                    GetValueString(Instance));
-            }
-            else
+            if (true == isStaticInstance)
             {
                 int typeIndex = GetTypeIndex(Type);
 
-                if (-1 == typeIndex)
+                if (0 > typeIndex)
                 {
-                    string message = String.Format("Can't find type {0}\n", Type.FullName);
-                    message += String.Format("All defined types are:\n{0}", GetAllDefinedTypesName());
-                    throw new Exception(message);
+                    throw new Exception($"Can't get type index of {Type.FullName}");
                 }
-                ret += GetValueString(typeIndex);
+
+                if (MemberOfStaticInstance is FieldReference field)
+                {
+                    ret += $"{{{GetValueString(null)} {GetValueString(field.Name)}}} {GetValueString(typeIndex)}";
+                }
+                else if (MemberOfStaticInstance is PropertyReference property)
+                {
+                    ret += $"{{{GetValueString(property.Name)} {GetValueString(null)}}} {GetValueString(typeIndex)}";
+                }
+            }
+            else
+            {
+                if (null != XFactoryMethod)
+                {
+                    ret += "[" + GetValueString(definedMethods.IndexOf((XFactoryMethod.DeclaringType, XFactoryMethod))) + "] ";
+                }
+
+                if (0 < paramsList.Count)
+                {
+                    ret += "(";
+
+                    foreach (var param in paramsList)
+                    {
+                        ret += GetValueString(param);
+                    }
+
+                    ret += ")";
+                }
+
+                if (Instance is EXamlValueConverterFromString)
+                {
+                    ret += "q(" + (Instance as EXamlValueConverterFromString).GetString() + ")q";
+                }
+                else if (true == Type.Resolve()?.IsEnum)
+                {
+                    ret += String.Format("o({0} {1})o ",
+                        GetValueString(GetTypeIndex(Type)),
+                        GetValueString(Instance));
+                }
+                else
+                {
+                    int typeIndex = GetTypeIndex(Type);
+
+                    if (-1 == typeIndex)
+                    {
+                        string message = String.Format("Can't find type {0}\n", Type.FullName);
+                        message += String.Format("All defined types are:\n{0}", GetAllDefinedTypesName());
+                        throw new Exception(message);
+                    }
+                    ret += GetValueString(typeIndex);
+                }
             }
 
             ret += signEnd + "\n";
@@ -149,6 +170,59 @@ namespace Tizen.NUI.EXaml
             eXamlCreateObjects.Add(this);
         }
 
+        public static EXamlCreateObject GetStaticInstance(TypeReference type, FieldReference field, PropertyReference property)
+        {
+            MemberReference memberRef = null;
+
+            if (null != field)
+            {
+                memberRef = field;
+            }
+            else if (null != property)
+            {
+                memberRef = property;
+            }
+
+            if (null == memberRef)
+            {
+                return null;
+            }
+
+            if (StaticInstances.ContainsKey((type, memberRef)))
+            {
+                return StaticInstances[(type, memberRef)];
+            }
+            else
+            {
+                var staticInstance = new EXamlCreateObject(type, field, property);
+                StaticInstances.Add((type, memberRef), staticInstance);
+                return staticInstance;
+            }
+        }
+
+        public EXamlCreateObject(TypeReference type, FieldReference field, PropertyReference property)
+        {
+            MemberReference memberRef = null;
+
+            if (null != field)
+            {
+                memberRef = field;
+            }
+            else if (null != property)
+            {
+                memberRef = property;
+            }
+
+            Type = type;
+            MemberOfStaticInstance = memberRef;
+            isStaticInstance = true;
+
+            EXamlOperation.eXamlOperations.Add(this);
+
+            Index = eXamlCreateObjects.Count;
+            eXamlCreateObjects.Add(this);
+        }
+
         internal bool IsValid
         {
             get;
@@ -173,6 +247,12 @@ namespace Tizen.NUI.EXaml
         }
 
         internal MethodDefinition XFactoryMethod
+        {
+            get;
+            set;
+        }
+
+        internal MemberReference MemberOfStaticInstance
         {
             get;
             set;
@@ -220,5 +300,12 @@ namespace Tizen.NUI.EXaml
                 BindableProperties.Add(bindalbeProperty.Resolve());
             }
         }
+
+        private static Dictionary<(TypeReference, MemberReference), EXamlCreateObject> StaticInstances
+        {
+            get;
+        } = new Dictionary<(TypeReference, MemberReference), EXamlCreateObject>();
+
+        private bool isStaticInstance = false;
     }
 }

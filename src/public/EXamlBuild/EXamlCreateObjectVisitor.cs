@@ -89,16 +89,10 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 				(compiledMarkupExtensionType = Type.GetType(compiledMarkupExtensionName)) != null &&
 				(markupProvider = Activator.CreateInstance(compiledMarkupExtensionType) as ICompiledMarkupExtension) != null) {
 
-				//Fang
-				//var il = markupProvider.ProvideValue(node, Module, Context, out typeref);
-				//typeref = Module.ImportReference(typeref);
+				Context.Values[node] = markupProvider.ProvideValue(node, Module);
 
-				//var vardef = new VariableDefinition(typeref);
-				//Context.Variables[node] = vardef;
-				//Context.Body.Variables.Add(vardef);
-
-				//Context.IL.Append(il);
-				//Context.IL.Emit(OpCodes.Stloc, vardef);
+				VariableDefinition vardef = new VariableDefinition(typeref);
+				Context.Variables[node] = vardef;
 
 				//clean the node as it has been fully exhausted
 				foreach (var prop in node.Properties)
@@ -135,7 +129,6 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			}
 			else if (node.Properties.ContainsKey(XmlName.xFactoryMethod))
 			{
-				//Fang: Need to deal factory method
 				var factoryMethod = (string)(node.Properties [XmlName.xFactoryMethod] as ValueNode).Value;
                 factoryMethodInfo = typedef.AllMethods().FirstOrDefault(md => !md.IsConstructor &&
                                                                               md.Name == factoryMethod &&
@@ -168,7 +161,6 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 				var argumentList = GetCtorXArguments(node, factoryMethodInfo.Parameters.Count);
 				Context.Values[node] = new EXamlCreateObject(null, typedef, factoryMethodInfo, argumentList.ToArray());
 				return;
-				//Context.IL.Append(PushCtorXArguments(factoryMethodInfo, node));
 			}
 
 			if (ctorInfo == null && factoryMethodInfo == null)
@@ -252,7 +244,6 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 				else if (node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null &&
 						   implicitOperatorref != null)
 				{
-					//Fang
 					var converterType = vnode.GetConverterType(new ICustomAttributeProvider[] { typeref.ResolveCached() });
 					if (null == converterType)
                     {
