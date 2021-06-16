@@ -13,6 +13,8 @@ namespace Tizen.NUI.Xaml
 		public string Path { get; set; } = Tizen.NUI.Binding.Binding.SelfPath;
 		public BindingMode Mode { get; set; } = BindingMode.Default;
 
+        public EXamlCreateObject ModeInEXaml { get; set; } = null;
+
         public object Converter { get; set; }
 
         public object ConverterParameter { get; set; }
@@ -34,7 +36,7 @@ namespace Tizen.NUI.Xaml
             if (TypedBinding == null)
             {
                 var newTypeRef = module.ImportReference(typeof(Tizen.NUI.Binding.Binding));
-                return new EXamlCreateObject(null, newTypeRef, new object[] { Path, Mode, Converter, ConverterParameter, StringFormat, Source });
+                return new EXamlCreateObject(null, newTypeRef, new object[] { Path, ModeInEXaml, Converter, ConverterParameter, StringFormat, Source });
             }
             else
             {
