@@ -320,8 +320,16 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
                                 for (int i = 0; i < ctorInfo.Parameters.Count; i++)
                                 {
-                                    @params[i] = ctorInfo.Parameters[i].Constant;
+                                    var param = ctorInfo.Parameters[i];
 
+                                    if (ctorInfo.Parameters[i].ParameterType.ResolveCached().IsEnum)
+                                    {
+                                        @params[i] = NodeILExtensions.GetParsedEnum(param.ParameterType, param.Constant.ToString(), null);
+                                    }
+                                    else
+                                    {
+                                        @params[i] = param.Constant;
+                                    }
                                 }
 
                                 Context.Values[node] = new EXamlCreateObject(null, typeref, @params);
