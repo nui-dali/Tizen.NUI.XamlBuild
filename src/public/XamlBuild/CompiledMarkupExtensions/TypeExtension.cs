@@ -28,7 +28,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			if (valueNode == null)
 				throw new XamlParseException("TypeName isn't set.", node as XmlLineInfo);
 
-			if (!node.Properties.ContainsKey(name)) {
+			if (!node.Properties.ContainsKey(name))
+			{
 				node.Properties[name] = typeNameNode;
 				node.CollectionItems.Clear();
 			}
@@ -46,9 +47,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			};
 		}
 
-        public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module)
-        {
-            throw new System.NotImplementedException();
-        }
-    }
+		public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module)
+		{
+			throw new System.NotImplementedException();
+		}
+	}
 }

@@ -20,17 +20,21 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			instructions.Add(Instruction.Create(OpCodes.Newarr, typeTypeRef));
 
 			memberRef = typeTypeRef.MakeArrayType();
-			for (var i = 0; i < n; i++) {
+			for (var i = 0; i < n; i++)
+			{
 				var vardef = context.Variables[node.CollectionItems[i] as IElementNode];
-				if (typeTypeRef.IsValueType) {
+				if (typeTypeRef.IsValueType)
+				{
 					instructions.Add(Instruction.Create(OpCodes.Dup));
 					instructions.Add(Instruction.Create(OpCodes.Ldc_I4, i));
 					instructions.Add(Instruction.Create(OpCodes.Ldelema, typeTypeRef));
 					instructions.Add(Instruction.Create(OpCodes.Ldloc, vardef));
-					if (vardef.VariableType == module.TypeSystem.Object) 
+					if (vardef.VariableType == module.TypeSystem.Object)
 						instructions.Add(Instruction.Create(OpCodes.Unbox_Any, module.ImportReference(typeTypeRef)));
 					instructions.Add(Instruction.Create(OpCodes.Stobj, typeTypeRef));
-				} else {
+				}
+				else
+				{
 					instructions.Add(Instruction.Create(OpCodes.Dup));
 					instructions.Add(Instruction.Create(OpCodes.Ldc_I4, i));
 					instructions.Add(Instruction.Create(OpCodes.Ldloc, vardef));
@@ -40,9 +44,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			return instructions;
 		}
 
-        public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module)
-        {
-            throw new System.NotImplementedException();
-        }
-    }
+		public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module)
+		{
+			throw new System.NotImplementedException();
+		}
+	}
 }
