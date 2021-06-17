@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
+using Tizen.NUI.EXaml;
 using Tizen.NUI.Xaml;
 
 namespace Tizen.NUI.Xaml.Build.Tasks
@@ -38,5 +39,10 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			}
 			return instructions;
 		}
-	}
+
+        public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module)
+        {
+            throw new System.NotImplementedException();
+        }
+    }
 }

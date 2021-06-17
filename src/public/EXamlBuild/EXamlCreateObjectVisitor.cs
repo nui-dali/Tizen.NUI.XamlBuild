@@ -186,38 +186,42 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
             ctorInfo = ctorInfo ?? typedef.Methods.FirstOrDefault(md => md.IsConstructor && !md.HasParameters && !md.IsStatic);
 
-            if (null == ctorInfo)
-            {
-                ctorInfo = typedef.Methods.FirstOrDefault(md => md.IsConstructor && !md.IsStatic);
-                if (null != ctorInfo)
-                {
-                    bool areAllParamsDefault = true;
+			if (null == ctorInfo)
+			{
+				foreach (var method in typedef.Methods)
+				{
+					if (method.IsConstructor && !method.IsStatic)
+					{
+						bool areAllParamsDefault = true;
 
-                    foreach (ParameterDefinition parameter in ctorInfo.Parameters)
-                    {
-                        if (false == parameter.HasDefault)
-                        {
-                            areAllParamsDefault = false;
-                            break;
-                        }
-                    }
+						foreach (var param in method.Parameters)
+						{
+							if (!param.HasDefault)
+							{
+								areAllParamsDefault = false;
+								break;
+							}
+						}
 
-                    if (false == areAllParamsDefault)
-                    {
-                        ctorInfo = null;
-                    }
-                    else
-                    {
-                        factoryCtorInfo = ctorInfo;
+						if (areAllParamsDefault)
+						{
+							if (null == ctorInfo)
+                            {
+								ctorInfo = method;
+							}
+							else
+                            {
+								throw new XamlParseException($"{typedef.FullName} has more than one constructor which params are all default.", node);
+							}
+						}
+					}
+				}
 
-                        if (!typedef.IsValueType) //for ctor'ing typedefs, we first have to ldloca before the params
-                        {
-							//Fang
-                            //Context.IL.Append(PushCtorDefaultArguments(factoryCtorInfo, node));
-                        }
-                    }
-                }
-            }
+				if (null == ctorInfo)
+				{
+					throw new XamlParseException($"{typedef.FullName} has no constructor which params are all default.", node);
+				}
+			}
 
 			if (parameterizedCtorInfo != null && ctorInfo == null)
 				//there was a parameterized ctor, we didn't use it
@@ -298,10 +302,25 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 								canConvertCollectionItem = true;
 							}
 						}
-						
+
 						if (false == canConvertCollectionItem)
 						{
-							Context.Values[node] = new EXamlCreateObject(null, typeref);
+							if (!ctorInfo.HasParameters)
+							{
+								Context.Values[node] = new EXamlCreateObject(null, typeref);
+							}
+							else
+                            {
+								object[] @params = new object[ctorInfo.Parameters.Count];
+
+								for (int i = 0; i < ctorInfo.Parameters.Count; i++)
+                                {
+									@params[i] = ctorInfo.Parameters[i].Constant;
+
+								}
+
+								Context.Values[node] = new EXamlCreateObject(null, typeref, @params);
+							}
 						}
 					}
                 }

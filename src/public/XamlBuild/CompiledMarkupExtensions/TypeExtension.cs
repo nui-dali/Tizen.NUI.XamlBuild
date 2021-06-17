@@ -4,7 +4,7 @@ using System.Xml;
 
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-
+using Tizen.NUI.EXaml;
 using Tizen.NUI.Xaml;
 
 using static Mono.Cecil.Cil.Instruction;
@@ -45,5 +45,10 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 														  isStatic: true)),
 			};
 		}
-	}
+
+        public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module)
+        {
+            throw new System.NotImplementedException();
+        }
+    }
 }

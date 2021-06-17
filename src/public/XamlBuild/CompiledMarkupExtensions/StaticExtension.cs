@@ -5,6 +5,7 @@ using Tizen.NUI.Xaml;
 using System.Xml;
 
 using static System.String;
+using Tizen.NUI.EXaml;
 
 namespace Tizen.NUI.Xaml.Build.Tasks
 {
@@ -77,6 +78,35 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			memberRef = propertyDef.PropertyType;
 			var getterDef = module.ImportReference(propertyDef.GetMethod);
 			return new [] { Instruction.Create(OpCodes.Call, getterDef) };
+		}
+
+		public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module)
+        {
+			INode ntype;
+			if (!node.Properties.TryGetValue(new XmlName("", "Member"), out ntype))
+				ntype = node.CollectionItems[0];
+			var member = ((ValueNode)ntype).Value as string;
+
+			if (IsNullOrEmpty(member) || !member.Contains("."))
+			{
+				var lineInfo = node as IXmlLineInfo;
+				throw new XamlParseException("Syntax for x:Static is [Member=][prefix:]typeName.staticMemberName", lineInfo);
+			}
+
+			var dotIdx = member.LastIndexOf('.');
+			var typename = member.Substring(0, dotIdx);
+			var membername = member.Substring(dotIdx + 1);
+
+			var typeRef = module.ImportReference(XmlTypeExtensions.GetTypeReference(typename, module, node as BaseNode));
+			var fieldRef = GetFieldReference(typeRef, membername, module);
+			var propertyDef = GetPropertyDefinition(typeRef, membername, module);
+
+			var ret = EXamlCreateObject.GetStaticInstance(typeRef, fieldRef, propertyDef);
+			if (null == ret)
+            {
+				throw new XamlParseException($"{membername} is not static member in type {typename}", node as IXmlLineInfo);
+			}
+			return ret;
 		}
 
 		public static FieldReference GetFieldReference(TypeReference typeRef, string fieldName, ModuleDefinition module)

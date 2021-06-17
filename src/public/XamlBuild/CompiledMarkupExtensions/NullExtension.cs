@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Tizen.NUI.EXaml;
 using Tizen.NUI.Xaml;
 
 namespace Tizen.NUI.Xaml.Build.Tasks
@@ -14,5 +15,10 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			typeRef = module.TypeSystem.Object;
 			return new[] { Instruction.Create(OpCodes.Ldnull) };
 		}
-	}
+
+        public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

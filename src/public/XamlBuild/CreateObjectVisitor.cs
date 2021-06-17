@@ -166,35 +166,47 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
             if (null == ctorInfo)
             {
-                ctorInfo = typedef.Methods.FirstOrDefault(md => md.IsConstructor && !md.IsStatic);
-                if (null != ctorInfo)
-                {
-                    bool areAllParamsDefault = true;
+				foreach (var method in typedef.Methods)
+				{
+					if (method.IsConstructor && !method.IsStatic)
+					{
+						bool areAllParamsDefault = true;
 
-                    foreach (ParameterDefinition parameter in ctorInfo.Parameters)
-                    {
-                        if (false == parameter.HasDefault)
-                        {
-                            areAllParamsDefault = false;
-                            break;
-                        }
-                    }
+						foreach (var param in method.Parameters)
+						{
+							if (!param.HasDefault)
+							{
+								areAllParamsDefault = false;
+								break;
+							}
+						}
 
-                    if (false == areAllParamsDefault)
-                    {
-                        ctorInfo = null;
-                    }
-                    else
-                    {
-                        factoryCtorInfo = ctorInfo;
+						if (areAllParamsDefault)
+						{
+							if (null == ctorInfo)
+							{
+								ctorInfo = method;
+							}
+							else
+							{
+								throw new XamlParseException($"{typedef.FullName} has more than one constructor which params are all default.", node);
+							}
+						}
+					}
+				}
 
-                        if (!typedef.IsValueType) //for ctor'ing typedefs, we first have to ldloca before the params
-                        {
-                            Context.IL.Append(PushCtorDefaultArguments(factoryCtorInfo, node));
-                        }
-                    }
-                }
-            }
+				if (null == ctorInfo)
+				{
+					throw new XamlParseException($"{typedef.FullName} has no constructor which params are all default.", node);
+				}
+
+				factoryCtorInfo = ctorInfo;
+
+				if (!typedef.IsValueType) //for ctor'ing typedefs, we first have to ldloca before the params
+				{
+					Context.IL.Append(PushCtorDefaultArguments(factoryCtorInfo, node));
+				}
+			}
 
 			if (parameterizedCtorInfo != null && ctorInfo == null)
 				//there was a parameterized ctor, we didn't use it
