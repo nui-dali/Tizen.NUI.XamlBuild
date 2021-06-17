@@ -58,7 +58,7 @@ namespace Tizen.NUI.StyleSheets
                     setCurrentSelector(new Child(), All);
                     reader.SkipWhiteSpaces();
                     break;
-                case '^':				//not in CSS spec
+                case '^': //not in CSS spec
                     reader.Read();
                     var element = reader.ReadIdent();
                     if (element == null) return Invalid;
@@ -250,7 +250,7 @@ namespace Tizen.NUI.StyleSheets
                 return false;
                 //var index = styleable.Parent.Children.IndexOf(styleable);
                 //if (index == 0)
-                //	return false;
+                //    return false;
                 //var adjacent = styleable.Parent.Children[index - 1];
                 //return Left.Matches(adjacent);
             }
@@ -291,13 +291,13 @@ namespace Tizen.NUI.StyleSheets
 
                 //var index = styleable.Parent.Children.IndexOf(styleable);
                 //if (index == 0)
-                //	return false;
+                //    return false;
                 //int siblingIndex = -1;
                 //for (var i = 0; i < index; i++)
-                //	if (Left.Matches(styleable.Parent.Children[i])) {
-                //		siblingIndex = i;
-                //		break;
-                //	}
+                //    if (Left.Matches(styleable.Parent.Children[i])) {
+                //        siblingIndex = i;
+                //        break;
+                //    }
                 //return siblingIndex != -1;
             }
         }

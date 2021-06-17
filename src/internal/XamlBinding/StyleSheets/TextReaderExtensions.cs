@@ -7,7 +7,7 @@ namespace Tizen.NUI.StyleSheets
 {
     internal static class TextReaderExtensions
     {
-        //ident		[-]?{nmstart}{nmchar}*
+        //ident [-]?{nmstart}{nmchar}*
         public static string ReadIdent(this TextReader reader)
         {
             var sb = new StringBuilder();
@@ -32,7 +32,7 @@ namespace Tizen.NUI.StyleSheets
             return sb.ToString();
         }
 
-        //name		{nmchar}+
+        //name {nmchar}+
         public static string ReadName(this TextReader reader)
         {
             var sb = new StringBuilder();
@@ -61,7 +61,7 @@ namespace Tizen.NUI.StyleSheets
             return sb.ToString();
         }
 
-        //w			[ \t\r\n\f]*
+        //w [ \t\r\n\f]*
         public static void SkipWhiteSpaces(this TextReader reader)
         {
             int p;

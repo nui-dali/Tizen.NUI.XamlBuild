@@ -159,7 +159,7 @@ namespace Tizen.NUI.Binding
         {
             // Style style = (bindable as /*VisualElement*/BaseHandle).Style;
             // if (style == null)
-            // 	return;
+            //     return;
             // style.UnApplyCore(bindable, (Style)oldValue);
             // style.ApplyCore(bindable, (Style)newValue);
         }

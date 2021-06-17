@@ -523,9 +523,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
                     //il.Emit(Ldstr, resourcePath);   //resourcePath
                     //il.Emit(Callvirt, module.ImportMethodReference(("mscorlib", "System", "Func`3"),
-                    //											   methodName: "Invoke",
-                    //											   paramCount: 2,
-                    //											   classArguments: new[] { ("mscorlib", "System.Reflection", "AssemblyName"), ("mscorlib", "System", "String"), ("mscorlib", "System", "String") }));
+                    //methodName: "Invoke",
+                    //paramCount: 2,
+                    //classArguments: new[] { ("mscorlib", "System.Reflection", "AssemblyName"), ("mscorlib", "System", "String"), ("mscorlib", "System", "String") }));
                     //il.Emit(Brfalse, nop);
                     //il.Emit(Ldarg_0);
                     //il.Emit(Call, initCompRuntime);
