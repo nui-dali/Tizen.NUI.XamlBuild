@@ -511,11 +511,45 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 yield return Create(Box, module.ImportReference(originalTypeRef));
         }
 
-        static object GetParsedEnum(TypeReference enumRef, string value, IXmlLineInfo lineInfo)
+        static public object GetParsedEnum(TypeReference enumRef, string value, IXmlLineInfo lineInfo)
         {
             var enumDef = enumRef.ResolveCached();
             if (!enumDef.IsEnum)
                 throw new InvalidOperationException();
+
+            bool isStrMatchEnumValue = false;
+
+            foreach (var field in enumDef.Fields)
+            {
+                if (field.Name == "value__")
+                    continue;
+
+                if (field.Name == value)
+                {
+                    isStrMatchEnumValue = true;
+                    break;
+                }
+            }
+
+            if (!isStrMatchEnumValue)
+            {
+                foreach (var field in enumDef.Fields)
+                {
+                    if (field.Name == "value__")
+                        continue;
+                    if (IsStringMatchObject(field.Constant, value))
+                    {
+                        isStrMatchEnumValue = true;
+                        value = field.Name;
+                        break;
+                    }
+                }
+            }
+
+            if (!isStrMatchEnumValue)
+            {
+                throw new Exception($"{value} is not value of {enumRef.FullName}");
+            }
 
             return new EXamlCreateObject(value, enumRef);
         }
@@ -576,6 +610,48 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                         found = true;
                     }
                 }
+
+                if (!found)
+                {
+                    foreach (var field in enumDef.Fields)
+                    {
+                        if (field.Name == "value__")
+                            continue;
+                        if (IsStringMatchObject(field.Constant, v))
+                        {
+                            switch (typeRef.FullName)
+                            {
+                                case "System.Byte":
+                                    b |= (byte)field.Constant;
+                                    break;
+                                case "System.SByte":
+                                    if (found)
+                                        throw new XamlParseException($"Multi-valued enums are not valid on sbyte enum types", lineInfo);
+                                    sb = (sbyte)field.Constant;
+                                    break;
+                                case "System.Int16":
+                                    s |= (short)field.Constant;
+                                    break;
+                                case "System.UInt16":
+                                    us |= (ushort)field.Constant;
+                                    break;
+                                case "System.Int32":
+                                    i |= (int)field.Constant;
+                                    break;
+                                case "System.UInt32":
+                                    ui |= (uint)field.Constant;
+                                    break;
+                                case "System.Int64":
+                                    l |= (long)field.Constant;
+                                    break;
+                                case "System.UInt64":
+                                    ul |= (ulong)field.Constant;
+                                    break;
+                            }
+                            found = true;
+                        }
+                    }
+                }
             }
 
             if (!found)
@@ -601,6 +677,37 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             default:
                 throw new XamlParseException($"Enum value not found for {value}", lineInfo);
             }
+        }
+
+        private static bool IsStringMatchObject(object obj, string str)
+        {
+            try
+            {
+                switch (obj.GetType().FullName)
+                {
+                    case "System.Byte":
+                        return (byte)obj == byte.Parse(str);
+                    case "System.SByte":
+                        return (sbyte)obj == sbyte.Parse(str);
+                    case "System.Int16":
+                        return (Int16)obj == Int16.Parse(str);
+                    case "System.UInt16":
+                        return (UInt16)obj == UInt16.Parse(str);
+                    case "System.Int32":
+                        return (Int32)obj == Int32.Parse(str);
+                    case "System.UInt32":
+                        return (UInt32)obj == UInt32.Parse(str);
+                    case "System.Int64":
+                        return (Int64)obj == Int64.Parse(str);
+                    case "System.UInt64":
+                        return (UInt64)obj == UInt64.Parse(str);
+                }
+            }
+            catch (Exception e)
+            {
+            }
+
+            return false;
         }
 
         public static IEnumerable<Instruction> PushXmlLineInfo(this INode node, ILContext context)
