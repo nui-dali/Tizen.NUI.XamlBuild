@@ -52,7 +52,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 		{
 			var parentVar = Context.Variables[(IElementNode)node];
 			return parentVar.VariableType.FullName == "Tizen.NUI.Binding.ResourceDictionary"
-                || parentVar.VariableType.Resolve().BaseType?.FullName == "Tizen.NUI.Binding.ResourceDictionary";
+				|| parentVar.VariableType.Resolve().BaseType?.FullName == "Tizen.NUI.Binding.ResourceDictionary";
 		}
 
 		public void Visit(ValueNode node, INode parentNode)
@@ -65,29 +65,31 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			//At this point, all MarkupNodes are expanded to ElementNodes
 		}
 
-        public void Visit(ElementNode node, INode parentNode)
+		public void Visit(ElementNode node, INode parentNode)
 		{
 			var typeref = Module.ImportReference(node.XmlType.GetTypeReference(Module, node));
 			TypeDefinition typedef = typeref.ResolveCached();
 
-			if (IsXaml2009LanguagePrimitive(node)) {
-                var vardef = new VariableDefinition(typeref);
-                Context.Variables[node] = vardef;
+			if (IsXaml2009LanguagePrimitive(node))
+			{
+				var vardef = new VariableDefinition(typeref);
+				Context.Variables[node] = vardef;
 
 				var value = GetValueFromLanguagePrimitive(typedef, node);
 				Context.Values[node] = value;
 				return;
 			}
 
-            //if this is a MarkupExtension that can be compiled directly, compile and returns the value
-            var compiledMarkupExtensionName = typeref
+			//if this is a MarkupExtension that can be compiled directly, compile and returns the value
+			var compiledMarkupExtensionName = typeref
 				.GetCustomAttribute(Module, (XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "ProvideCompiledAttribute"))
 				?.ConstructorArguments?[0].Value as string;
 			Type compiledMarkupExtensionType;
 			ICompiledMarkupExtension markupProvider;
 			if (compiledMarkupExtensionName != null &&
 				(compiledMarkupExtensionType = Type.GetType(compiledMarkupExtensionName)) != null &&
-				(markupProvider = Activator.CreateInstance(compiledMarkupExtensionType) as ICompiledMarkupExtension) != null) {
+				(markupProvider = Activator.CreateInstance(compiledMarkupExtensionType) as ICompiledMarkupExtension) != null)
+			{
 
 				Context.Values[node] = markupProvider.ProvideValue(node, Module);
 
@@ -107,18 +109,20 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			MethodDefinition parameterizedCtorInfo = null;
 			MethodDefinition ctorInfo = null;
 
-			if (node.Properties.ContainsKey(XmlName.xArguments) && !node.Properties.ContainsKey(XmlName.xFactoryMethod)) {
+			if (node.Properties.ContainsKey(XmlName.xArguments) && !node.Properties.ContainsKey(XmlName.xFactoryMethod))
+			{
 				factoryCtorInfo = typedef.AllMethods().FirstOrDefault(md => md.IsConstructor &&
 																			!md.IsStatic &&
 																			md.HasParameters &&
 																			md.MatchXArguments(node, typeref, Module, Context));
-				if (factoryCtorInfo == null) {
+				if (factoryCtorInfo == null)
+				{
 					throw new XamlParseException(
 						string.Format("No constructors found for {0} with matching x:Arguments", typedef.FullName), node);
 				}
 				ctorInfo = factoryCtorInfo;
 				if (!typedef.IsValueType) //for ctor'ing typedefs, we first have to ldloca before the params
-                {
+				{
 					VariableDefinition vardef = new VariableDefinition(typeref);
 					Context.Variables[node] = vardef;
 
@@ -129,11 +133,11 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			}
 			else if (node.Properties.ContainsKey(XmlName.xFactoryMethod))
 			{
-				var factoryMethod = (string)(node.Properties [XmlName.xFactoryMethod] as ValueNode).Value;
-                factoryMethodInfo = typedef.AllMethods().FirstOrDefault(md => !md.IsConstructor &&
-                                                                              md.Name == factoryMethod &&
-                                                                              md.IsStatic &&
-                                                                              md.MatchXArguments(node, typeref, Module, Context));
+				var factoryMethod = (string)(node.Properties[XmlName.xFactoryMethod] as ValueNode).Value;
+				factoryMethodInfo = typedef.AllMethods().FirstOrDefault(md => !md.IsConstructor &&
+																			  md.Name == factoryMethod &&
+																			  md.IsStatic &&
+																			  md.MatchXArguments(node, typeref, Module, Context));
 
 				if (factoryMethodInfo == null)
 				{
@@ -149,11 +153,11 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 					}
 				}
 
-                if (factoryMethodInfo == null)
-                {
-                    throw new XamlParseException(
-                        String.Format("No static method found for {0}::{1} ({2})", typedef.FullName, factoryMethod, null), node);
-                }
+				if (factoryMethodInfo == null)
+				{
+					throw new XamlParseException(
+						String.Format("No static method found for {0}::{1} ({2})", typedef.FullName, factoryMethod, null), node);
+				}
 
 				VariableDefinition vardef = new VariableDefinition(typeref);
 				Context.Variables[node] = vardef;
@@ -173,18 +177,18 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 																					 pd.CustomAttributes.Any(
 																						 ca =>
 																							 ca.AttributeType.FullName ==
-                                                                                             "Tizen.NUI.Binding.ParameterAttribute")));
+																							 "Tizen.NUI.Binding.ParameterAttribute")));
 			}
 			string missingCtorParameter = null;
 			if (parameterizedCtorInfo != null && ValidateCtorArguments(parameterizedCtorInfo, node, out missingCtorParameter))
 			{
 				ctorInfo = parameterizedCtorInfo;
 				//Fang
-//				IL_0000:  ldstr "foo"
+				//				IL_0000:  ldstr "foo"
 				//Context.IL.Append(PushCtorArguments(parameterizedCtorInfo, node));
 			}
 
-            ctorInfo = ctorInfo ?? typedef.Methods.FirstOrDefault(md => md.IsConstructor && !md.HasParameters && !md.IsStatic);
+			ctorInfo = ctorInfo ?? typedef.Methods.FirstOrDefault(md => md.IsConstructor && !md.HasParameters && !md.IsStatic);
 
 			if (null == ctorInfo)
 			{
@@ -206,11 +210,11 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 						if (areAllParamsDefault)
 						{
 							if (null == ctorInfo)
-                            {
+							{
 								ctorInfo = method;
 							}
 							else
-                            {
+							{
 								throw new XamlParseException($"{typedef.FullName} has more than one constructor which params are all default.", node);
 							}
 						}
@@ -228,16 +232,17 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 				throw new XamlParseException($"The Property '{missingCtorParameter}' is required to create a '{typedef.FullName}' object.", node);
 			var ctorinforef = ctorInfo?.ResolveGenericParameters(typeref, Module);
 
-            var factorymethodinforef = factoryMethodInfo?.ResolveGenericParameters(typeref, Module);
+			var factorymethodinforef = factoryMethodInfo?.ResolveGenericParameters(typeref, Module);
 			var implicitOperatorref = typedef.Methods.FirstOrDefault(md =>
 				md.IsPublic &&
 				md.IsStatic &&
 				md.IsSpecialName &&
-				md.Name == "op_Implicit" && md.Parameters [0].ParameterType.FullName == "System.String");
+				md.Name == "op_Implicit" && md.Parameters[0].ParameterType.FullName == "System.String");
 
-			if (ctorinforef != null || factorymethodinforef != null || typedef.IsValueType) {
+			if (ctorinforef != null || factorymethodinforef != null || typedef.IsValueType)
+			{
 				VariableDefinition vardef = new VariableDefinition(typeref);
-				Context.Variables [node] = vardef;
+				Context.Variables[node] = vardef;
 
 				ValueNode vnode = null;
 				if (node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null &&
@@ -250,12 +255,12 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 				{
 					var converterType = vnode.GetConverterType(new ICustomAttributeProvider[] { typeref.ResolveCached() });
 					if (null == converterType)
-                    {
+					{
 						var realValue = vnode.GetBaseValue(typeref);
 						Context.Values[node] = new EXamlCreateObject(realValue, typeref);
 					}
 					else
-                    {
+					{
 						var converterValue = new EXamlValueConverterFromString(converterType.Resolve(), vnode.Value as string);
 						Context.Values[node] = new EXamlCreateObject(converterValue, typeref);
 					}
@@ -287,7 +292,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 							var valueNode = node.CollectionItems.First() as ValueNode;
 
 							if (valueNode.CanConvertValue(Context.Module, typeref, (TypeReference)null))
-                            {
+							{
 								var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { typeref.Resolve() });
 								if (null != converterType)
 								{
@@ -310,11 +315,11 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 								Context.Values[node] = new EXamlCreateObject(null, typeref);
 							}
 							else
-                            {
+							{
 								object[] @params = new object[ctorInfo.Parameters.Count];
 
 								for (int i = 0; i < ctorInfo.Parameters.Count; i++)
-                                {
+								{
 									@params[i] = ctorInfo.Parameters[i].Constant;
 
 								}
@@ -323,13 +328,13 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 							}
 						}
 					}
-                }
+				}
 				else if (ctorInfo != null && node.Properties.ContainsKey(XmlName.xArguments) &&
 						 !node.Properties.ContainsKey(XmlName.xFactoryMethod) && ctorInfo.MatchXArguments(node, typeref, Module, Context))
 				{
-//					IL_0008:  ldloca.s 1
-//					IL_000a:  ldc.i4.1 
-//					IL_000b:  call instance void valuetype Test/Foo::'.ctor'(bool)
+					//					IL_0008:  ldloca.s 1
+					//					IL_000a:  ldc.i4.1 
+					//					IL_000b:  call instance void valuetype Test/Foo::'.ctor'(bool)
 
 					//Fang
 					//var ctor = Module.ImportReference(ctorinforef);
@@ -339,14 +344,14 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 				}
 				else
 				{
-//					IL_0000:  ldloca.s 0
-//					IL_0002:  initobj Test/Foo
+					//					IL_0000:  ldloca.s 0
+					//					IL_0002:  initobj Test/Foo
 					//Fang
 					//Context.IL.Emit(OpCodes.Ldloca, vardef);
 					//Context.IL.Emit(OpCodes.Initobj, Module.ImportReference(typedef));
 				}
 
-                if (typeref.FullName == "Tizen.NUI.Xaml.ArrayExtension")
+				if (typeref.FullName == "Tizen.NUI.Xaml.ArrayExtension")
 				{
 					//Fang
 					//var visitor = new SetPropertiesVisitor(Context);
@@ -377,10 +382,10 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 			}
 		}
 
-        public void Visit(RootNode node, INode parentNode)
+		public void Visit(RootNode node, INode parentNode)
 		{
-//			IL_0013:  ldarg.0 
-//			IL_0014:  stloc.3 
+			//			IL_0013:  ldarg.0 
+			//			IL_0014:  stloc.3 
 
 			var ilnode = (ILRootNode)node;
 			var typeref = ilnode.TypeReference;
@@ -408,7 +413,8 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 					parameter.CustomAttributes.First(ca => ca.AttributeType.FullName == "Tizen.NUI.Binding.ParameterAttribute")
 						.ConstructorArguments.First()
 						.Value as string;
-				if (!enode.Properties.ContainsKey(new XmlName("", propname))) {
+				if (!enode.Properties.ContainsKey(new XmlName("", propname)))
+				{
 					firstMissingProperty = propname;
 					return false;
 				}
@@ -455,8 +461,9 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
 		static bool IsXaml2009LanguagePrimitive(IElementNode node)
 		{
-			if (node.NamespaceURI == XamlParser.X2009Uri) {
-				var n = node.XmlType.Name.Split(':') [1];
+			if (node.NamespaceURI == XamlParser.X2009Uri)
+			{
+				var n = node.XmlType.Name.Split(':')[1];
 				return n != "Array";
 			}
 			if (node.NamespaceURI != "clr-namespace:System;assembly=mscorlib")
@@ -486,132 +493,136 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 		{
 			var module = Context.Module;
 			var hasValue = node.CollectionItems.Count == 1 && node.CollectionItems[0] is ValueNode &&
-			               ((ValueNode)node.CollectionItems[0]).Value is string;
+						   ((ValueNode)node.CollectionItems[0]).Value is string;
 			var valueString = hasValue ? ((ValueNode)node.CollectionItems[0]).Value as string : string.Empty;
 			object ret = null;
 
 			switch (typedef.FullName)
 			{
-			case "System.SByte":
-				if (hasValue && sbyte.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out sbyte outsbyte))
-					ret = outsbyte;
-				else
-					ret = 0;
+				case "System.SByte":
+					if (hasValue && sbyte.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out sbyte outsbyte))
+						ret = outsbyte;
+					else
+						ret = 0;
 					break;
-			case "System.Int16":
-				if (hasValue && short.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out short outshort))
-					ret = outshort;
-				else
-					ret = 0;
-				break;
-			case "System.Int32":
-				if (hasValue && int.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out int outint))
-					ret = outint;
-				else
-					ret = 0;
-				break;
-			case "System.Int64":
-				if (hasValue && long.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out long outlong))
-					ret = outlong;
-				else
-					ret = 0;
-				break;
-			case "System.Byte":
-				if (hasValue && byte.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out byte outbyte))
-					ret = outbyte;
-				else
-					ret = 0;
-				break;
-			case "System.UInt16":
-				if (hasValue && short.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out short outushort))
-					ret = outushort;
-				else
-					ret = 0;
-				break;
-			case "System.UInt32":
-				if (hasValue && uint.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out uint outuint))
-					ret = outuint;
-				else
-					ret = 0;
-				break;
-			case "System.UInt64":
-				if (hasValue && long.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out long outulong))
-					ret = outulong;
-				else
-					ret = 0;
-				break;
-			case "System.Boolean":
-				if (hasValue && bool.TryParse(valueString, out bool outbool))
-					ret = true;
-				else
-					ret = false;
-				break;
-			case "System.String":
-				ret = valueString;
-				break;
-			case "System.Object":
-				var ctorinfo =
-					module.TypeSystem.Object.ResolveCached()
-						.Methods.FirstOrDefault(md => md.IsConstructor && !md.HasParameters);
-				var ctor = module.ImportReference(ctorinfo);
-				ret = Create(Newobj, ctor);
-				break;
-			case "System.Char":
-				if (hasValue && char.TryParse(valueString, out char outchar))
-					ret = outchar;
-				else
-					ret = (char)0;
-				break;
-			case "System.Decimal":
-				decimal outdecimal;
-				if (hasValue && decimal.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out outdecimal)) {
-					ret = outdecimal;
-				}
-				else
-				{
-					ret = (decimal)0;
-				}
-				break;
-			case "System.Single":
-				if (hasValue && float.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out float outfloat))
-					ret = outfloat;
-				else
-					ret = 0f;
-				break;
-			case "System.Double":
-				if (hasValue && double.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out double outdouble))
-					ret = outdouble;
-				else
-					ret = 0d;
-				break;
-			case "System.TimeSpan":
-				if (hasValue && TimeSpan.TryParse(valueString, CultureInfo.InvariantCulture, out TimeSpan outspan)) {
-					
-					ret = outspan;
-				}
-				else
-				{
-					ret = null;
-				}
-				break;
-			case "System.Uri":
-				if (hasValue && Uri.TryCreate(valueString, UriKind.RelativeOrAbsolute, out Uri outuri)) {
-					ret = outuri;
-				}
-				else
-				{
-					ret = null;
-				};
-				break;
-			default:
-				var defaultCtor = module.ImportCtorReference(typedef, parameterTypes: null);
-				if (defaultCtor != null)
-					ret = Create(Newobj, defaultCtor);
-				else {
-					//should never happen. but if it does, this prevents corrupting the IL stack
-					ret = null;
-				}
-				break;
+				case "System.Int16":
+					if (hasValue && short.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out short outshort))
+						ret = outshort;
+					else
+						ret = 0;
+					break;
+				case "System.Int32":
+					if (hasValue && int.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out int outint))
+						ret = outint;
+					else
+						ret = 0;
+					break;
+				case "System.Int64":
+					if (hasValue && long.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out long outlong))
+						ret = outlong;
+					else
+						ret = 0;
+					break;
+				case "System.Byte":
+					if (hasValue && byte.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out byte outbyte))
+						ret = outbyte;
+					else
+						ret = 0;
+					break;
+				case "System.UInt16":
+					if (hasValue && short.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out short outushort))
+						ret = outushort;
+					else
+						ret = 0;
+					break;
+				case "System.UInt32":
+					if (hasValue && uint.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out uint outuint))
+						ret = outuint;
+					else
+						ret = 0;
+					break;
+				case "System.UInt64":
+					if (hasValue && long.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out long outulong))
+						ret = outulong;
+					else
+						ret = 0;
+					break;
+				case "System.Boolean":
+					if (hasValue && bool.TryParse(valueString, out bool outbool))
+						ret = true;
+					else
+						ret = false;
+					break;
+				case "System.String":
+					ret = valueString;
+					break;
+				case "System.Object":
+					var ctorinfo =
+						module.TypeSystem.Object.ResolveCached()
+							.Methods.FirstOrDefault(md => md.IsConstructor && !md.HasParameters);
+					var ctor = module.ImportReference(ctorinfo);
+					ret = Create(Newobj, ctor);
+					break;
+				case "System.Char":
+					if (hasValue && char.TryParse(valueString, out char outchar))
+						ret = outchar;
+					else
+						ret = (char)0;
+					break;
+				case "System.Decimal":
+					decimal outdecimal;
+					if (hasValue && decimal.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out outdecimal))
+					{
+						ret = outdecimal;
+					}
+					else
+					{
+						ret = (decimal)0;
+					}
+					break;
+				case "System.Single":
+					if (hasValue && float.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out float outfloat))
+						ret = outfloat;
+					else
+						ret = 0f;
+					break;
+				case "System.Double":
+					if (hasValue && double.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out double outdouble))
+						ret = outdouble;
+					else
+						ret = 0d;
+					break;
+				case "System.TimeSpan":
+					if (hasValue && TimeSpan.TryParse(valueString, CultureInfo.InvariantCulture, out TimeSpan outspan))
+					{
+
+						ret = outspan;
+					}
+					else
+					{
+						ret = null;
+					}
+					break;
+				case "System.Uri":
+					if (hasValue && Uri.TryCreate(valueString, UriKind.RelativeOrAbsolute, out Uri outuri))
+					{
+						ret = outuri;
+					}
+					else
+					{
+						ret = null;
+					};
+					break;
+				default:
+					var defaultCtor = module.ImportCtorReference(typedef, parameterTypes: null);
+					if (defaultCtor != null)
+						ret = Create(Newobj, defaultCtor);
+					else
+					{
+						//should never happen. but if it does, this prevents corrupting the IL stack
+						ret = null;
+					}
+					break;
 			}
 
 			return ret;
