@@ -5,18 +5,18 @@ using System.Text;
 
 namespace Tizen.NUI.Xaml.Build.Tasks
 {
-	class VariableDefinitionReference
-	{
-		public VariableDefinitionReference(VariableDefinition vardef)
-		{
-			VariableDefinition = vardef;
-		}
+    class VariableDefinitionReference
+    {
+        public VariableDefinitionReference(VariableDefinition vardef)
+        {
+            VariableDefinition = vardef;
+        }
 
-		public VariableDefinition VariableDefinition { get; set; }
+        public VariableDefinition VariableDefinition { get; set; }
 
-		public static implicit operator VariableDefinition(VariableDefinitionReference vardefref)
-		{
-			return vardefref.VariableDefinition;
-		}
-	}
+        public static implicit operator VariableDefinition(VariableDefinitionReference vardefref)
+        {
+            return vardefref.VariableDefinition;
+        }
+    }
 }

@@ -122,12 +122,12 @@ namespace Tizen.NUI.Xaml
                 if (split.Length == 2)
                 {
                     prefix = split[0];
-                    //					name = split [1];
+                    //name = split [1];
                 }
                 else
                 {
                     prefix = "";
-                    //					name = split [0];
+                    //name = split [0];
                 }
 
                 Type type;

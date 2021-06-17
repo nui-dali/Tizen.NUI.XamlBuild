@@ -317,8 +317,8 @@ namespace Tizen.NUI.Xaml
         {
             //this could be extended to look for [XmlnsDefinition] in all assemblies
             // var assemblies = new [] {
-            // 	typeof(View).GetTypeInfo().Assembly,
-            // 	//typeof(XamlLoader).GetTypeInfo().Assembly,
+            //     typeof(View).GetTypeInfo().Assembly,
+            //     typeof(XamlLoader).GetTypeInfo().Assembly,
             // };
             // s_assemblies = new Assembly[]{typeof(View).GetTypeInfo().Assembly};
             s_assemblies.Add(typeof(Element).GetTypeInfo().Assembly);

@@ -12,8 +12,8 @@ namespace Tizen.NUI.Binding
             // var listView = container as ListView;
 
             // var recycle = listView == null ? false :
-            // 	(listView.CachingStrategy & ListViewCachingStrategy.RecycleElementAndDataTemplate) ==
-            // 		ListViewCachingStrategy.RecycleElementAndDataTemplate;
+            //     (listView.CachingStrategy & ListViewCachingStrategy.RecycleElementAndDataTemplate) ==
+            //         ListViewCachingStrategy.RecycleElementAndDataTemplate;
 
             DataTemplate dataTemplate = null;
             // if (recycle && _dataTemplates.TryGetValue(item.GetType(), out dataTemplate))
@@ -26,11 +26,11 @@ namespace Tizen.NUI.Binding
 
             // if (recycle)
             // {
-            // 	if (!dataTemplate.CanRecycle)
-            // 		throw new NotSupportedException(
-            // 			"RecycleElementAndDataTemplate requires DataTemplate activated with ctor taking a type.");
+            //     if (!dataTemplate.CanRecycle)
+            //         throw new NotSupportedException(
+            //             "RecycleElementAndDataTemplate requires DataTemplate activated with ctor taking a type.");
 
-            // 	_dataTemplates[item.GetType()] = dataTemplate;
+            //     _dataTemplates[item.GetType()] = dataTemplate;
             // }
 
             return dataTemplate;

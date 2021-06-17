@@ -184,8 +184,8 @@ namespace Tizen.NUI.Binding.Internals
         }
 
         // ApplyCore is as slim as it should be:
-        // Setting  100000 values						: 17ms.
-        // ApplyCore  100000 (w/o INPC, w/o unnapply)	: 20ms.
+        // Setting  100000 values                        : 17ms.
+        // ApplyCore  100000 (w/o INPC, w/o unnapply)    : 20ms.
         internal void ApplyCore(object sourceObject, BindableObject target, BindableProperty property, bool fromTarget = false)
         {
             var isTSource = sourceObject != null && sourceObject is TSource;

@@ -535,9 +535,9 @@ namespace Tizen.NUI.Binding
         internal virtual void OnParentResourcesChanged(object sender, ResourcesChangedEventArgs e)
         {
             // if (e == ResourcesChangedEventArgs.StyleSheets)
-            // 	// ApplyStyleSheetsOnParentSet();
+            //     // ApplyStyleSheetsOnParentSet();
             // else
-            // 	OnParentResourcesChanged(e.Values);
+            //     OnParentResourcesChanged(e.Values);
         }
 
         internal virtual void OnParentResourcesChanged(IEnumerable<KeyValuePair<string, object>> values)
@@ -616,20 +616,20 @@ namespace Tizen.NUI.Binding
         {
             // IFlowDirectionController controller = child as IFlowDirectionController;
             // if (controller == null)
-            // 	return;
+            //     return;
 
             // if (controller.EffectiveFlowDirection.IsImplicit())
             // {
-            // 	var parentView = child.Parent as IFlowDirectionController;
-            // 	if (parentView == null)
-            // 		return;
+            //     var parentView = child.Parent as IFlowDirectionController;
+            //     if (parentView == null)
+            //         return;
 
-            // 	var flowDirection = parentView.EffectiveFlowDirection.ToFlowDirection();
+            //     var flowDirection = parentView.EffectiveFlowDirection.ToFlowDirection();
 
-            // 	if (flowDirection != controller.EffectiveFlowDirection.ToFlowDirection())
-            // 	{
-            // 		controller.EffectiveFlowDirection = flowDirection.ToEffectiveFlowDirection();
-            // 	}
+            //     if (flowDirection != controller.EffectiveFlowDirection.ToFlowDirection())
+            //     {
+            //         controller.EffectiveFlowDirection = flowDirection.ToEffectiveFlowDirection();
+            //     }
             // }
         }
 

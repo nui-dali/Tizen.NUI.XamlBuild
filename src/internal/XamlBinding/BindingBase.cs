@@ -57,24 +57,24 @@ namespace Tizen.NUI.Binding
             }
         }
 
-		public object TargetNullValue
-		{
-			get { return _targetNullValue; }
-			set {
-				ThrowIfApplied();
-				_targetNullValue = value;
-			}
-		}
+        public object TargetNullValue
+        {
+            get { return _targetNullValue; }
+            set {
+                ThrowIfApplied();
+                _targetNullValue = value;
+            }
+        }
 
-		public object FallbackValue {
-			get => _fallbackValue;
-			set {
-				ThrowIfApplied();
-				_fallbackValue = value;
-			}
-		}
+        public object FallbackValue {
+            get => _fallbackValue;
+            set {
+                ThrowIfApplied();
+                _fallbackValue = value;
+            }
+        }
 
-		internal bool AllowChaining { get; set; }
+        internal bool AllowChaining { get; set; }
 
         internal object Context { get; set; }
 

@@ -142,7 +142,7 @@ namespace Tizen.NUI.Xaml
                 if (xpe == null && Context.Types[parentElement].GetRuntimeMethods().Any(mi => mi.Name == "Add" && mi.GetParameters().Length == 1))
                 {
                     //if there are similar parameters in the function, this will exist issue.
-                    var addMethod =	Context.Types[parentElement].GetRuntimeMethods().First(mi => mi.Name == "Add" && mi.GetParameters().Length == 1);
+                    var addMethod =    Context.Types[parentElement].GetRuntimeMethods().First(mi => mi.Name == "Add" && mi.GetParameters().Length == 1);
                     if(addMethod != null) addMethod.Invoke(source, new[] { value });
                     return;
                 }

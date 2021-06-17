@@ -111,7 +111,7 @@ namespace Tizen.NUI.StyleSheets
                 var selector = kvp.Key;
                 var style = kvp.Value;
                 // if (!selector.Matches(styleable))
-                // 	continue;
+                //     continue;
                 style.Apply(visualStylable);
             }
         }

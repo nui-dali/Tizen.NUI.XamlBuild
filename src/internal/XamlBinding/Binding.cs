@@ -100,8 +100,8 @@ namespace Tizen.NUI.Binding
             if (propertyGetter == null)
                 throw new ArgumentNullException("propertyGetter");
 
-			return new Binding(GetBindingPath(propertyGetter), mode, converter, converterParameter, stringFormat);
-		}
+            return new Binding(GetBindingPath(propertyGetter), mode, converter, converterParameter, stringFormat);
+        }
 
         internal override void Apply(bool fromTarget)
         {
@@ -244,7 +244,7 @@ namespace Tizen.NUI.Binding
 
                 builder.Insert(0, property.Name);
 
-                //				member = member.Expression as MemberExpression ?? (member.Expression as UnaryExpression)?.Operand as MemberExpression;
+                //member = member.Expression as MemberExpression ?? (member.Expression as UnaryExpression)?.Operand as MemberExpression;
                 member = member.Expression as MemberExpression ?? (member.Expression is UnaryExpression ? (member.Expression as UnaryExpression).Operand as MemberExpression : null);
             }
 

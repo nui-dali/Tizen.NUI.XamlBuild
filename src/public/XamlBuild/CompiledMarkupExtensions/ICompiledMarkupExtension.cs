@@ -6,10 +6,10 @@ using Tizen.NUI.Xaml;
 
 namespace Tizen.NUI.Xaml.Build.Tasks
 {
-	interface ICompiledMarkupExtension
-	{
-		IEnumerable<Instruction> ProvideValue(IElementNode node, ModuleDefinition module, ILContext context, out TypeReference typeRef);
+    interface ICompiledMarkupExtension
+    {
+        IEnumerable<Instruction> ProvideValue(IElementNode node, ModuleDefinition module, ILContext context, out TypeReference typeRef);
 
-		EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module);
-	}
+        EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module);
+    }
 }

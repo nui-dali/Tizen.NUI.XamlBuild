@@ -43,9 +43,9 @@ namespace Tizen.NUI.Binding
         internal virtual void OnParentResourcesChanged(object sender, ResourcesChangedEventArgs e)
         {
             // if (e == ResourcesChangedEventArgs.StyleSheets)
-            // 	// ApplyStyleSheetsOnParentSet();
+            //     ApplyStyleSheetsOnParentSet();
             // else
-            // 	OnParentResourcesChanged(e.Values);
+            //     OnParentResourcesChanged(e.Values);
         }
 
         internal IResourceDictionary SystemResources { get; }

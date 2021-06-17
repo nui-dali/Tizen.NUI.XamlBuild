@@ -260,10 +260,6 @@ namespace Tizen.NUI.EXaml
             {
                 var typeDef = property.Item1;
                 int typeIndex = GetTypeIndex(typeDef);
-                if (-1 == typeIndex)
-                {
-                    int temp = 0;
-                }
                 ret += String.Format("(\"{0}\" \"{1}\")\n", typeIndex, property.Item2.Name);
             }
             ret += ">\n";
@@ -273,10 +269,6 @@ namespace Tizen.NUI.EXaml
             {
                 var typeDef = eventDef.Item1;
                 int typeIndex = GetTypeIndex(typeDef);
-                if (-1 == typeIndex)
-                {
-                    int temp = 0;
-                }
                 ret += String.Format("(\"{0}\" \"{1}\")\n", typeIndex, eventDef.Item2.Name);
             }
             ret += ">\n";
@@ -286,10 +278,6 @@ namespace Tizen.NUI.EXaml
             {
                 var typeDef = method.Item1;
                 int typeIndex = GetTypeIndex(typeDef);
-                if (-1 == typeIndex)
-                {
-                    int temp = 0;
-                }
 
                 string strForParam = "(";
                 foreach (var param in method.Item2.Parameters)
@@ -307,10 +295,6 @@ namespace Tizen.NUI.EXaml
             {
                 var typeDef = property.DeclaringType;
                 int typeIndex = GetTypeIndex(typeDef);
-                if (-1 == typeIndex)
-                {
-                    int temp = 0;
-                }
                 ret += String.Format("(\"{0}\" \"{1}\")\n", typeIndex, property.Name);
             }
             ret += ">\n";

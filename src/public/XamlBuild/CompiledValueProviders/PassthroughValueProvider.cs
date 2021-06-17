@@ -8,11 +8,11 @@ using Tizen.NUI.Xaml.Build.Tasks;
 
 namespace Tizen.NUI.Xaml.Core.XamlC
 {
-	class PassthroughValueProvider : ICompiledValueProvider
-	{
-		public IEnumerable<Instruction> ProvideValue(VariableDefinitionReference vardefref, ModuleDefinition module, BaseNode node, ILContext context)
-		{
-			yield break;
-		}
-	}
+    class PassthroughValueProvider : ICompiledValueProvider
+    {
+        public IEnumerable<Instruction> ProvideValue(VariableDefinitionReference vardefref, ModuleDefinition module, BaseNode node, ILContext context)
+        {
+            yield break;
+        }
+    }
 }

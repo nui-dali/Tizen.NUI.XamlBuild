@@ -96,9 +96,9 @@ namespace Tizen.NUI.Binding
 
                         // var presenter = child as ContentPresenter;
                         // if (presenter != null)
-                        // 	presenter.Clear();
+                        //     presenter.Clear();
                         // else if (controlTemplated == null || controlTemplated.ControlTemplate == null)
-                        // 	queue.Enqueue(child);
+                        //     queue.Enqueue(child);
                     }
                 }
             }
