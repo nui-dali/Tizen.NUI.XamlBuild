@@ -206,14 +206,19 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
                 if (null == ctorInfo)
                 {
-                    throw new XamlParseException($"{typedef.FullName} has no constructor which params are all default.", node);
+                    if (!typedef.IsValueType)
+                    {
+                        throw new XamlParseException($"{typedef.FullName} has no constructor which params are all default.", node);
+                    }
                 }
-
-                factoryCtorInfo = ctorInfo;
-
-                if (!typedef.IsValueType) //for ctor'ing typedefs, we first have to ldloca before the params
+                else
                 {
-                    Context.IL.Append(PushCtorDefaultArguments(factoryCtorInfo, node));
+                    factoryCtorInfo = ctorInfo;
+
+                    if (!typedef.IsValueType) //for ctor'ing typedefs, we first have to ldloca before the params
+                    {
+                        Context.IL.Append(PushCtorDefaultArguments(factoryCtorInfo, node));
+                    }
                 }
             }
 

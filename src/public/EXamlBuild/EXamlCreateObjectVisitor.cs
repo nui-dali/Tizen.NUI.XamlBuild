@@ -221,7 +221,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                     }
                 }
 
-                if (null == ctorInfo)
+                if (null == ctorInfo && !typedef.IsValueType)
                 {
                     throw new XamlParseException($"{typedef.FullName} has no constructor which params are all default.", node);
                 }
