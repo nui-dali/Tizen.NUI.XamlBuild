@@ -34,7 +34,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 		{
 			var parentVar = Context.Variables[(IElementNode)node];
 			return parentVar.VariableType.FullName == "Tizen.NUI.Binding.ResourceDictionary"
-                || parentVar.VariableType.Resolve().BaseType?.FullName == "Tizen.NUI.Binding.ResourceDictionary";
+				|| parentVar.VariableType.Resolve().BaseType?.FullName == "Tizen.NUI.Binding.ResourceDictionary";
 		}
 
 		public void Visit(ValueNode node, INode parentNode)
@@ -47,14 +47,15 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			//At this point, all MarkupNodes are expanded to ElementNodes
 		}
 
-        public void Visit(ElementNode node, INode parentNode)
+		public void Visit(ElementNode node, INode parentNode)
 		{
 			var typeref = Module.ImportReference(node.XmlType.GetTypeReference(Module, node));
 			TypeDefinition typedef = typeref.ResolveCached();
 
-			if (IsXaml2009LanguagePrimitive(node)) {
+			if (IsXaml2009LanguagePrimitive(node))
+			{
 				var vardef = new VariableDefinition(typeref);
-				Context.Variables [node] = vardef;
+				Context.Variables[node] = vardef;
 				Context.Body.Variables.Add(vardef);
 
 				Context.IL.Append(PushValueFromLanguagePrimitive(typedef, node));
@@ -62,15 +63,16 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				return;
 			}
 
-            //if this is a MarkupExtension that can be compiled directly, compile and returns the value
-            var compiledMarkupExtensionName = typeref
+			//if this is a MarkupExtension that can be compiled directly, compile and returns the value
+			var compiledMarkupExtensionName = typeref
 				.GetCustomAttribute(Module, (XamlCTask.xamlAssemblyName, XamlCTask.xamlNameSpace, "ProvideCompiledAttribute"))
 				?.ConstructorArguments?[0].Value as string;
 			Type compiledMarkupExtensionType;
 			ICompiledMarkupExtension markupProvider;
 			if (compiledMarkupExtensionName != null &&
 				(compiledMarkupExtensionType = Type.GetType(compiledMarkupExtensionName)) != null &&
-				(markupProvider = Activator.CreateInstance(compiledMarkupExtensionType) as ICompiledMarkupExtension) != null) {
+				(markupProvider = Activator.CreateInstance(compiledMarkupExtensionType) as ICompiledMarkupExtension) != null)
+			{
 
 				var il = markupProvider.ProvideValue(node, Module, Context, out typeref);
 				typeref = Module.ImportReference(typeref);
@@ -96,20 +98,24 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			MethodDefinition parameterizedCtorInfo = null;
 			MethodDefinition ctorInfo = null;
 
-			if (node.Properties.ContainsKey(XmlName.xArguments) && !node.Properties.ContainsKey(XmlName.xFactoryMethod)) {
+			if (node.Properties.ContainsKey(XmlName.xArguments) && !node.Properties.ContainsKey(XmlName.xFactoryMethod))
+			{
 				factoryCtorInfo = typedef.AllMethods().FirstOrDefault(md => md.IsConstructor &&
 																			!md.IsStatic &&
 																			md.HasParameters &&
 																			md.MatchXArguments(node, typeref, Module, Context));
-				if (factoryCtorInfo == null) {
+				if (factoryCtorInfo == null)
+				{
 					throw new XamlParseException(
 						string.Format("No constructors found for {0} with matching x:Arguments", typedef.FullName), node);
 				}
 				ctorInfo = factoryCtorInfo;
 				if (!typedef.IsValueType) //for ctor'ing typedefs, we first have to ldloca before the params
 					Context.IL.Append(PushCtorXArguments(factoryCtorInfo, node));
-			} else if (node.Properties.ContainsKey(XmlName.xFactoryMethod)) {
-				var factoryMethod = (string)(node.Properties [XmlName.xFactoryMethod] as ValueNode).Value;
+			}
+			else if (node.Properties.ContainsKey(XmlName.xFactoryMethod))
+			{
+				var factoryMethod = (string)(node.Properties[XmlName.xFactoryMethod] as ValueNode).Value;
 				factoryMethodInfo = typedef.AllMethods().FirstOrDefault(md => !md.IsConstructor &&
 																			  md.Name == factoryMethod &&
 																			  md.IsStatic &&
@@ -120,31 +126,33 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 					typeExtensionRef = typeExtensionRef?.ResolveCached();
 
 					if (null != typeExtensionRef?.Resolve())
-                    {
+					{
 						factoryMethodInfo = typeExtensionRef.Resolve().AllMethods().FirstOrDefault(md => !md.IsConstructor &&
 																			  md.Name == factoryMethod &&
 																			  md.IsStatic &&
 																			  md.MatchXArguments(node, typeref, Module, Context));
 
 						if (null != factoryMethod)
-                        {
+						{
 							ownerTypeOfFactoryMethod = typeExtensionRef.ResolveCached();
 						}
 					}
 				}
 				else
-                {
+				{
 					ownerTypeOfFactoryMethod = typedef;
 
 				}
 
-				if (factoryMethodInfo == null) {
+				if (factoryMethodInfo == null)
+				{
 					throw new XamlParseException(
 						String.Format("No static method found for {0}::{1} ({2})", typedef.FullName, factoryMethod, null), node);
 				}
 				Context.IL.Append(PushCtorXArguments(factoryMethodInfo, node));
 			}
-			if (ctorInfo == null && factoryMethodInfo == null) {
+			if (ctorInfo == null && factoryMethodInfo == null)
+			{
 				parameterizedCtorInfo = typedef.Methods.FirstOrDefault(md => md.IsConstructor &&
 																			 !md.IsStatic &&
 																			 md.HasParameters &&
@@ -153,117 +161,143 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 																					 pd.CustomAttributes.Any(
 																						 ca =>
 																							 ca.AttributeType.FullName ==
-                                                                                             "Tizen.NUI.Binding.ParameterAttribute")));
+																							 "Tizen.NUI.Binding.ParameterAttribute")));
 			}
 			string missingCtorParameter = null;
-			if (parameterizedCtorInfo != null && ValidateCtorArguments(parameterizedCtorInfo, node, out missingCtorParameter)) {
+			if (parameterizedCtorInfo != null && ValidateCtorArguments(parameterizedCtorInfo, node, out missingCtorParameter))
+			{
 				ctorInfo = parameterizedCtorInfo;
-//				IL_0000:  ldstr "foo"
+				//				IL_0000:  ldstr "foo"
 				Context.IL.Append(PushCtorArguments(parameterizedCtorInfo, node));
 			}
 
-            ctorInfo = ctorInfo ?? typedef.Methods.FirstOrDefault(md => md.IsConstructor && !md.HasParameters && !md.IsStatic);
+			ctorInfo = ctorInfo ?? typedef.Methods.FirstOrDefault(md => md.IsConstructor && !md.HasParameters && !md.IsStatic);
 
-            if (null == ctorInfo)
-            {
-                ctorInfo = typedef.Methods.FirstOrDefault(md => md.IsConstructor && !md.IsStatic);
-                if (null != ctorInfo)
-                {
-                    bool areAllParamsDefault = true;
+			if (null == ctorInfo)
+			{
+				foreach (var method in typedef.Methods)
+				{
+					if (method.IsConstructor && !method.IsStatic)
+					{
+						bool areAllParamsDefault = true;
 
-                    foreach (ParameterDefinition parameter in ctorInfo.Parameters)
-                    {
-                        if (false == parameter.HasDefault)
-                        {
-                            areAllParamsDefault = false;
-                            break;
-                        }
-                    }
+						foreach (var param in method.Parameters)
+						{
+							if (!param.HasDefault)
+							{
+								areAllParamsDefault = false;
+								break;
+							}
+						}
 
-                    if (false == areAllParamsDefault)
-                    {
-                        ctorInfo = null;
-                    }
-                    else
-                    {
-                        factoryCtorInfo = ctorInfo;
+						if (areAllParamsDefault)
+						{
+							if (null == ctorInfo)
+							{
+								ctorInfo = method;
+							}
+							else
+							{
+								throw new XamlParseException($"{typedef.FullName} has more than one constructor which params are all default.", node);
+							}
+						}
+					}
+				}
 
-                        if (!typedef.IsValueType) //for ctor'ing typedefs, we first have to ldloca before the params
-                        {
-                            Context.IL.Append(PushCtorDefaultArguments(factoryCtorInfo, node));
-                        }
-                    }
-                }
-            }
+				if (null == ctorInfo)
+				{
+					throw new XamlParseException($"{typedef.FullName} has no constructor which params are all default.", node);
+				}
+
+				factoryCtorInfo = ctorInfo;
+
+				if (!typedef.IsValueType) //for ctor'ing typedefs, we first have to ldloca before the params
+				{
+					Context.IL.Append(PushCtorDefaultArguments(factoryCtorInfo, node));
+				}
+			}
 
 			if (parameterizedCtorInfo != null && ctorInfo == null)
 				//there was a parameterized ctor, we didn't use it
 				throw new XamlParseException($"The Property '{missingCtorParameter}' is required to create a '{typedef.FullName}' object.", node);
 			var ctorinforef = ctorInfo?.ResolveGenericParameters(typeref, Module);
 
-            var factorymethodinforef = factoryMethodInfo?.ResolveGenericParameters(ownerTypeOfFactoryMethod, Module);
+			var factorymethodinforef = factoryMethodInfo?.ResolveGenericParameters(ownerTypeOfFactoryMethod, Module);
 			var implicitOperatorref = typedef.Methods.FirstOrDefault(md =>
 				md.IsPublic &&
 				md.IsStatic &&
 				md.IsSpecialName &&
-				md.Name == "op_Implicit" && md.Parameters [0].ParameterType.FullName == "System.String");
+				md.Name == "op_Implicit" && md.Parameters[0].ParameterType.FullName == "System.String");
 
-			if (ctorinforef != null || factorymethodinforef != null || typedef.IsValueType) {
+			if (ctorinforef != null || factorymethodinforef != null || typedef.IsValueType)
+			{
 				VariableDefinition vardef = new VariableDefinition(typeref);
-				Context.Variables [node] = vardef;
+				Context.Variables[node] = vardef;
 				Context.Body.Variables.Add(vardef);
 
 				ValueNode vnode = null;
 				if (node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null &&
-					vardef.VariableType.IsValueType) {
+					vardef.VariableType.IsValueType)
+				{
 					//<Color>Purple</Color>
-					Context.IL.Append(vnode.PushConvertedValue(Context, typeref, new ICustomAttributeProvider [] { typedef },
+					Context.IL.Append(vnode.PushConvertedValue(Context, typeref, new ICustomAttributeProvider[] { typedef },
 						node.PushServiceProvider(Context), false, true));
 					Context.IL.Emit(OpCodes.Stloc, vardef);
-				} else if (node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null &&
-						   implicitOperatorref != null) {
+				}
+				else if (node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null &&
+						 implicitOperatorref != null)
+				{
 					//<FileImageSource>path.png</FileImageSource>
 					var implicitOperator = Module.ImportReference(implicitOperatorref);
 					Context.IL.Emit(OpCodes.Ldstr, ((ValueNode)(node.CollectionItems.First())).Value as string);
 					Context.IL.Emit(OpCodes.Call, implicitOperator);
 					Context.IL.Emit(OpCodes.Stloc, vardef);
-				} else if (factorymethodinforef != null) {
+				}
+				else if (factorymethodinforef != null)
+				{
 					Context.IL.Emit(OpCodes.Call, Module.ImportReference(factorymethodinforef));
 					Context.IL.Emit(OpCodes.Stloc, vardef);
-				} else if (!typedef.IsValueType) {
+				}
+				else if (!typedef.IsValueType)
+				{
 					var ctor = Module.ImportReference(ctorinforef);
-//					IL_0001:  newobj instance void class [Tizen.NUI.Xaml.UIComponents]Tizen.NUI.Xaml.UIComponents.Button::'.ctor'()
-//					IL_0006:  stloc.0 
+					//					IL_0001:  newobj instance void class [Tizen.NUI.Xaml.UIComponents]Tizen.NUI.Xaml.UIComponents.Button::'.ctor'()
+					//					IL_0006:  stloc.0 
 					Context.IL.Emit(OpCodes.Newobj, ctor);
 					Context.IL.Emit(OpCodes.Stloc, vardef);
-                } else if (ctorInfo != null && node.Properties.ContainsKey(XmlName.xArguments) &&
-						   !node.Properties.ContainsKey(XmlName.xFactoryMethod) && ctorInfo.MatchXArguments(node, typeref, Module, Context)) {
-//					IL_0008:  ldloca.s 1
-//					IL_000a:  ldc.i4.1 
-//					IL_000b:  call instance void valuetype Test/Foo::'.ctor'(bool)
+				}
+				else if (ctorInfo != null && node.Properties.ContainsKey(XmlName.xArguments) &&
+						 !node.Properties.ContainsKey(XmlName.xFactoryMethod) && ctorInfo.MatchXArguments(node, typeref, Module, Context))
+				{
+					//					IL_0008:  ldloca.s 1
+					//					IL_000a:  ldc.i4.1 
+					//					IL_000b:  call instance void valuetype Test/Foo::'.ctor'(bool)
 
 					var ctor = Module.ImportReference(ctorinforef);
 					Context.IL.Emit(OpCodes.Ldloca, vardef);
 					Context.IL.Append(PushCtorXArguments(factoryCtorInfo, node));
 					Context.IL.Emit(OpCodes.Call, ctor);
-				} else {
-//					IL_0000:  ldloca.s 0
-//					IL_0002:  initobj Test/Foo
+				}
+				else
+				{
+					//					IL_0000:  ldloca.s 0
+					//					IL_0002:  initobj Test/Foo
 					Context.IL.Emit(OpCodes.Ldloca, vardef);
 					Context.IL.Emit(OpCodes.Initobj, Module.ImportReference(typedef));
 				}
 
-                if (null != XamlCTask.BaseTypeDefiniation && typedef.InheritsFromOrImplements(XamlCTask.BaseTypeDefiniation))
-                {
-                    var field = XamlCTask.BaseTypeDefiniation.Properties.SingleOrDefault(fd => fd.Name == "IsCreateByXaml");
-                    if (field == null)
-                        return;
+				if (null != XamlCTask.BaseTypeDefiniation && typedef.InheritsFromOrImplements(XamlCTask.BaseTypeDefiniation))
+				{
+					var field = XamlCTask.BaseTypeDefiniation.Properties.SingleOrDefault(fd => fd.Name == "IsCreateByXaml");
+					if (field == null)
+						return;
 
-                    ValueNode value = new ValueNode("true", node.NamespaceResolver);
-                    Set(Context.Variables[node], "IsCreateByXaml", value, null);
-                }
+					ValueNode value = new ValueNode("true", node.NamespaceResolver);
+					Set(Context.Variables[node], "IsCreateByXaml", value, null);
+				}
 
-                if (typeref.FullName == "Tizen.NUI.Xaml.ArrayExtension") {
+				if (typeref.FullName == "Tizen.NUI.Xaml.ArrayExtension")
+				{
 					var visitor = new SetPropertiesVisitor(Context);
 					foreach (var cnode in node.Properties.Values.ToList())
 						cnode.Accept(visitor, node);
@@ -292,43 +326,43 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			}
 		}
 
-        private void Set(VariableDefinition parent, string localName, INode node, IXmlLineInfo iXmlLineInfo)
-        {
-            var module = Context.Body.Method.Module;
-            TypeReference declaringTypeReference;
-            var property = parent.VariableType.GetProperty(pd => pd.Name == localName, out declaringTypeReference);
-            var propertySetter = property.SetMethod;
-
-            module.ImportReference(parent.VariableType.ResolveCached());
-            var propertySetterRef = module.ImportReference(module.ImportReference(propertySetter).ResolveGenericParameters(declaringTypeReference, module));
-            propertySetterRef.ImportTypes(module);
-            var propertyType = property.ResolveGenericPropertyType(declaringTypeReference, module);
-            var valueNode = node as ValueNode;
-            var elementNode = node as IElementNode;
-
-            if (parent.VariableType.IsValueType)
-                Context.IL.Emit(OpCodes.Ldloca, parent);
-            else
-                Context.IL.Emit(OpCodes.Ldloc, parent);
-
-            if (valueNode != null)
-            {
-                foreach (var instruction in valueNode.PushConvertedValue(Context, propertyType, new ICustomAttributeProvider[] { property, propertyType.ResolveCached() }, valueNode.PushServiceProvider(Context, propertyRef: property), false, true))
-                {
-                    Context.IL.Append(instruction);
-                }
-
-                if (parent.VariableType.IsValueType)
-                    Context.IL.Emit(OpCodes.Call, propertySetterRef);
-                else
-                    Context.IL.Emit(OpCodes.Callvirt, propertySetterRef);
-            }
-        }
-
-        public void Visit(RootNode node, INode parentNode)
+		private void Set(VariableDefinition parent, string localName, INode node, IXmlLineInfo iXmlLineInfo)
 		{
-//			IL_0013:  ldarg.0 
-//			IL_0014:  stloc.3 
+			var module = Context.Body.Method.Module;
+			TypeReference declaringTypeReference;
+			var property = parent.VariableType.GetProperty(pd => pd.Name == localName, out declaringTypeReference);
+			var propertySetter = property.SetMethod;
+
+			module.ImportReference(parent.VariableType.ResolveCached());
+			var propertySetterRef = module.ImportReference(module.ImportReference(propertySetter).ResolveGenericParameters(declaringTypeReference, module));
+			propertySetterRef.ImportTypes(module);
+			var propertyType = property.ResolveGenericPropertyType(declaringTypeReference, module);
+			var valueNode = node as ValueNode;
+			var elementNode = node as IElementNode;
+
+			if (parent.VariableType.IsValueType)
+				Context.IL.Emit(OpCodes.Ldloca, parent);
+			else
+				Context.IL.Emit(OpCodes.Ldloc, parent);
+
+			if (valueNode != null)
+			{
+				foreach (var instruction in valueNode.PushConvertedValue(Context, propertyType, new ICustomAttributeProvider[] { property, propertyType.ResolveCached() }, valueNode.PushServiceProvider(Context, propertyRef: property), false, true))
+				{
+					Context.IL.Append(instruction);
+				}
+
+				if (parent.VariableType.IsValueType)
+					Context.IL.Emit(OpCodes.Call, propertySetterRef);
+				else
+					Context.IL.Emit(OpCodes.Callvirt, propertySetterRef);
+			}
+		}
+
+		public void Visit(RootNode node, INode parentNode)
+		{
+			//			IL_0013:  ldarg.0 
+			//			IL_0014:  stloc.3 
 
 			var ilnode = (ILRootNode)node;
 			var typeref = ilnode.TypeReference;
@@ -356,7 +390,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 					parameter.CustomAttributes.First(ca => ca.AttributeType.FullName == "Tizen.NUI.Binding.ParameterAttribute")
 						.ConstructorArguments.First()
 						.Value as string;
-				if (!enode.Properties.ContainsKey(new XmlName("", propname))) {
+				if (!enode.Properties.ContainsKey(new XmlName("", propname)))
+				{
 					firstMissingProperty = propname;
 					return false;
 				}
@@ -391,40 +426,40 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			}
 		}
 
-        IEnumerable<Instruction> PushCtorDefaultArguments(MethodDefinition factoryCtorInfo, ElementNode enode)
-        {
-            var arguments = new List<INode>();
+		IEnumerable<Instruction> PushCtorDefaultArguments(MethodDefinition factoryCtorInfo, ElementNode enode)
+		{
+			var arguments = new List<INode>();
 
-            for (var i = 0; i < factoryCtorInfo.Parameters.Count; i++)
-            {
-                var parameter = factoryCtorInfo.Parameters[i];
+			for (var i = 0; i < factoryCtorInfo.Parameters.Count; i++)
+			{
+				var parameter = factoryCtorInfo.Parameters[i];
 
-                ValueNode arg = new ValueNode(parameter.Constant?.ToString(), enode.NamespaceResolver);
+				ValueNode arg = new ValueNode(parameter.Constant?.ToString(), enode.NamespaceResolver);
 
-                if (arg != null)
-                {
-                    foreach (var instruction in arg.PushConvertedValue(Context,
-                        parameter.ParameterType,
-                        new ICustomAttributeProvider[] { parameter, parameter.ParameterType.ResolveCached() },
-                        enode.PushServiceProvider(Context), false, true))
-                        yield return instruction;
-                }
-            }
-        }
+				if (arg != null)
+				{
+					foreach (var instruction in arg.PushConvertedValue(Context,
+						parameter.ParameterType,
+						new ICustomAttributeProvider[] { parameter, parameter.ParameterType.ResolveCached() },
+						enode.PushServiceProvider(Context), false, true))
+						yield return instruction;
+				}
+			}
+		}
 
 
-        IEnumerable<Instruction> PushCtorXArguments(MethodDefinition factoryCtorInfo, ElementNode enode)
+		IEnumerable<Instruction> PushCtorXArguments(MethodDefinition factoryCtorInfo, ElementNode enode)
 		{
 			if (!enode.Properties.ContainsKey(XmlName.xArguments))
 				yield break;
 
 			var arguments = new List<INode>();
 			var node = enode.Properties[XmlName.xArguments] as ElementNode;
-            if (node != null)
-            {
-                node.Accept(new SetPropertiesVisitor(Context, true), null);
-                arguments.Add(node);
-            }
+			if (node != null)
+			{
+				node.Accept(new SetPropertiesVisitor(Context, true), null);
+				arguments.Add(node);
+			}
 
 			var list = enode.Properties[XmlName.xArguments] as ListNode;
 			if (list != null)
@@ -433,7 +468,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 					arguments.Add(n);
 			}
 
-            for (var i = 0; i < arguments.Count; i++)
+			for (var i = 0; i < arguments.Count; i++)
 			{
 				var parameter = factoryCtorInfo.Parameters[i];
 				var arg = arguments[i];
@@ -452,23 +487,24 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 				}
 			}
 
-            for (var i = arguments.Count; i < factoryCtorInfo.Parameters.Count; i++)
-            {
-                var parameter = factoryCtorInfo.Parameters[i];
-                var arg = new ValueNode(parameter.Constant.ToString(), node.NamespaceResolver);
+			for (var i = arguments.Count; i < factoryCtorInfo.Parameters.Count; i++)
+			{
+				var parameter = factoryCtorInfo.Parameters[i];
+				var arg = new ValueNode(parameter.Constant.ToString(), node.NamespaceResolver);
 
-                foreach (var instruction in arg.PushConvertedValue(Context,
-                        parameter.ParameterType,
-                        new ICustomAttributeProvider[] { parameter, parameter.ParameterType.ResolveCached() },
-                        enode.PushServiceProvider(Context), false, true))
-                    yield return instruction;
-            }
-        }
+				foreach (var instruction in arg.PushConvertedValue(Context,
+						parameter.ParameterType,
+						new ICustomAttributeProvider[] { parameter, parameter.ParameterType.ResolveCached() },
+						enode.PushServiceProvider(Context), false, true))
+					yield return instruction;
+			}
+		}
 
 		static bool IsXaml2009LanguagePrimitive(IElementNode node)
 		{
-			if (node.NamespaceURI == XamlParser.X2009Uri) {
-				var n = node.XmlType.Name.Split(':') [1];
+			if (node.NamespaceURI == XamlParser.X2009Uri)
+			{
+				var n = node.XmlType.Name.Split(':')[1];
 				return n != "Array";
 			}
 			if (node.NamespaceURI != "clr-namespace:System;assembly=mscorlib")
@@ -498,179 +534,189 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 		{
 			var module = Context.Body.Method.Module;
 			var hasValue = node.CollectionItems.Count == 1 && node.CollectionItems[0] is ValueNode &&
-			               ((ValueNode)node.CollectionItems[0]).Value is string;
+						   ((ValueNode)node.CollectionItems[0]).Value is string;
 			var valueString = hasValue ? ((ValueNode)node.CollectionItems[0]).Value as string : string.Empty;
-			switch (typedef.FullName) {
-			case "System.SByte":
-				if (hasValue && sbyte.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out sbyte outsbyte))
-					yield return Create(Ldc_I4, (int)outsbyte);
-				else
-					yield return Create(Ldc_I4, 0x00);
-				break;
-			case "System.Int16":
-				if (hasValue && short.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out short outshort))
-					yield return Create(Ldc_I4, outshort);
-				else
-					yield return Create(Ldc_I4, 0x00);
-				break;
-			case "System.Int32":
-				if (hasValue && int.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out int outint))
-					yield return Create(Ldc_I4, outint);
-				else
-					yield return Create(Ldc_I4, 0x00);
-				break;
-			case "System.Int64":
-				if (hasValue && long.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out long outlong))
-					yield return Create(Ldc_I8, outlong);
-				else
-					yield return Create(Ldc_I8, 0L);
-				break;
-			case "System.Byte":
-				if (hasValue && byte.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out byte outbyte))
-					yield return Create(Ldc_I4, (int)outbyte);
-				else
-					yield return Create(Ldc_I4, 0x00);
-				break;
-			case "System.UInt16":
-				if (hasValue && short.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out short outushort))
-					yield return Create(Ldc_I4, outushort);
-				else
-					yield return Create(Ldc_I4, 0x00);
-				break;
-			case "System.UInt32":
-				if (hasValue && int.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out int outuint))
-					yield return Create(Ldc_I4, outuint);
-				else
-					yield return Create(Ldc_I4, 0x00);
-				break;
-			case "System.UInt64":
-				if (hasValue && long.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out long outulong))
-					yield return Create(Ldc_I8, outulong);
-				else
-					yield return Create(Ldc_I8, 0L);
-				break;
-			case "System.Boolean":
-				if (hasValue && bool.TryParse(valueString, out bool outbool))
-					yield return Create(outbool ? Ldc_I4_1 : Ldc_I4_0);
-				else
-					yield return Create(Ldc_I4_0);
-				break;
-			case "System.String":
-				yield return Create(Ldstr, valueString);
-				break;
-			case "System.Object":
-				var ctorinfo =
-					module.TypeSystem.Object.ResolveCached()
-						.Methods.FirstOrDefault(md => md.IsConstructor && !md.HasParameters);
-				var ctor = module.ImportReference(ctorinfo);
-				yield return Create(Newobj, ctor);
-				break;
-			case "System.Char":
-				if (hasValue && char.TryParse(valueString, out char outchar))
-					yield return Create(Ldc_I4, outchar);
-				else
-					yield return Create(Ldc_I4, 0x00);
-				break;
-			case "System.Decimal":
-				decimal outdecimal;
-				if (hasValue && decimal.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out outdecimal)) {
-					var vardef = new VariableDefinition(module.ImportReference(("mscorlib", "System", "Decimal")));
-					Context.Body.Variables.Add(vardef);
-					//Use an extra temp var so we can push the value to the stack, just like other cases
-//					IL_0003:  ldstr "adecimal"
-//					IL_0008:  ldc.i4.s 0x6f
-//					IL_000a:  call class [mscorlib]System.Globalization.CultureInfo class [mscorlib]System.Globalization.CultureInfo::get_InvariantCulture()
-//					IL_000f:  ldloca.s 0
-//					IL_0011:  call bool valuetype [mscorlib]System.Decimal::TryParse(string, valuetype [mscorlib]System.Globalization.NumberStyles, class [mscorlib]System.IFormatProvider, [out] valuetype [mscorlib]System.Decimal&)
-//					IL_0016:  pop
+			switch (typedef.FullName)
+			{
+				case "System.SByte":
+					if (hasValue && sbyte.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out sbyte outsbyte))
+						yield return Create(Ldc_I4, (int)outsbyte);
+					else
+						yield return Create(Ldc_I4, 0x00);
+					break;
+				case "System.Int16":
+					if (hasValue && short.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out short outshort))
+						yield return Create(Ldc_I4, outshort);
+					else
+						yield return Create(Ldc_I4, 0x00);
+					break;
+				case "System.Int32":
+					if (hasValue && int.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out int outint))
+						yield return Create(Ldc_I4, outint);
+					else
+						yield return Create(Ldc_I4, 0x00);
+					break;
+				case "System.Int64":
+					if (hasValue && long.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out long outlong))
+						yield return Create(Ldc_I8, outlong);
+					else
+						yield return Create(Ldc_I8, 0L);
+					break;
+				case "System.Byte":
+					if (hasValue && byte.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out byte outbyte))
+						yield return Create(Ldc_I4, (int)outbyte);
+					else
+						yield return Create(Ldc_I4, 0x00);
+					break;
+				case "System.UInt16":
+					if (hasValue && short.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out short outushort))
+						yield return Create(Ldc_I4, outushort);
+					else
+						yield return Create(Ldc_I4, 0x00);
+					break;
+				case "System.UInt32":
+					if (hasValue && int.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out int outuint))
+						yield return Create(Ldc_I4, outuint);
+					else
+						yield return Create(Ldc_I4, 0x00);
+					break;
+				case "System.UInt64":
+					if (hasValue && long.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out long outulong))
+						yield return Create(Ldc_I8, outulong);
+					else
+						yield return Create(Ldc_I8, 0L);
+					break;
+				case "System.Boolean":
+					if (hasValue && bool.TryParse(valueString, out bool outbool))
+						yield return Create(outbool ? Ldc_I4_1 : Ldc_I4_0);
+					else
+						yield return Create(Ldc_I4_0);
+					break;
+				case "System.String":
 					yield return Create(Ldstr, valueString);
-					yield return Create(Ldc_I4, 0x6f); //NumberStyles.Number
-					yield return Create(Call, module.ImportPropertyGetterReference(("mscorlib", "System.Globalization", "CultureInfo"),
-																			propertyName: "InvariantCulture",
-																			isStatic: true));
-					yield return Create(Ldloca, vardef);
-					yield return Create(Call, module.ImportMethodReference(("mscorlib", "System", "Decimal"),
-																		   methodName: "TryParse",
-																		   parameterTypes: new[] {
+					break;
+				case "System.Object":
+					var ctorinfo =
+						module.TypeSystem.Object.ResolveCached()
+							.Methods.FirstOrDefault(md => md.IsConstructor && !md.HasParameters);
+					var ctor = module.ImportReference(ctorinfo);
+					yield return Create(Newobj, ctor);
+					break;
+				case "System.Char":
+					if (hasValue && char.TryParse(valueString, out char outchar))
+						yield return Create(Ldc_I4, outchar);
+					else
+						yield return Create(Ldc_I4, 0x00);
+					break;
+				case "System.Decimal":
+					decimal outdecimal;
+					if (hasValue && decimal.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out outdecimal))
+					{
+						var vardef = new VariableDefinition(module.ImportReference(("mscorlib", "System", "Decimal")));
+						Context.Body.Variables.Add(vardef);
+						//Use an extra temp var so we can push the value to the stack, just like other cases
+						//					IL_0003:  ldstr "adecimal"
+						//					IL_0008:  ldc.i4.s 0x6f
+						//					IL_000a:  call class [mscorlib]System.Globalization.CultureInfo class [mscorlib]System.Globalization.CultureInfo::get_InvariantCulture()
+						//					IL_000f:  ldloca.s 0
+						//					IL_0011:  call bool valuetype [mscorlib]System.Decimal::TryParse(string, valuetype [mscorlib]System.Globalization.NumberStyles, class [mscorlib]System.IFormatProvider, [out] valuetype [mscorlib]System.Decimal&)
+						//					IL_0016:  pop
+						yield return Create(Ldstr, valueString);
+						yield return Create(Ldc_I4, 0x6f); //NumberStyles.Number
+						yield return Create(Call, module.ImportPropertyGetterReference(("mscorlib", "System.Globalization", "CultureInfo"),
+																				propertyName: "InvariantCulture",
+																				isStatic: true));
+						yield return Create(Ldloca, vardef);
+						yield return Create(Call, module.ImportMethodReference(("mscorlib", "System", "Decimal"),
+																			   methodName: "TryParse",
+																			   parameterTypes: new[] {
 																			   ("mscorlib", "System", "String"),
 																			   ("mscorlib", "System.Globalization", "NumberStyles"),
 																			   ("mscorlib", "System", "IFormatProvider"),
 																			   ("mscorlib", "System", "Decimal"),
-																		   },
-																		   isStatic: true));
-					yield return Create(Pop);
-					yield return Create(Ldloc, vardef);
-				} else {
-					yield return Create(Ldc_I4_0);
-					yield return Create(Newobj, module.ImportCtorReference(("mscorlib", "System", "Decimal"), parameterTypes: new[] { ("mscorlib", "System", "Int32") }));
-				}
-				break;
-			case "System.Single":
-				if (hasValue && float.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out float outfloat))
-					yield return Create(Ldc_R4, outfloat);
-				else
-					yield return Create(Ldc_R4, 0f);
-				break;
-			case "System.Double":
-				if (hasValue && double.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out double outdouble))
-					yield return Create(Ldc_R8, outdouble);
-				else
-					yield return Create(Ldc_R8, 0d);
-				break;
-			case "System.TimeSpan":
-				if (hasValue && TimeSpan.TryParse(valueString, CultureInfo.InvariantCulture, out TimeSpan outspan)) {
-					var vardef = new VariableDefinition(module.ImportReference(("mscorlib", "System", "TimeSpan")));
-					Context.Body.Variables.Add(vardef);
-					//Use an extra temp var so we can push the value to the stack, just like other cases
-					yield return Create(Ldstr, valueString);
-					yield return Create(Call, module.ImportPropertyGetterReference(("mscorlib", "System.Globalization", "CultureInfo"),
-																				   propertyName: "InvariantCulture", isStatic: true));
-					yield return Create(Ldloca, vardef);
-					yield return Create(Call, module.ImportMethodReference(("mscorlib", "System", "TimeSpan"),
-																		   methodName: "TryParse",
-																		   parameterTypes: new[] {
+																			   },
+																			   isStatic: true));
+						yield return Create(Pop);
+						yield return Create(Ldloc, vardef);
+					}
+					else
+					{
+						yield return Create(Ldc_I4_0);
+						yield return Create(Newobj, module.ImportCtorReference(("mscorlib", "System", "Decimal"), parameterTypes: new[] { ("mscorlib", "System", "Int32") }));
+					}
+					break;
+				case "System.Single":
+					if (hasValue && float.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out float outfloat))
+						yield return Create(Ldc_R4, outfloat);
+					else
+						yield return Create(Ldc_R4, 0f);
+					break;
+				case "System.Double":
+					if (hasValue && double.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out double outdouble))
+						yield return Create(Ldc_R8, outdouble);
+					else
+						yield return Create(Ldc_R8, 0d);
+					break;
+				case "System.TimeSpan":
+					if (hasValue && TimeSpan.TryParse(valueString, CultureInfo.InvariantCulture, out TimeSpan outspan))
+					{
+						var vardef = new VariableDefinition(module.ImportReference(("mscorlib", "System", "TimeSpan")));
+						Context.Body.Variables.Add(vardef);
+						//Use an extra temp var so we can push the value to the stack, just like other cases
+						yield return Create(Ldstr, valueString);
+						yield return Create(Call, module.ImportPropertyGetterReference(("mscorlib", "System.Globalization", "CultureInfo"),
+																					   propertyName: "InvariantCulture", isStatic: true));
+						yield return Create(Ldloca, vardef);
+						yield return Create(Call, module.ImportMethodReference(("mscorlib", "System", "TimeSpan"),
+																			   methodName: "TryParse",
+																			   parameterTypes: new[] {
 																			   ("mscorlib", "System", "String"),
 																			   ("mscorlib", "System", "IFormatProvider"),
 																			   ("mscorlib", "System", "TimeSpan"),
-																		   },
-																		   isStatic: true));
-					yield return Create(Pop);
-					yield return Create(Ldloc, vardef);
-				} else {
-					yield return Create(Ldc_I8, 0L);
-					yield return Create(Newobj, module.ImportCtorReference(("mscorlib", "System", "TimeSpan"), parameterTypes: new[] { ("mscorlib", "System", "Int64") }));
-				}
-				break;
-			case "System.Uri":
-				if (hasValue && Uri.TryCreate(valueString, UriKind.RelativeOrAbsolute, out Uri outuri)) {
-					var vardef = new VariableDefinition(module.ImportReference(("System", "System", "Uri")));
-					Context.Body.Variables.Add(vardef);
-					//Use an extra temp var so we can push the value to the stack, just like other cases
-					yield return Create(Ldstr, valueString);
-					yield return Create(Ldc_I4, (int)UriKind.RelativeOrAbsolute);
-					yield return Create(Ldloca, vardef);
-					yield return Create(Call, module.ImportMethodReference(("System", "System", "Uri"),
-																		   methodName: "TryCreate",
-																		   parameterTypes: new[] {
+																			   },
+																			   isStatic: true));
+						yield return Create(Pop);
+						yield return Create(Ldloc, vardef);
+					}
+					else
+					{
+						yield return Create(Ldc_I8, 0L);
+						yield return Create(Newobj, module.ImportCtorReference(("mscorlib", "System", "TimeSpan"), parameterTypes: new[] { ("mscorlib", "System", "Int64") }));
+					}
+					break;
+				case "System.Uri":
+					if (hasValue && Uri.TryCreate(valueString, UriKind.RelativeOrAbsolute, out Uri outuri))
+					{
+						var vardef = new VariableDefinition(module.ImportReference(("System", "System", "Uri")));
+						Context.Body.Variables.Add(vardef);
+						//Use an extra temp var so we can push the value to the stack, just like other cases
+						yield return Create(Ldstr, valueString);
+						yield return Create(Ldc_I4, (int)UriKind.RelativeOrAbsolute);
+						yield return Create(Ldloca, vardef);
+						yield return Create(Call, module.ImportMethodReference(("System", "System", "Uri"),
+																			   methodName: "TryCreate",
+																			   parameterTypes: new[] {
 																			   ("mscorlib", "System", "String"),
 																			   ("System", "System", "UriKind"),
 																			   ("System", "System", "Uri"),
-																		   },
-																		   isStatic: true));
-					yield return Create(Pop);
-					yield return Create(Ldloc, vardef);
-				} else
-					yield return Create(Ldnull);
-				break;
-			default:
-				var defaultCtor = module.ImportCtorReference(typedef, parameterTypes: null);
-				if (defaultCtor != null)
-					yield return Create(Newobj, defaultCtor);
-				else {
-					//should never happen. but if it does, this prevents corrupting the IL stack
-					yield return Create(Ldnull);
-				}
-				break;
+																			   },
+																			   isStatic: true));
+						yield return Create(Pop);
+						yield return Create(Ldloc, vardef);
+					}
+					else
+						yield return Create(Ldnull);
+					break;
+				default:
+					var defaultCtor = module.ImportCtorReference(typedef, parameterTypes: null);
+					if (defaultCtor != null)
+						yield return Create(Newobj, defaultCtor);
+					else
+					{
+						//should never happen. but if it does, this prevents corrupting the IL stack
+						yield return Create(Ldnull);
+					}
+					break;
 			}
 		}
 	}

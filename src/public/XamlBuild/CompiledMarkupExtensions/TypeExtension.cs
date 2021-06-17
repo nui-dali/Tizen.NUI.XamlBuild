@@ -4,7 +4,7 @@ using System.Xml;
 
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-
+using Tizen.NUI.EXaml;
 using Tizen.NUI.Xaml;
 
 using static Mono.Cecil.Cil.Instruction;
@@ -28,7 +28,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 			if (valueNode == null)
 				throw new XamlParseException("TypeName isn't set.", node as XmlLineInfo);
 
-			if (!node.Properties.ContainsKey(name)) {
+			if (!node.Properties.ContainsKey(name))
+			{
 				node.Properties[name] = typeNameNode;
 				node.CollectionItems.Clear();
 			}
@@ -44,6 +45,11 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 														  parameterTypes: new[] { ("mscorlib", "System", "RuntimeTypeHandle") },
 														  isStatic: true)),
 			};
+		}
+
+		public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module)
+		{
+			throw new System.NotImplementedException();
 		}
 	}
 }
