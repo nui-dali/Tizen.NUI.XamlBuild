@@ -116,10 +116,8 @@ namespace Tizen.NUI.EXaml
         {
             var ret = WriteOpertions();
 
-            byte[] byteArray = System.Text.Encoding.ASCII.GetBytes(ret);
-
-            var stream = File.Create(filePath);
-            stream.Write(byteArray, 0, byteArray.Length);
+            var stream = File.CreateText(filePath);
+            stream.Write(ret);
             stream.Close();
         }
 
