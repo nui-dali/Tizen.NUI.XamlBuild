@@ -173,7 +173,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
             ctorInfo = ctorInfo ?? typedef.Methods.FirstOrDefault(md => md.IsConstructor && !md.HasParameters && !md.IsStatic);
 
-            if (null == ctorInfo)
+            if (null == ctorInfo && null == factoryMethodInfo)
             {
                 foreach (var method in typedef.Methods)
                 {
