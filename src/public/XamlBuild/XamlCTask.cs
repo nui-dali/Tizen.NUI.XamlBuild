@@ -309,8 +309,6 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                             continue;
                         }
 
-                        isXamlGenerated = true;
-
                         resourcesToPrune.Add(resource);
                     }
 
