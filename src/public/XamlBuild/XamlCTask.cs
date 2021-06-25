@@ -278,17 +278,42 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                             continue;
                         }
 
+                        bool currentRetOfType;
+                        IList<Exception> currentExceptionsOfType;
+
                         if (UseInjection)
                         {
-                            success = DoInjection(typeDef, resource, out thrownExceptions);
+                            currentRetOfType = DoInjection(typeDef, resource, out currentExceptionsOfType);
                         }
                         else
                         {
-                            success = GenerateEXaml(typeDef, resource, out thrownExceptions);
+                            currentRetOfType = GenerateEXaml(typeDef, resource, out currentExceptionsOfType);
                         }
+
+                        if (null != currentExceptionsOfType)
+                        {
+                            if (null == thrownExceptions)
+                            {
+                                thrownExceptions = new List<Exception>();
+                            }
+
+                            foreach (var e in currentExceptionsOfType)
+                            {
+                                thrownExceptions.Add(e);
+                            }
+                        }
+
+                        if (false == currentRetOfType)
+                        {
+                            success = false;
+                            continue;
+                        }
+
+                        isXamlGenerated = true;
 
                         resourcesToPrune.Add(resource);
                     }
+
                     if (hasCompiledXamlResources)
                     {
                         LoggingHelper.LogMessage(Low, $"{new string(' ', 4)}Changing the module MVID");
