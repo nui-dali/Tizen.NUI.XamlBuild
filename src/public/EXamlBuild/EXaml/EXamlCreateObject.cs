@@ -118,7 +118,25 @@ namespace Tizen.NUI.EXaml
 
         internal new TypeReference GetType()
         {
-            return Type;
+            if (isStaticInstance)
+            {
+                if (MemberOfStaticInstance is FieldReference field)
+                {
+                    return field.FieldType;
+                }
+                else if (MemberOfStaticInstance is PropertyReference property)
+                {
+                    return property.PropertyType;
+                }
+                else
+                {
+                    throw new Exception($"Invalid static instance, type is {Type.FullName}");
+                }
+            }
+            else
+            {
+                return Type;
+            }
         }
 
         public EXamlCreateObject(object instance, TypeReference type, object[] @params = null)

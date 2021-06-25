@@ -743,7 +743,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             var realValue = context.Values[elementNode] as EXamlCreateObject;
             if (null != realValue)
             {
-                if (realValue.Type.InheritsFromOrImplements(propertyType))
+                if (realValue.GetType().InheritsFromOrImplements(propertyType))
                 {
                     return true;
                 }
