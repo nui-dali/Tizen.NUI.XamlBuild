@@ -295,7 +295,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
                             if (currentRetOfType)
                             {
-                                InjectionMethodGetEXamlPath(typeDef, resource);
+                                InjectionMethodGetEXamlPath(typeDef);
                             }
                         }
 
@@ -681,6 +681,10 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             var module = Context.Body.Method.Module;
             TypeReference declaringTypeReference;
             var property = parent.VariableType.GetProperty(pd => pd.Name == localName, out declaringTypeReference);
+            if (null == property)
+            {
+                return;
+            }
             var propertySetter = property.SetMethod;
 
             module.ImportReference(parent.VariableType.ResolveCached());
