@@ -105,7 +105,6 @@ namespace Tizen.NUI.EXaml
                     if (-1 == typeIndex)
                     {
                         string message = String.Format("Can't find type {0}\n", Type.FullName);
-                        message += String.Format("All defined types are:\n{0}", GetAllDefinedTypesName());
                         throw new Exception(message);
                     }
                     ret += GetValueString(typeIndex);

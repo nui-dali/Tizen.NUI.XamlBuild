@@ -2,11 +2,14 @@ using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
+using Tizen.NUI.Binding;
 using Tizen.NUI.EXaml;
+using Tizen.NUI.EXaml.Build.Tasks;
 using Tizen.NUI.Xaml;
 
 namespace Tizen.NUI.Xaml.Build.Tasks
 {
+    [ContentProperty("Items")]
     class ArrayExtension : ICompiledMarkupExtension
     {
         public IEnumerable<Instruction> ProvideValue(IElementNode node, ModuleDefinition module, ILContext context, out TypeReference memberRef)
@@ -44,9 +47,34 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             return instructions;
         }
 
-        public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module)
+        public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module, EXamlContext Context)
         {
-            throw new System.NotImplementedException();
+            return new EXamlCreateArrayObject(Type.MakeArrayType(), items);
         }
+
+        public TypeReference Type
+        {
+            get;
+            set;
+        }
+
+        public object Items
+        {
+            get
+            {
+                return null;
+            }
+            set
+            {
+                if (null == items)
+                {
+                    items = new List<object>();
+                }
+
+                items.Add(value);
+            }
+        }
+
+        private List<object> items;
     }
 }

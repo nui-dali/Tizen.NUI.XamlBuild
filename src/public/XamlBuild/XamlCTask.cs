@@ -142,6 +142,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                         s_xmlnsDefinitions.Add(attribute);
                     }
                 }
+
+                module.Dispose();
             }
             catch (Exception e)
             {
@@ -170,6 +172,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 //LoggingHelper.LogMessage(Normal, $"{new string(' ', 2)}Assembly file not found. Skipping XamlC.");
                 //return true;
             }
+
+            s_xmlnsDefinitions.Clear();
 
             var resolver = DefaultAssemblyResolver ?? new XamlCAssemblyResolver();
             if (resolver is XamlCAssemblyResolver xamlCResolver)
@@ -288,6 +292,11 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                         else
                         {
                             currentRetOfType = GenerateEXaml(typeDef, resource, out currentExceptionsOfType);
+
+                            if (currentRetOfType)
+                            {
+                                InjectionMethodGetEXamlPath(typeDef, resource);
+                            }
                         }
 
                         if (null != currentExceptionsOfType)
@@ -473,7 +482,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
             LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Replacing {0}.InitializeComponent ()");
             Exception e;
-            
+
             EXamlOperation.Clear();
 
             if (!TryCoreCompile(typeDef, rootnode, out e))
@@ -496,17 +505,33 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             }
             else
             {
-                if (xamlFilePath.EndsWith(".xaml"))
+                var examlDir = outputRootPath + @"res\examl\";
+                if (Directory.Exists(examlDir))
                 {
-                    var examlFilePath = xamlFilePath.Substring(0, xamlFilePath.Length - ".xaml".Length) + ".examl";
-                    if (!File.Exists(examlFilePath))
-                    {
-                        examlFilePath = outputRootPath + examlFilePath;
-                    }
-
-                    EXamlOperation.WriteOpertions(examlFilePath);
+                    Directory.CreateDirectory(examlDir);
                 }
+
+                var examlFilePath = examlDir + typeDef.FullName + ".examl";
+
+                EXamlOperation.WriteOpertions(examlFilePath);
             }
+
+            return true;
+        }
+
+        bool InjectionMethodGetEXamlPath(TypeDefinition typeDef)
+        {
+            var getEXamlPathComp = typeDef.Methods.FirstOrDefault(md => md.Name == "GetEXamlPath");
+            if (getEXamlPathComp == null)
+            {
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}no GetEXamlPath found... skipped.");
+                return false;
+            }
+
+            var examlRelativePath = @"examl\" + typeDef.FullName + ".examl";
+            getEXamlPathComp.Body.Instructions.Clear();
+            getEXamlPathComp.Body.GetILProcessor().Emit(OpCodes.Ldstr, examlRelativePath);
+            getEXamlPathComp.Body.GetILProcessor().Emit(OpCodes.Ret);
 
             return true;
         }
@@ -615,6 +640,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         {
             try
             {
+                XmlTypeExtensions.s_xmlnsDefinitions?.Clear();
+                XmlTypeExtensions.s_xmlnsDefinitions = null;
+
                 var visitorContext = new EXamlContext(typeDef);
 
                 visitorContext.Values[rootnode] = new EXamlCreateObject(null, rootnode.TypeReference);

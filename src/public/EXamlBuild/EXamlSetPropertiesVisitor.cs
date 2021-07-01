@@ -265,10 +265,14 @@ namespace Tizen.NUI.EXaml.Build.Tasks
         {
             GenericInstanceType markupExtension;
             IList<TypeReference> genericArguments;
-            if (instance.GetType().FullName == "Tizen.NUI.Xaml.ArrayExtension" &&
-                instance.GetType().ImplementsGenericInterface("Tizen.NUI.Xaml.IMarkupExtension`1", out markupExtension, out genericArguments))
+            if (instance.GetType().FullName == "Tizen.NUI.Xaml.Build.Tasks.ArrayExtension")
             {
-                
+                var nodeValue = context.Values[node] as EXamlCreateObject;
+
+                if (nodeValue?.Instance is Xaml.Build.Tasks.ArrayExtension arrayExtension)
+                {
+                    return arrayExtension.ProvideValue(node, module, context);
+                }
             }
             else if (instance.GetType().ImplementsGenericInterface("Tizen.NUI.Xaml.IMarkupExtension`1", out markupExtension, out genericArguments))
             {

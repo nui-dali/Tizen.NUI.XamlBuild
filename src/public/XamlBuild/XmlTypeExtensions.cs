@@ -10,7 +10,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 {
     static class XmlTypeExtensions
     {
-        static IList<XmlnsDefinitionAttribute> s_xmlnsDefinitions;
+        static internal IList<XmlnsDefinitionAttribute> s_xmlnsDefinitions;
 
         static void GatherXmlnsDefinitionAttributes()
         {

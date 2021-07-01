@@ -91,7 +91,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 (markupProvider = Activator.CreateInstance(compiledMarkupExtensionType) as ICompiledMarkupExtension) != null)
             {
 
-                Context.Values[node] = markupProvider.ProvideValue(node, Module);
+                Context.Values[node] = markupProvider.ProvideValue(node, Module, Context);
 
                 VariableDefinition vardef = new VariableDefinition(typeref);
                 Context.Variables[node] = vardef;
@@ -278,7 +278,14 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                     //IL_0006:  stloc.0
                     //Context.IL.Emit(OpCodes.Newobj, ctor);
                     //Context.IL.Emit(OpCodes.Stloc, vardef);
+                    if (typeref.FullName == "Tizen.NUI.Xaml.ArrayExtension")
+                    {
+                        typeref = Module.ImportReference(typeof(ArrayExtension));
+                        typedef = typeref.ResolveCached();
+                    }
+
                     var accordingType = this.GetType().Assembly.GetType(typedef.FullName);
+
                     if (null != accordingType)
                     {
                         Context.Values[node] = new EXamlCreateObject(Activator.CreateInstance(accordingType), typeref);

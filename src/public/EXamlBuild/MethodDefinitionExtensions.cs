@@ -73,9 +73,9 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
                 var argValue = context.Values[arguments[i]];
                 TypeReference argType = null;
-                if (argValue is EXamlCreateObject)
+                if (argValue is EXamlCreateObject eXamlCreateObject)
                 {
-                    argType = (argValue as EXamlCreateObject).Type;
+                    argType = eXamlCreateObject.Type;
                 }
                 else
                 {

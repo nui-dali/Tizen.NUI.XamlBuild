@@ -68,6 +68,5 @@ namespace Tizen.NUI.EXaml
                 return true;
             }
         }
-
     }
 }
