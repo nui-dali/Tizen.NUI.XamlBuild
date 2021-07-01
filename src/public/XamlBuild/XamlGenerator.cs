@@ -359,7 +359,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             //Create and initialize fields
             initcomp.Statements.Add(new CodeMethodInvokeExpression(
                 new CodeTypeReferenceExpression(new CodeTypeReference($"global::Tizen.NUI.EXaml.EXamlExtensions")),
-                "LoadFromEXamlPath", new CodeThisReferenceExpression(), new CodeTypeOfExpression(declType.Name)));
+                "LoadFromEXamlByRelativePath", new CodeThisReferenceExpression(), 
+                new CodeMethodInvokeExpression()
+                { Method = new CodeMethodReferenceExpression() { MethodName = "GetEXamlPath" } }));
 
             foreach (var namedField in NamedFields) {
                 declType.Members.Add(namedField);
@@ -375,6 +377,16 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
                 initcomp.Statements.Add(assign);
             }
+
+            var getEXamlPathcomp = new CodeMemberMethod()
+            {
+                Name = "GetEXamlPath",
+                ReturnType = new CodeTypeReference(typeof(string)),
+            };
+
+            getEXamlPathcomp.Statements.Add(new CodeMethodReturnStatement(new CodeDefaultValueExpression(new CodeTypeReference(typeof(string)))));
+
+            declType.Members.Add(getEXamlPathcomp);
 
         writeAndExit:
             //write the result

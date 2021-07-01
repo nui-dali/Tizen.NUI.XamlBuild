@@ -6,6 +6,7 @@ using System.Xml;
 
 using static System.String;
 using Tizen.NUI.EXaml;
+using Tizen.NUI.EXaml.Build.Tasks;
 
 namespace Tizen.NUI.Xaml.Build.Tasks
 {
@@ -83,7 +84,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             return new[] { Instruction.Create(OpCodes.Call, getterDef) };
         }
 
-        public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module)
+        public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module, EXamlContext Context)
         {
             INode ntype;
             if (!node.Properties.TryGetValue(new XmlName("", "Member"), out ntype))

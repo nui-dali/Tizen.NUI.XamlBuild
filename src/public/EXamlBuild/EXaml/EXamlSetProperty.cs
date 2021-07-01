@@ -81,6 +81,13 @@ namespace Tizen.NUI.EXaml
                         }
                         else
                         {
+                            if (instance.GetType().FullName == typeof(Xaml.Build.Tasks.ArrayExtension).FullName
+                                &&
+                                "Type" == propertyName)
+                            {
+                                eXamlCreateObject.IsValid = false;
+                            }
+
                             propertyInfo.SetMethod.Invoke(this.instance.Instance, new object[] { eXamlCreateObject.Instance });
                         }
                     }

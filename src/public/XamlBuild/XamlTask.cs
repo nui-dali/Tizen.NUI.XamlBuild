@@ -109,7 +109,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         } = new List<XmlnsDefinitionAttribute>();
     }
 
-    static class CecilExtensions
+    public static class CecilExtensions
     {
         public static bool IsXaml(this EmbeddedResource resource, ModuleDefinition module, out string classname)
         {

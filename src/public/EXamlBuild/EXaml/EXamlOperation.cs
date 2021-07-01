@@ -116,12 +116,24 @@ namespace Tizen.NUI.EXaml
         {
             var ret = WriteOpertions();
 
+            OutputDir = filePath.Substring(0, filePath.LastIndexOf('\\'));
+            if (!Directory.Exists(OutputDir))
+            {
+                Directory.CreateDirectory(OutputDir);
+            }
+
             var stream = File.CreateText(filePath);
             stream.Write(ret);
             stream.Close();
         }
 
-        internal static void GatherType(TypeReference type)
+        public static string OutputDir
+        {
+            get;
+            private set;
+        }
+
+        private static void GatherType(TypeReference type)
         {
             var assemblyName = GetAssemblyName(type.Resolve().Module.Assembly);
             if (!definedAssemblies.Contains(assemblyName))
@@ -135,7 +147,7 @@ namespace Tizen.NUI.EXaml
             }
         }
 
-        internal static void GatherType(Type type)
+        private static void GatherType(Type type)
         {
             var assemblyName = GetAssemblyName(type.Assembly);
             if (!definedAssemblies.Contains(assemblyName))
@@ -149,7 +161,7 @@ namespace Tizen.NUI.EXaml
             }
         }
 
-        internal static void GatherMethod((TypeReference, MethodDefinition) methodInfo)
+        private static void GatherMethod((TypeReference, MethodDefinition) methodInfo)
         {
             GatherType(methodInfo.Item1);
             definedMethods.Add(methodInfo.Item1, methodInfo.Item2);
@@ -307,12 +319,12 @@ namespace Tizen.NUI.EXaml
 
         internal abstract string Write();
 
-        internal static List<string> definedAssemblies
+        private static List<string> definedAssemblies
         {
             get;
         } = new List<string>();
 
-        internal class TypeData
+        private class TypeData
         {
             internal TypeData(Type type)
             {
@@ -412,23 +424,12 @@ namespace Tizen.NUI.EXaml
             }
         }
 
-        internal static List<TypeData> definedTypes
+        private static List<TypeData> definedTypes
         {
             get;
         } = new List<TypeData>();
-        internal static string GetAllDefinedTypesName()
-        {
-            string ret = "";
 
-            foreach (var type in definedTypes)
-            {
-                ret += type.FullName + "\n";
-            }
-
-            return ret;
-        }
-
-        internal static int GetTypeIndex(TypeData typeData)
+        private static int GetTypeIndex(TypeData typeData)
         {
             if (null != typeData.TypeReference)
             {
@@ -512,7 +513,7 @@ namespace Tizen.NUI.EXaml
             return ret;
         }
 
-        internal static int GetTypeIndex(Type type)
+        private static int GetTypeIndex(Type type)
         {
             for (int i = 0; i < definedTypes.Count; i++)
             {

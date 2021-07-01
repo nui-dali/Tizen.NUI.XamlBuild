@@ -5,6 +5,7 @@ using System.Xml;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Tizen.NUI.EXaml;
+using Tizen.NUI.EXaml.Build.Tasks;
 using Tizen.NUI.Xaml;
 
 using static Mono.Cecil.Cil.Instruction;
@@ -47,9 +48,29 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             };
         }
 
-        public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module)
+        public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module, EXamlContext context)
         {
-            throw new System.NotImplementedException();
+            INode typeNameNode;
+
+            var name = new XmlName("", "TypeName");
+            if (!node.Properties.TryGetValue(name, out typeNameNode) && node.CollectionItems.Any())
+                typeNameNode = node.CollectionItems[0];
+
+            var valueNode = typeNameNode as ValueNode;
+            if (valueNode == null)
+                throw new XamlParseException("TypeName isn't set.", node as XmlLineInfo);
+
+            if (!node.Properties.ContainsKey(name))
+            {
+                node.Properties[name] = typeNameNode;
+                node.CollectionItems.Clear();
+            }
+
+            var typeref = module.ImportReference(XmlTypeExtensions.GetTypeReference(valueNode.Value as string, module, node as BaseNode));
+
+            context.TypeExtensions[node] = typeref ?? throw new XamlParseException($"Can't resolve type `{valueNode.Value}'.", node as IXmlLineInfo);
+
+            return new EXamlCreateObject(typeref, module.ImportReference(typeof(TypeReference)));
         }
     }
 }
