@@ -528,7 +528,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 return false;
             }
 
-            var examlRelativePath = @"examl\" + typeDef.FullName + ".examl";
+            var examlRelativePath = @"examl/" + typeDef.FullName + ".examl";
             getEXamlPathComp.Body.Instructions.Clear();
             getEXamlPathComp.Body.GetILProcessor().Emit(OpCodes.Ldstr, examlRelativePath);
             getEXamlPathComp.Body.GetILProcessor().Emit(OpCodes.Ret);
