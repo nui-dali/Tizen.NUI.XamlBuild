@@ -691,9 +691,24 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
         static void SetValue(EXamlCreateObject parent, MemberReference bpRef, INode node, IXmlLineInfo iXmlLineInfo, EXamlContext context)
         {
-            //Fang: need to deal set value to field;
-            var value = context.Values[node];
-            new EXamlSetBindalbeProperty(parent, bpRef, value);
+            var valueNode = node as ValueNode;
+
+            if (valueNode != null)
+            {
+                var valueType = bpRef.GetBindablePropertyType(null, context.Module);
+                var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { valueType.Resolve() });
+                if (null != converterType)
+                {
+                    var converterValue = new EXamlValueConverterFromString(converterType.Resolve(), valueNode.Value as string);
+                    context.Values[node] = new EXamlCreateObject(converterValue, valueType);
+                }
+                else
+                {
+                    context.Values[node] = valueNode.GetBaseValue(valueType);
+                }
+            }
+
+            new EXamlSetBindalbeProperty(parent, bpRef, context.Values[node]);
         }
 
         static void GetValue(EXamlCreateObject parent, FieldReference bpRef, IXmlLineInfo iXmlLineInfo, EXamlContext context, out TypeReference propertyType)
