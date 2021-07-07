@@ -135,14 +135,14 @@ namespace Tizen.NUI.EXaml
 
         private static void GatherType(TypeReference type)
         {
-            var assemblyName = GetAssemblyName(type.Resolve().Module.Assembly);
-            if (!definedAssemblies.Contains(assemblyName))
-            {
-                definedAssemblies.Add(assemblyName);
-            }
-
             if (-1 == GetTypeIndex(type))
             {
+                var assemblyName = GetAssemblyName(type.Resolve().Module.Assembly);
+                if (!definedAssemblies.Contains(assemblyName))
+                {
+                    definedAssemblies.Add(assemblyName);
+                }
+
                 definedTypes.Add(new TypeData(type));
             }
         }
@@ -164,6 +164,12 @@ namespace Tizen.NUI.EXaml
         private static void GatherMethod((TypeReference, MethodDefinition) methodInfo)
         {
             GatherType(methodInfo.Item1);
+
+            foreach (var param in methodInfo.Item2.Parameters)
+            {
+                GatherType(param.ParameterType);
+            }
+
             definedMethods.Add(methodInfo.Item1, methodInfo.Item2);
         }
 
@@ -292,7 +298,14 @@ namespace Tizen.NUI.EXaml
                 string strForParam = "(";
                 foreach (var param in method.Item2.Parameters)
                 {
-                    strForParam += GetValueString(GetTypeIndex(param.ParameterType)) + " ";
+                    int paramTypeIndex = GetTypeIndex(param.ParameterType);
+
+                    if (-1 == paramTypeIndex)
+                    {
+                        throw new Exception($"Can't find index of param type {param.ParameterType.FullName}");
+                    }
+
+                    strForParam += GetValueString(paramTypeIndex) + " ";
                 }
                 strForParam += ")";
 
