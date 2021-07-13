@@ -103,7 +103,7 @@ namespace Tizen.NUI.EXaml
             definedBindableProperties.Clear();
             definedMethods.Clear();
 
-            EXamlCreateObject.eXamlCreateObjects.Clear();
+            EXamlCreateObject.ClearStaticThing();
             EXamlAddObject.eXamlAddObjectList.Clear();
             EXamlAddEvent.eXamlAddEventList.Clear();
             EXamlValueConverterFromString.ClearStaticThing();
@@ -567,6 +567,18 @@ namespace Tizen.NUI.EXaml
             if (null == valueObject)
             {
                 ret += "zz ";
+            }
+            else if (valueObject is List<object> listObjects)
+            {
+                ret += "(";
+
+                foreach (var obj in listObjects)
+                {
+                    ret += GetValueString(obj);
+                    ret += " ";
+                }
+
+                ret += ")";
             }
             else
             {

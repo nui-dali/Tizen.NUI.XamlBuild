@@ -88,9 +88,9 @@ namespace Tizen.NUI.EXaml
                     ret += ")";
                 }
 
-                if (Instance is EXamlValueConverterFromString)
+                if (Instance is EXamlValueConverterFromString valueConverterFromString)
                 {
-                    ret += "q(" + (Instance as EXamlValueConverterFromString).GetString() + ")q";
+                    ret += "q(" + valueConverterFromString.GetString() + ")q";
                 }
                 else if (true == Type.Resolve()?.IsEnum)
                 {
@@ -316,6 +316,12 @@ namespace Tizen.NUI.EXaml
             {
                 BindableProperties.Add(bindalbeProperty.Resolve());
             }
+        }
+
+        internal static void ClearStaticThing()
+        {
+            eXamlCreateObjects.Clear();
+            StaticInstances.Clear();
         }
 
         private static Dictionary<(TypeReference, MemberReference), EXamlCreateObject> StaticInstances
