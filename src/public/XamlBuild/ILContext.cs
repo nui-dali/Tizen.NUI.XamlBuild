@@ -10,10 +10,11 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 {
     class ILContext
     {
-        public ILContext(ILProcessor il, MethodBody body, ModuleDefinition module, FieldDefinition parentContextValues = null)
+        public ILContext(ILProcessor il, MethodBody body, List<Instruction> insOfAddEvent, ModuleDefinition module, FieldDefinition parentContextValues = null)
         {
             IL = il;
             Body = body;
+            InsOfAddEvent = insOfAddEvent;
             Values = new Dictionary<INode, object>();
             Variables = new Dictionary<IElementNode, VariableDefinition>();
             Scopes = new Dictionary<INode, Tuple<VariableDefinition, IList<string>>>();
@@ -37,6 +38,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         public ILProcessor IL { get; private set; }
 
         public MethodBody Body { get; private set; }
+
+        public List<Instruction> InsOfAddEvent { get; private set; }
 
         public ModuleDefinition Module { get; private set; }
     }

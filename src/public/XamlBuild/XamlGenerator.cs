@@ -357,11 +357,16 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             declType.Members.Add(initcomp);
 
             //Create and initialize fields
-            initcomp.Statements.Add(new CodeMethodInvokeExpression(
+            var loadExaml_invoke = new CodeMethodInvokeExpression(
                 new CodeTypeReferenceExpression(new CodeTypeReference($"global::Tizen.NUI.EXaml.EXamlExtensions")),
                 "LoadFromEXamlByRelativePath", new CodeThisReferenceExpression(), 
                 new CodeMethodInvokeExpression()
-                { Method = new CodeMethodReferenceExpression() { MethodName = "GetEXamlPath" } }));
+                { Method = new CodeMethodReferenceExpression() { MethodName = "GetEXamlPath" } });
+
+            CodeAssignStatement assignEXamlObject = new CodeAssignStatement(
+                    new CodeVariableReferenceExpression("eXamlData"), loadExaml_invoke);
+
+            initcomp.Statements.Add(assignEXamlObject);
 
             foreach (var namedField in NamedFields) {
                 declType.Members.Add(namedField);
@@ -378,20 +383,65 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 initcomp.Statements.Add(assign);
             }
 
+            declType.Members.Add(new CodeMemberField
+            {
+                Name = "eXamlData",
+                Type = new CodeTypeReference("System.Object"),
+                Attributes = MemberAttributes.Private,
+                CustomAttributes = { GeneratedCodeAttrDecl }
+            });
+
             var getEXamlPathcomp = new CodeMemberMethod()
             {
                 Name = "GetEXamlPath",
                 ReturnType = new CodeTypeReference(typeof(string)),
+                CustomAttributes = { GeneratedCodeAttrDecl }
             };
 
             getEXamlPathcomp.Statements.Add(new CodeMethodReturnStatement(new CodeDefaultValueExpression(new CodeTypeReference(typeof(string)))));
 
             declType.Members.Add(getEXamlPathcomp);
 
+            GenerateMethodExitXaml(declType);
+
         writeAndExit:
             //write the result
             using (var writer = new StreamWriter(outFilePath))
                 Provider.GenerateCodeFromCompileUnit(ccu, writer, new CodeGeneratorOptions());
+        }
+
+        private static void GenerateMethodExitXaml(CodeTypeDeclaration declType)
+        {
+            var removeEventsComp = new CodeMemberMethod()
+            {
+                Name = "RemoveEventsInXaml",
+                CustomAttributes = { GeneratedCodeAttrDecl }
+            };
+
+            removeEventsComp.Statements.Add(new CodeMethodInvokeExpression(
+                new CodeTypeReferenceExpression(new CodeTypeReference($"global::Tizen.NUI.EXaml.EXamlExtensions")),
+                "RemoveEventsInXaml", new CodeVariableReferenceExpression("eXamlData")));
+
+            declType.Members.Add(removeEventsComp);
+
+            var exitXamlComp = new CodeMemberMethod()
+            {
+                Name = "ExitXaml",
+                CustomAttributes = { GeneratedCodeAttrDecl }
+            };
+
+            exitXamlComp.Statements.Add(new CodeMethodInvokeExpression(new CodeMethodReferenceExpression()
+            {
+                MethodName = "RemoveEventsInXaml",
+            }));
+
+            var disposeXamlElements_invoke = new CodeMethodInvokeExpression(
+                new CodeTypeReferenceExpression(new CodeTypeReference($"global::Tizen.NUI.EXaml.EXamlExtensions")),
+                "DisposeXamlElements", new CodeThisReferenceExpression());
+
+            exitXamlComp.Statements.Add(disposeXamlElements_invoke);
+
+            declType.Members.Add(exitXamlComp);
         }
 
         static IEnumerable<CodeMemberField> GetCodeMemberFields(XmlNode root, XmlNamespaceManager nsmgr)

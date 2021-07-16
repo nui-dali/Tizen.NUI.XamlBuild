@@ -90,8 +90,6 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             stream.Close();
         }
 
-        private Type definitionAttribute = null;
-
         static private TypeDefinition baseTypeDefiniation = null;
         static public TypeDefinition BaseTypeDefiniation
         {
@@ -403,6 +401,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 initComp.Body.Instructions.Clear();
                 initComp.Body.GetILProcessor().Emit(OpCodes.Ret);
                 initComp.Body.InitLocals = true;
+
                 typeDef.Methods.Add(initCompRuntime);
                 LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
             }
@@ -420,7 +419,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
             LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Replacing {0}.InitializeComponent ()");
             Exception e;
-            if (!TryCoreCompile(initComp, initCompRuntime, rootnode, out e))
+            if (!TryCoreCompile(initComp, rootnode, out e))
             {
                 LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
                 (thrownExceptions = thrownExceptions ?? new List<Exception>()).Add(e);
@@ -536,71 +535,32 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             return true;
         }
 
-        bool TryCoreCompile(MethodDefinition initComp, MethodDefinition initCompRuntime, ILRootNode rootnode, out Exception exception)
+        bool TryCoreCompile(MethodDefinition initComp, ILRootNode rootnode, out Exception exception)
         {
             try
             {
                 var body = new MethodBody(initComp);
                 var module = body.Method.Module;
+                var type = initComp.DeclaringType;
+
+                MethodDefinition constructorOfRemoveEventsType;
+                TypeDefinition typeOfRemoveEvents = CreateTypeForRemoveEvents(type, out constructorOfRemoveEventsType);
+
+                var field = type.GetOrCreateField("___Info_Of_RemoveEvent___", FieldAttributes.Private, typeOfRemoveEvents);
+
                 body.InitLocals = true;
                 var il = body.GetILProcessor();
-                var resourcePath = GetPathForType(module, initComp.DeclaringType);
-                //resourcePath = null;
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Newobj, constructorOfRemoveEventsType);
+                il.Emit(OpCodes.Stfld, field);
+
+                var resourcePath = GetPathForType(module, type);
 
                 il.Emit(Nop);
 
-                if (initCompRuntime != null)
-                {
-                    // Generating branching code for the Previewer
+                List<Instruction> insOfAddEvent = new List<Instruction>();
 
-                    //First using the ResourceLoader
-                    //var nop = Instruction.Create(Nop);
-                    //var getResourceProvider = module.ImportPropertyGetterReference((tizenNUIAssemblyName, "Tizen.NUI.Binding.Internals", "ResourceLoader"), "ResourceProvider", isStatic: true);
-                    //il.Emit(Call, getResourceProvider);
-                    //il.Emit(Brfalse, nop);
-                    //               il.Emit(Call, getResourceProvider);
-
-                    //               //var getResourceProvider123 = module.ImportPropertyGetterReference((tizenNUIAssemblyName, "Tizen.NUI.Binding.Internals", "ResourceLoader"), "ResourceProvider123", isStatic: true);
-                    //               //il.Emit(Call, getResourceProvider123);
-
-                    //               il.Emit(Ldtoken, module.ImportReference(initComp.DeclaringType));
-                    //il.Emit(Call, module.ImportMethodReference(("mscorlib", "System", "Type"), methodName: "GetTypeFromHandle", parameterTypes: new[] { ("mscorlib", "System", "RuntimeTypeHandle") }, isStatic: true));
-                    //il.Emit(Call, module.ImportMethodReference(("mscorlib", "System.Reflection", "IntrospectionExtensions"), methodName: "GetTypeInfo", parameterTypes: new[] { ("mscorlib", "System", "Type") }, isStatic: true));
-                    //il.Emit(Callvirt, module.ImportPropertyGetterReference(("mscorlib", "System.Reflection", "TypeInfo"), propertyName: "Assembly", flatten: true));
-                    //il.Emit(Callvirt, module.ImportMethodReference(("mscorlib", "System.Reflection", "Assembly"), methodName: "GetName", parameterTypes: null)); //assemblyName
-
-                    //il.Emit(Ldstr, resourcePath);   //resourcePath
-                    //il.Emit(Callvirt, module.ImportMethodReference(("mscorlib", "System", "Func`3"),
-                    //methodName: "Invoke",
-                    //paramCount: 2,
-                    //classArguments: new[] { ("mscorlib", "System.Reflection", "AssemblyName"), ("mscorlib", "System", "String"), ("mscorlib", "System", "String") }));
-                    //il.Emit(Brfalse, nop);
-                    //il.Emit(Ldarg_0);
-                    //il.Emit(Call, initCompRuntime);
-                    //il.Emit(Ret);
-                    //il.Append(nop);
-
-                    //Or using the deprecated XamlLoader
-                    //nop = Instruction.Create(Nop);
-
-                    //var getXamlFileProvider = module.ImportPropertyGetterReference((tizenNUIAssemblyName, "Tizen.NUI.Xaml.Internals", "XamlLoader"), propertyName: "XamlFileProvider", isStatic: true);
-                    //il.Emit(Call, getXamlFileProvider);
-                    //il.Emit(Brfalse, nop);
-                    //il.Emit(Call, getXamlFileProvider);
-                    //il.Emit(Ldarg_0);
-                    //il.Emit(Call, module.ImportMethodReference(("mscorlib", "System", "Object"), methodName: "GetType", parameterTypes: null));
-                    //il.Emit(Callvirt, module.ImportMethodReference(("mscorlib", "System", "Func`2"),
-                    //                                               methodName: "Invoke",
-                    //                                               paramCount: 1,
-                    //                                               classArguments: new[] { ("mscorlib", "System", "Type"), ("mscorlib", "System", "String") }));
-                    //il.Emit(Brfalse, nop);
-                    //il.Emit(Ldarg_0);
-                    //il.Emit(Call, initCompRuntime);
-                    //il.Emit(Ret);
-                    //il.Append(nop);
-                }
-
-                var visitorContext = new ILContext(il, body, module);
+                var visitorContext = new ILContext(il, body, insOfAddEvent, module);
 
                 rootnode.Accept(new XamlNodeVisitor((node, parent) => node.Parent = parent), null);
                 rootnode.Accept(new ExpandMarkupsVisitor(visitorContext), null);
@@ -613,6 +573,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 rootnode.Accept(new SetFieldVisitor(visitorContext), null);
                 rootnode.Accept(new SetResourcesVisitor(visitorContext), null);
                 rootnode.Accept(new SetPropertiesVisitor(visitorContext, true), null);
+
+                AddInsOfRemoveEvent(il, visitorContext.InsOfAddEvent, typeOfRemoveEvents);
 
                 il.Emit(Ret);
                 initComp.Body = body;
@@ -634,6 +596,113 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
                 return false;
             }
+        }
+
+        private void AddInsOfRemoveEvent(ILProcessor ilOfInit, List<Instruction> instructions, TypeDefinition typeDef)
+        {
+            MethodDefinition methodCall = typeDef.GetOrCreateMethod("Call", MethodAttributes.Public, typeof(void));
+            methodCall.Body.Instructions.Clear();
+
+            var fieldOfRemoveEvent = typeDef.DeclaringType.Fields.FirstOrDefault(a => a.Name == "___Info_Of_RemoveEvent___");
+
+            var il = methodCall.Body.GetILProcessor();
+
+            foreach (var ins in instructions)
+            {
+                if (ins.OpCode == OpCodes.Ldloc
+                    &&
+                    ins.Operand is VariableDefinition variable)
+                {
+                    var fieldName = "field" + variable.Index;
+                    var field = typeDef.GetOrCreateField(fieldName, FieldAttributes.Public, variable.VariableType);
+
+                    ilOfInit.Emit(OpCodes.Ldarg_0);
+                    ilOfInit.Emit(OpCodes.Ldfld, fieldOfRemoveEvent);
+                    ilOfInit.Emit(OpCodes.Ldloc, variable);
+                    ilOfInit.Emit(OpCodes.Stfld, field);
+
+                    methodCall.Body.Instructions.Add(Instruction.Create(Ldarg_0));
+                    methodCall.Body.Instructions.Add(Instruction.Create(Ldfld, field));
+                }
+                else
+                {
+                    bool isReplaced = false;
+                    if (ins.OpCode == OpCodes.Callvirt && ins.Operand is MethodReference method)
+                    {
+                        if (method.Name.StartsWith("add_"))
+                        {
+                            var eventName = method.Name.Substring("add_".Length);
+                            TypeReference _;
+                            var typeOfEvent = method.DeclaringType.GetEvent(a => a.Name == eventName, out _);
+
+                            if (typeOfEvent is EventDefinition)
+                            {
+                                var methodOfRemoveEvent = typeDef.Module.ImportReference(method.DeclaringType.ResolveCached()?.Methods.FirstOrDefault(a => a.Name == "remove_" + eventName));
+                                if (null != methodOfRemoveEvent)
+                                {
+                                    var newIns = Instruction.Create(ins.OpCode, methodOfRemoveEvent);
+                                    methodCall.Body.Instructions.Add(newIns);
+
+                                    isReplaced = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if (false == isReplaced)
+                    {
+                        methodCall.Body.Instructions.Add(ins);
+                    }
+                }
+            }
+
+            methodCall.Body.Instructions.Add(Instruction.Create(Ret));
+
+            var removeEventMethod = typeDef.DeclaringType.Methods.FirstOrDefault(a => a.Name == "RemoveEventsInXaml");
+            if (null != removeEventMethod)
+            {
+                removeEventMethod.Body.Instructions.Clear();
+                var ilRemoveEvent = removeEventMethod.Body.GetILProcessor();
+
+                ilRemoveEvent.Emit(Ldarg_0);
+                ilRemoveEvent.Emit(Ldfld, fieldOfRemoveEvent);
+                ilRemoveEvent.Emit(Dup);
+
+                var insOfCall = Instruction.Create(Call, methodCall.Resolve());
+
+                ilRemoveEvent.Emit(Brtrue_S, insOfCall);
+                ilRemoveEvent.Emit(Pop);
+
+                var endIns = Instruction.Create(Ret);
+
+                ilRemoveEvent.Emit(Br_S, endIns);
+                ilRemoveEvent.Append(insOfCall);
+
+                ilRemoveEvent.Append(endIns);
+            }
+        }
+
+        TypeDefinition CreateTypeForRemoveEvents(TypeDefinition typeDef, out MethodDefinition constructor)
+        {
+            var module = typeDef.Module;
+
+            var name = "___Type___For___RemoveEvent___";
+            var nestType = typeDef.NestedTypes.FirstOrDefault(a => a.Name == name);
+
+            if (null == nestType)
+            {
+                nestType = new TypeDefinition(typeDef.Namespace, name, TypeAttributes.NestedPrivate | TypeAttributes.BeforeFieldInit | TypeAttributes.Sealed | TypeAttributes.AnsiClass);
+                nestType.BaseType = module.ImportReference(typeof(object));
+                typeDef.NestedTypes.Add(nestType);
+
+                constructor = nestType.AddDefaultConstructor();
+            }
+            else
+            {
+                constructor = nestType.Methods.FirstOrDefault(a => a.IsConstructor);
+            }
+
+            return nestType;
         }
 
         bool TryCoreCompile(TypeDefinition typeDef, ILRootNode rootnode, out Exception exception)

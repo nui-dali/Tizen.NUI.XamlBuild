@@ -772,7 +772,17 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
             //If the target is an event, connect
             if (CanConnectEvent(parent, localName, attached))
-                return ConnectEvent(parent, localName, valueNode, iXmlLineInfo, context);
+            {
+                var instrunctions = ConnectEvent(parent, localName, valueNode, iXmlLineInfo, context);
+                if (null != context.InsOfAddEvent)
+                {
+                    foreach (var ins in instrunctions)
+                    {
+                        context.InsOfAddEvent.Add(ins);
+                    }
+                }
+                return instrunctions;
+            }
 
             //If Value is DynamicResource, SetDynamicResource
             if (CanSetDynamicResource(bpRef, valueNode, context))
@@ -1424,7 +1434,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             //Fill the loadTemplate Body
             var templateIl = loadTemplate.Body.GetILProcessor();
             templateIl.Emit(OpCodes.Nop);
-            var templateContext = new ILContext(templateIl, loadTemplate.Body, module, parentValues)
+            var templateContext = new ILContext(templateIl, loadTemplate.Body, null, module, parentValues)
             {
                 Root = root
             };
