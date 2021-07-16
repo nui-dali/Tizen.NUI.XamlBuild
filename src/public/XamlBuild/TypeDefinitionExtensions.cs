@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -54,6 +55,31 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                     yield return md;
                 self = self.BaseType == null ? null : self.BaseType.ResolveCached();
             }
+        }
+
+        public static FieldDefinition GetOrCreateField(this TypeDefinition self, string name, Mono.Cecil.FieldAttributes attributes, TypeReference fieldType)
+        {
+            var field = self.Fields.FirstOrDefault(a => a.Name == name);
+
+            if (null == field)
+            {
+                field = new FieldDefinition(name, attributes, fieldType);
+                self.Fields.Add(field);
+            }
+
+            return field;
+        }
+
+        public static MethodDefinition GetOrCreateMethod(this TypeDefinition self, string name, MethodAttributes attributes, Type type)
+        {
+            MethodDefinition method = self.Methods.FirstOrDefault(a => a.Name == name);
+            if (null == method)
+            {
+                method = new MethodDefinition(name, MethodAttributes.Public, self.Module.ImportReference(type));
+                self.Methods.Add(method);
+            }
+
+            return method;
         }
     }
 }
