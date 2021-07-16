@@ -115,8 +115,14 @@ namespace Tizen.NUI.EXaml
         public static void WriteOpertions(string filePath)
         {
             var ret = WriteOpertions();
-
-            OutputDir = filePath.Substring(0, filePath.LastIndexOf('\\'));
+            if (filePath.Contains("\\"))
+            {
+                OutputDir = filePath.Substring(0, filePath.LastIndexOf('\\'));
+            }
+            else
+            {
+                OutputDir = filePath.Substring(0, filePath.LastIndexOf('/'));
+            }
             if (!Directory.Exists(OutputDir))
             {
                 Directory.CreateDirectory(OutputDir);

@@ -505,7 +505,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             }
             else
             {
-                var examlDir = outputRootPath + @"res\examl\";
+                var examlDir = outputRootPath + @"res/examl/";
                 if (Directory.Exists(examlDir))
                 {
                     Directory.CreateDirectory(examlDir);
