@@ -115,13 +115,15 @@ namespace Tizen.NUI.EXaml
         public static void WriteOpertions(string filePath)
         {
             var ret = WriteOpertions();
-            if (filePath.Contains("\\"))
+            if(string.IsNullOrEmpty(filePath))
             {
-                OutputDir = filePath.Substring(0, filePath.LastIndexOf('\\'));
+                throw new Exception("filePath is empty or null!");
             }
-            else
+            /*Avoid the difference of '/' in file path on windows and linux*/
+            filePath = filePath.Replace("\\", "/");
+            if (filePath.Contains("/"))
             {
-                OutputDir = filePath.Substring(0, filePath.LastIndexOf('/'));
+                OutputDir = filePath.Substring(0, filePath.LastIndexOf("/"));
             }
             if (!Directory.Exists(OutputDir))
             {
