@@ -74,10 +74,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             return true;
         }
 
-        public static object GetBaseValue(this ValueNode node, TypeReference targetTypeRef)
+        public static object GetBaseValue(string str, TypeReference targetTypeRef)
         {
-            var str = (string)node.Value;
-
             //Obvious Built-in conversions
             if (str == null) //if default parameter is null, exception will throw
                 return null;
@@ -228,6 +226,13 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             //    yield return Create(Box, module.ImportReference(originalTypeRef));
             //}
             return null;
+        }
+
+        public static object GetBaseValue(this ValueNode node, TypeReference targetTypeRef)
+        {
+            var str = (string)node.Value;
+
+            return GetBaseValue(str, targetTypeRef);
         }
 
         public static TypeReference GetConverterType(this ValueNode node, IEnumerable<ICustomAttributeProvider> attributeProviders)
@@ -511,7 +516,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 yield return Create(Box, module.ImportReference(originalTypeRef));
         }
 
-        static public object GetParsedEnum(TypeReference enumRef, string value, IXmlLineInfo lineInfo)
+        static public object GetParsedEnum(TypeReference enumRef, string value)
         {
             var enumDef = enumRef.ResolveCached();
             if (!enumDef.IsEnum)

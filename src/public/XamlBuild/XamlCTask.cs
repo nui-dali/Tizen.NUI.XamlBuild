@@ -484,7 +484,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
             EXamlOperation.Clear();
 
-            if (!TryCoreCompile(typeDef, rootnode, out e))
+            var visitorContext = new EXamlContext(typeDef);
+
+            if (!TryCoreCompile(typeDef, rootnode, visitorContext, out e))
             {
                 LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
                 (thrownExceptions = thrownExceptions ?? new List<Exception>()).Add(e);
@@ -705,14 +707,12 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             return nestType;
         }
 
-        bool TryCoreCompile(TypeDefinition typeDef, ILRootNode rootnode, out Exception exception)
+        bool TryCoreCompile(TypeDefinition typeDef, ILRootNode rootnode, EXamlContext visitorContext, out Exception exception)
         {
             try
             {
                 XmlTypeExtensions.s_xmlnsDefinitions?.Clear();
                 XmlTypeExtensions.s_xmlnsDefinitions = null;
-
-                var visitorContext = new EXamlContext(typeDef);
 
                 visitorContext.Values[rootnode] = new EXamlCreateObject(null, rootnode.TypeReference);
 

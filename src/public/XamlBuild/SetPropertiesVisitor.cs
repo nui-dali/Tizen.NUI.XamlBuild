@@ -1398,7 +1398,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             var module = parentContext.Module;
             var anonType = new TypeDefinition(
                 null,
-                "<" + parentContext.Body.Method.Name + ">_anonXamlCDataTemplate_" + dtcount++,
+                "_" + parentContext.Body.Method.Name + "_anonXamlCDataTemplate_" + dtcount++,
                 TypeAttributes.BeforeFieldInit |
                 TypeAttributes.Sealed |
                 TypeAttributes.NestedPrivate) {
