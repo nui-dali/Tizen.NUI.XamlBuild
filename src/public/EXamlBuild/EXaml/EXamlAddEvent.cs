@@ -21,6 +21,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Tizen.NUI.Binding;
+using Tizen.NUI.EXaml.Build.Tasks;
 using Tizen.NUI.Xaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
@@ -39,18 +40,19 @@ namespace Tizen.NUI.EXaml
 
             ret += "#";
 
-            ret += String.Format("({0} {1} {2} {3})", 
-                GetValueString(Instance),
-                GetValueString(Element),
-                GetValueString(definedEvents.GetIndex(eventDef.DeclaringType, eventDef)),
-                GetValueString(definedMethods.GetIndex(Value.DeclaringType, Value)));
+            ret += String.Format("({0} {1} {2} {3})",
+                eXamlContext.GetValueString(Instance),
+                eXamlContext.GetValueString(Element),
+                eXamlContext.GetValueString(eXamlContext.definedEvents.GetIndex(eventDef.DeclaringType, eventDef)),
+                eXamlContext.GetValueString(eXamlContext.definedMethods.GetIndex(Value.DeclaringType, Value)));
 
             ret += "#\n";
 
             return ret;
         }
 
-        public EXamlAddEvent(EXamlCreateObject instance, EXamlCreateObject element, string eventName, MethodDefinition value)
+        public EXamlAddEvent(EXamlContext context, EXamlCreateObject instance, EXamlCreateObject element, string eventName, MethodDefinition value)
+            : base(context)
         {
             TypeReference typeref;
             var eventDef = instance.Type.GetEvent(fi=>fi.Name==eventName, out typeref);
@@ -65,19 +67,14 @@ namespace Tizen.NUI.EXaml
 
                 Instance.AddEvent(DeclaringType, eventDef);
 
-                EXamlOperation.eXamlOperations.Add(this);
-                eXamlAddEventList.Add(this);
+                eXamlContext.eXamlOperations.Add(this);
+                eXamlContext.eXamlAddEventList.Add(this);
             }
             else
             {
                 throw new Exception("Property is not element");
             }
         }
-
-        internal static List<EXamlAddEvent> eXamlAddEventList
-        {
-            get;
-        } = new List<EXamlAddEvent>();
 
         internal EXamlCreateObject Instance
         {

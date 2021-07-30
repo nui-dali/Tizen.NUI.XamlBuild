@@ -5,6 +5,7 @@ using System.Linq;
 using Tizen.NUI.Binding;
 using Tizen.NUI.Binding;
 using Tizen.NUI.EXaml;
+using Tizen.NUI.EXaml.Build.Tasks;
 
 namespace Tizen.NUI.Xaml
 {
@@ -13,14 +14,14 @@ namespace Tizen.NUI.Xaml
     {
         public string Key { get; set; }
 
-        public object ProvideValue()
+        public object ProvideValue(EXamlContext context)
         {
             object ret = null;
-            EXamlAddToResourceDictionary.resourceDictionary.TryGetValue(Key, out ret);
+            context.resourceDictionary.TryGetValue(Key, out ret);
 
             if (null == ret)
             {
-                throw new Exception(String.Format("Key {0} can't be find in Resource", Key));
+                throw new Exception(String.Format("Key {0} can't be found in Resource", Key));
             }
 
             return ret;

@@ -20,6 +20,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Tizen.NUI.Binding;
+using Tizen.NUI.EXaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
 {
@@ -30,16 +31,17 @@ namespace Tizen.NUI.EXaml
         {
             string ret = "";
             ret += String.Format("~({0} {1})~\n",
-                   GetValueString(instance), GetValueString(value));
+                   eXamlContext.GetValueString(instance), eXamlContext.GetValueString(value));
             return ret;
         }
 
-        public EXamlAddToCollectionProperty(EXamlGetObjectByProperty instance, object value)
+        public EXamlAddToCollectionProperty(EXamlContext context, EXamlGetObjectByProperty instance, object value)
+            : base(context)
         {
             this.instance = instance;
             this.value = value;
 
-            EXamlOperation.eXamlOperations.Add(this);
+            eXamlContext.eXamlOperations.Add(this);
         }
 
         private EXamlGetObjectByProperty instance;

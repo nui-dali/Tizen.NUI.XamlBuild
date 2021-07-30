@@ -127,7 +127,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                     Context.Variables[node] = vardef;
 
                     var argumentList = GetCtorXArguments(node, factoryCtorInfo.Parameters.Count);
-                    Context.Values[node] = new EXamlCreateObject(null, typedef, argumentList.ToArray());
+                    Context.Values[node] = new EXamlCreateObject(Context, null, typedef, argumentList.ToArray());
                     return;
                 }
             }
@@ -163,7 +163,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 Context.Variables[node] = vardef;
 
                 var argumentList = GetCtorXArguments(node, factoryMethodInfo.Parameters.Count);
-                Context.Values[node] = new EXamlCreateObject(null, typedef, factoryMethodInfo, argumentList.ToArray());
+                Context.Values[node] = new EXamlCreateObject(Context, null, typedef, factoryMethodInfo, argumentList.ToArray());
                 return;
             }
 
@@ -248,7 +248,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 if (node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null &&
                     vardef.VariableType.IsValueType)
                 {
-                    Context.Values[node] = vnode.GetBaseValue(typeref);
+                    Context.Values[node] = vnode.GetBaseValue(Context, typeref);
                 }
                 else if (node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null &&
                            implicitOperatorref != null)
@@ -256,13 +256,13 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                     var converterType = vnode.GetConverterType(new ICustomAttributeProvider[] { typeref.ResolveCached() });
                     if (null == converterType)
                     {
-                        var realValue = vnode.GetBaseValue(typeref);
-                        Context.Values[node] = new EXamlCreateObject(realValue, typeref);
+                        var realValue = vnode.GetBaseValue(Context, typeref);
+                        Context.Values[node] = new EXamlCreateObject(Context, realValue, typeref);
                     }
                     else
                     {
-                        var converterValue = new EXamlValueConverterFromString(converterType.Resolve(), vnode.Value as string);
-                        Context.Values[node] = new EXamlCreateObject(converterValue, typeref);
+                        var converterValue = new EXamlValueConverterFromString(Context, converterType.Resolve(), vnode.Value as string);
+                        Context.Values[node] = new EXamlCreateObject(Context, converterValue, typeref);
                     }
                 }
                 else if (factorymethodinforef != null)
@@ -288,7 +288,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
                     if (null != accordingType)
                     {
-                        Context.Values[node] = new EXamlCreateObject(Activator.CreateInstance(accordingType), typeref);
+                        Context.Values[node] = new EXamlCreateObject(Context, Activator.CreateInstance(accordingType), typeref);
                     }
                     else
                     {
@@ -303,12 +303,12 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                                 var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { typeref.Resolve() });
                                 if (null != converterType)
                                 {
-                                    var converterValue = new EXamlValueConverterFromString(converterType.Resolve(), valueNode.Value as string);
-                                    Context.Values[node] = new EXamlCreateObject(converterValue, typeref);
+                                    var converterValue = new EXamlValueConverterFromString(Context, converterType.Resolve(), valueNode.Value as string);
+                                    Context.Values[node] = new EXamlCreateObject(Context, converterValue, typeref);
                                 }
                                 else
                                 {
-                                    Context.Values[node] = valueNode.GetBaseValue(typeref);
+                                    Context.Values[node] = valueNode.GetBaseValue(Context, typeref);
                                 }
 
                                 canConvertCollectionItem = true;
@@ -319,7 +319,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                         {
                             if (!ctorInfo.HasParameters)
                             {
-                                Context.Values[node] = new EXamlCreateObject(null, typeref);
+                                Context.Values[node] = new EXamlCreateObject(Context, null, typeref);
                             }
                             else
                             {
@@ -331,7 +331,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
                                     if (ctorInfo.Parameters[i].ParameterType.ResolveCached().IsEnum)
                                     {
-                                        @params[i] = NodeILExtensions.GetParsedEnum(param.ParameterType, param.Constant.ToString(), null);
+                                        @params[i] = NodeILExtensions.GetParsedEnum(Context, param.ParameterType, param.Constant.ToString());
                                     }
                                     else
                                     {
@@ -339,7 +339,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                                     }
                                 }
 
-                                Context.Values[node] = new EXamlCreateObject(null, typeref, @params);
+                                Context.Values[node] = new EXamlCreateObject(Context, null, typeref, @params);
                             }
                         }
                     }

@@ -21,6 +21,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Tizen.NUI.Binding;
+using Tizen.NUI.EXaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
 {
@@ -33,9 +34,9 @@ namespace Tizen.NUI.EXaml
             {
                 string ret = "";
                 ret += String.Format("$({0} {1} {2})$\n",
-                    GetValueString(@object),
-                    GetValueString(definedBindableProperties.IndexOf(bindableProperty.Resolve())),
-                    GetValueString(key));
+                    eXamlContext.GetValueString(@object),
+                    eXamlContext.GetValueString(eXamlContext.definedBindableProperties.IndexOf(bindableProperty.Resolve())),
+                    eXamlContext.GetValueString(key));
                 return ret;
             }
             else
@@ -44,12 +45,13 @@ namespace Tizen.NUI.EXaml
             }
         }
 
-        public EXamlSetDynamicResource(EXamlCreateObject @object, MemberReference bindalbeProperty, string key)
+        public EXamlSetDynamicResource(EXamlContext context, EXamlCreateObject @object, MemberReference bindalbeProperty, string key)
+            : base(context)
         {
             this.@object = @object;
             this.bindableProperty = bindalbeProperty;
             this.key = key;
-            EXamlOperation.eXamlOperations.Add(this);
+            eXamlContext.eXamlOperations.Add(this);
 
             @object.AddBindableProperty(bindableProperty);
         }

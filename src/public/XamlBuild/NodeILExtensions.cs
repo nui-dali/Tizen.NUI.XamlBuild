@@ -8,6 +8,7 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Tizen.NUI.Binding;
 using Tizen.NUI.EXaml;
+using Tizen.NUI.EXaml.Build.Tasks;
 using Tizen.NUI.Xaml;
 
 using static Mono.Cecil.Cil.Instruction;
@@ -74,13 +75,13 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             return true;
         }
 
-        public static object GetBaseValue(string str, TypeReference targetTypeRef)
+        public static object GetBaseValue(EXamlContext context, string str, TypeReference targetTypeRef)
         {
             //Obvious Built-in conversions
             if (str == null) //if default parameter is null, exception will throw
                 return null;
             else if (targetTypeRef.ResolveCached().BaseType != null && targetTypeRef.ResolveCached().BaseType.FullName == "System.Enum")
-                return GetParsedEnum(targetTypeRef, str, node);
+                return GetParsedEnum(context, targetTypeRef, str);
             else if (targetTypeRef.FullName == "System.Char")
                 return Char.Parse(str);
             else if (targetTypeRef.FullName == "System.SByte")
@@ -228,11 +229,11 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             return null;
         }
 
-        public static object GetBaseValue(this ValueNode node, TypeReference targetTypeRef)
+        public static object GetBaseValue(this ValueNode node, EXamlContext context, TypeReference targetTypeRef)
         {
             var str = (string)node.Value;
 
-            return GetBaseValue(str, targetTypeRef);
+            return GetBaseValue(context, str, targetTypeRef);
         }
 
         public static TypeReference GetConverterType(this ValueNode node, IEnumerable<ICustomAttributeProvider> attributeProviders)
@@ -516,7 +517,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 yield return Create(Box, module.ImportReference(originalTypeRef));
         }
 
-        static public object GetParsedEnum(TypeReference enumRef, string value)
+        static public object GetParsedEnum(EXamlContext context, TypeReference enumRef, string value)
         {
             var enumDef = enumRef.ResolveCached();
             if (!enumDef.IsEnum)
@@ -556,7 +557,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 throw new Exception($"{value} is not value of {enumRef.FullName}");
             }
 
-            return new EXamlCreateObject(value, enumRef);
+            return new EXamlCreateObject(context, value, enumRef);
         }
 
         static Instruction PushParsedEnum(TypeReference enumRef, string value, IXmlLineInfo lineInfo)

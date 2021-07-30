@@ -49,7 +49,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
         public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module, EXamlContext Context)
         {
-            return new EXamlCreateArrayObject(Type.MakeArrayType(), items);
+            return new EXamlCreateArrayObject(Context, Type.MakeArrayType(), items);
         }
 
         public TypeReference Type

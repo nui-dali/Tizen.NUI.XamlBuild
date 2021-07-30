@@ -105,7 +105,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             var fieldRef = GetFieldReference(typeRef, membername, module);
             var propertyDef = GetPropertyDefinition(typeRef, membername, module);
 
-            var ret = EXamlCreateObject.GetStaticInstance(typeRef, fieldRef, propertyDef);
+            var ret = EXamlCreateObject.GetStaticInstance(Context, typeRef, fieldRef, propertyDef);
             if (null == ret)
             {
                 throw new XamlParseException($"{membername} is not static member in type {typename}", node as IXmlLineInfo);

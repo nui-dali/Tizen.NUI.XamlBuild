@@ -112,7 +112,12 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
             //Simplify ListNodes with single elements
             var pList = parentNode as ListNode;
-            if (pList != null && pList.CollectionItems.Count == 1) {
+            if (pList != null
+                &&
+                (pList.CollectionItems.Count == 1
+                ||
+                "XamlResources" == pList.XmlName.LocalName))
+            {
                 propertyName = pList.XmlName;
                 parentNode = parentNode.Parent;
             }
@@ -120,8 +125,11 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             if ((propertyName != XmlName.Empty || TryGetPropertyName(node, parentNode, out propertyName)) && skips.Contains(propertyName))
                 return;
 
-            if (propertyName == XmlName._CreateContent) {
-                SetDataTemplate((IElementNode)parentNode, node, Context, node);
+            if (propertyName == XmlName._CreateContent
+                &&
+                parentNode is ElementNode parentElementNode)
+            {
+                SetDataTemplate(parentElementNode, node, Context, node);
                 return;
             }
 
@@ -162,7 +170,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 if (CanAddToResourceDictionary(parentVar, parentVar.GetType(), node, node, Context))
                 {
                     var keyName = (node.Properties[XmlName.xKey] as ValueNode).Value as string;
-                    new EXamlAddToResourceDictionary(parentVar, keyName, Context.Values[node]);
+                    new EXamlAddToResourceDictionary(Context, parentVar, keyName, Context.Values[node]);
                 }
                 // Collection element, implicit content, or implicit collection element.
                 else if (parentVar.GetType().GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module).Any())
@@ -171,7 +179,15 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                     var adderTuple = elementType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module).First();
                     var adderRef = Module.ImportReference(adderTuple.Item1);
                     adderRef = Module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, Module));
-                    new EXamlAddObject(parentVar, Context.Values[node], adderRef.Resolve());
+
+                    if (IsAddMethodOfCollection(Module, adderRef.Resolve()))
+                    {
+                        new EXamlAddToCollectionInstance(Context, parentVar, Context.Values[node]);
+                    }
+                    else
+                    {
+                        new EXamlAddObject(Context, parentVar, Context.Values[node], adderRef.Resolve());
+                    }
                 }
                 else if ((contentProperty = GetContentProperty(parentVar.GetType())) != null)
                 {
@@ -208,8 +224,8 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                         localName = localName.Substring(index + 1);
                     }
 
-                    var getObjectByProperty = new EXamlGetObjectByProperty(Context.Values[parentList.Parent] as EXamlCreateObject, localName);
-                    new EXamlAddToCollectionProperty(getObjectByProperty, Context.Values[node]);
+                    var getObjectByProperty = new EXamlGetObjectByProperty(Context, Context.Values[parentList.Parent] as EXamlCreateObject, localName);
+                    new EXamlAddToCollectionProperty(Context, getObjectByProperty, Context.Values[node]);
                 }
             }
         }
@@ -220,6 +236,17 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
         public void Visit(ListNode node, INode parentNode)
         {
+        }
+
+        private static MethodDefinition addDefOfCollection;
+        private static bool IsAddMethodOfCollection(ModuleDefinition module, MethodDefinition methodDef)
+        {
+            if (null == addDefOfCollection)
+            {
+                addDefOfCollection = module.ImportReference(typeof(List<string>).GetMethod("Add")).Resolve();
+            }
+
+            return methodDef == addDefOfCollection;
         }
 
         public static bool TryGetPropertyName(INode node, INode parentNode, out XmlName name)
@@ -279,7 +306,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 var nodeValue = context.Values[node] as EXamlCreateObject;
                 if (nodeValue?.Instance is BindingExtension)
                 {
-                    var newValue = (nodeValue.Instance as BindingExtension).ProvideValue(module);
+                    var newValue = (nodeValue.Instance as BindingExtension).ProvideValue(context, module);
                     return newValue;
                 }
                 else if (nodeValue?.Instance is DynamicResourceExtension)
@@ -287,7 +314,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                     var dynamicResExtension = nodeValue.Instance as DynamicResourceExtension;
                     var newValue = dynamicResExtension.ProvideValue();
                     var newTypeRef = module.ImportReference(newValue.GetType());
-                    return new EXamlCreateObject(newValue, newTypeRef, new object[] { dynamicResExtension.Key });
+                    return new EXamlCreateObject(context, newValue, newTypeRef, new object[] { dynamicResExtension.Key });
                 }
             }
             else
@@ -300,12 +327,12 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                         var acceptEmptyServiceProvider = instance.GetType().GetCustomAttribute(module, (XamlTask.xamlAssemblyName, XamlTask.xamlNameSpace, "AcceptEmptyServiceProviderAttribute")) != null;
                         if (nodeValue.Instance is ReferenceExtension)
                         {
-                            var newValue = (nodeValue.Instance as ReferenceExtension).ProvideValue();
+                            var newValue = (nodeValue.Instance as ReferenceExtension).ProvideValue(context);
                             return newValue;
                         }
                         else if (nodeValue.Instance is StaticResourceExtension)
                         {
-                            var newValue = (nodeValue.Instance as StaticResourceExtension).ProvideValue();
+                            var newValue = (nodeValue.Instance as StaticResourceExtension).ProvideValue(context);
                             return newValue;
                         }
                     }
@@ -578,7 +605,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                     if (!handler.Parameters[i].ParameterType.InheritsFromOrImplements(invoke.Parameters[i].ParameterType))
                         throw new XamlParseException($"Signature (parameter {i}) of EventHandler \"{context.Type.FullName}.{value}\" doesn't match the event type", iXmlLineInfo);
 
-            new EXamlAddEvent(parent, context.Values[context.RootNode] as EXamlCreateObject, localName, handler);
+            new EXamlAddEvent(context, parent, context.Values[context.RootNode] as EXamlCreateObject, localName, handler);
         }
 
         static bool CanSetDynamicResource(MemberReference bpRef, INode valueNode, EXamlContext context)
@@ -606,7 +633,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 if (null != dynamicResource)
                 {
                     instance.IsValid = false;
-                    new EXamlSetDynamicResource(parent, bpRef, dynamicResource.Key);
+                    new EXamlSetDynamicResource(context, parent, bpRef, dynamicResource.Key);
                 }
             }
         }
@@ -634,7 +661,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
         static void SetBinding(EXamlCreateObject parent, MemberReference bpRef, IElementNode elementNode, IXmlLineInfo iXmlLineInfo, EXamlContext context)
         {
-            new EXamlSetBinding(parent, bpRef, context.Values[elementNode]);
+            new EXamlSetBinding(context, parent, bpRef, context.Values[elementNode]);
         }
 
         static bool CanSetValue(MemberReference bpRef, bool attached, INode node, IXmlLineInfo iXmlLineInfo, EXamlContext context)
@@ -699,16 +726,16 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { valueType.Resolve() });
                 if (null != converterType)
                 {
-                    var converterValue = new EXamlValueConverterFromString(converterType.Resolve(), valueNode.Value as string);
-                    context.Values[node] = new EXamlCreateObject(converterValue, valueType);
+                    var converterValue = new EXamlValueConverterFromString(context, converterType.Resolve(), valueNode.Value as string);
+                    context.Values[node] = new EXamlCreateObject(context, converterValue, valueType);
                 }
                 else
                 {
-                    context.Values[node] = valueNode.GetBaseValue(valueType);
+                    context.Values[node] = valueNode.GetBaseValue(context, valueType);
                 }
             }
 
-            new EXamlSetBindalbeProperty(parent, bpRef, context.Values[node]);
+            new EXamlSetBindalbeProperty(context, parent, bpRef, context.Values[node]);
         }
 
         static void GetValue(EXamlCreateObject parent, FieldReference bpRef, IXmlLineInfo iXmlLineInfo, EXamlContext context, out TypeReference propertyType)
@@ -823,12 +850,12 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { property, propertyType.ResolveCached() });
                 if (null != converterType)
                 {
-                    var converterValue = new EXamlValueConverterFromString(converterType.Resolve(), valueNode.Value as string);
-                    context.Values[node] = new EXamlCreateObject(converterValue, propertyType);
+                    var converterValue = new EXamlValueConverterFromString(context, converterType.Resolve(), valueNode.Value as string);
+                    context.Values[node] = new EXamlCreateObject(context, converterValue, propertyType);
                 }
                 else
                 {
-                    context.Values[node] = valueNode.GetBaseValue(property.PropertyType);
+                    context.Values[node] = valueNode.GetBaseValue(context, property.PropertyType);
                 }
             }
             else if (elementNode != null)
@@ -859,7 +886,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 }
             }
 
-            new EXamlSetProperty(parent, localName, context.Values[node]);
+            new EXamlSetProperty(context, parent, localName, context.Values[node]);
         }
 
         static void Get(EXamlCreateObject parent, string localName, IXmlLineInfo iXmlLineInfo, EXamlContext context, out TypeReference propertyType)
@@ -946,8 +973,9 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
             if (null != elementNode && CanAddToResourceDictionary(parent, propertyType, elementNode, iXmlLineInfo, context))
             {
-                //Fang: Need to deal
-                throw new XamlParseException(String.Format("Can't add {0} to {1}.{2}", node.ToString(), parent.Type.FullName, propertyName), iXmlLineInfo);
+                var keyName = (elementNode.Properties[XmlName.xKey] as ValueNode).Value as string;
+                new EXamlAddToResourceDictionary(context, parent, keyName, context.Values[node]);
+                return;
             }
 
             var adderTuple = propertyType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, module).FirstOrDefault();
@@ -961,19 +989,19 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             {
                 if (true == valueNode.CanConvertValue(module, childType, (TypeReference)null))
                 {
-                    var obj = new EXamlGetObjectByProperty(parent, propertyName);
+                    var obj = new EXamlGetObjectByProperty(context, parent, propertyName);
 
                     var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { property, childType.ResolveCached() });
                     if (null != converterType)
                     {
-                        var converterValue = new EXamlValueConverterFromString(converterType.Resolve(), valueNode.Value as string);
-                        context.Values[node] = new EXamlCreateObject(converterValue, propertyType);
+                        var converterValue = new EXamlValueConverterFromString(context, converterType.Resolve(), valueNode.Value as string);
+                        context.Values[node] = new EXamlCreateObject(context, converterValue, propertyType);
                     }
                     else
                     {
-                        context.Values[node] = valueNode.GetBaseValue(childType);
+                        context.Values[node] = valueNode.GetBaseValue(context, childType);
                     }
-                    new EXamlAddToCollectionProperty(obj, context.Values[node]);
+                    new EXamlAddToCollectionProperty(context, obj, context.Values[node]);
                 }
             }
         }
@@ -1030,100 +1058,30 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             return false;
         }
 
-        static void SetDataTemplate(IElementNode parentNode, ElementNode node, EXamlContext parentContext,
+        static void SetDataTemplate(ElementNode parentNode, ElementNode rootnode, EXamlContext parentContext,
             IXmlLineInfo xmlLineInfo)
         {
-            //Fang
-            //var parentVar = parentContext.Variables[parentNode];
-            ////Push the DataTemplate to the stack, for setting the template
-            //parentContext.IL.Emit(OpCodes.Ldloc, parentVar);
+            var typeref = parentContext.Module.ImportReference(rootnode.XmlType.GetTypeReference(parentContext.Module, rootnode));
+            var visitorContext = new EXamlContext(typeref.ResolveCached());
 
-            ////Create nested class
-            ////            .class nested private auto ansi sealed beforefieldinit '<Main>c__AnonStorey0'
-            ////            extends [mscorlib]System.Object
+            rootnode.Accept(new XamlNodeVisitor((node, parent) => node.Parent = parent), null);
+            rootnode.Accept(new EXamlExpandMarkupsVisitor(visitorContext), null);
+            rootnode.Accept(new PruneIgnoredNodesVisitor(), null);
+            rootnode.Accept(new EXamlCreateObjectVisitor(visitorContext), null);
+            rootnode.Accept(new EXamlSetNamescopesAndRegisterNamesVisitor(visitorContext), null);
+            rootnode.Accept(new EXamlSetFieldVisitor(visitorContext), null);
+            rootnode.Accept(new EXamlSetResourcesVisitor(visitorContext), null);
+            rootnode.Accept(new EXamlSetPropertiesVisitor(visitorContext, true), null);
 
+            var eXamlString = visitorContext.GenerateEXamlString();
 
-            //var module = parentContext.Module;
-            //var anonType = new TypeDefinition(
-            //    null,
-            //    "<" + parentContext.Body.Method.Name + ">_anonXamlCDataTemplate_" + dtcount++,
-            //    TypeAttributes.BeforeFieldInit |
-            //    TypeAttributes.Sealed |
-            //    TypeAttributes.NestedPrivate) {
-            //    BaseType = module.TypeSystem.Object,
-            //    CustomAttributes = {
-            //        new CustomAttribute (module.ImportCtorReference(("mscorlib", "System.Runtime.CompilerServices", "CompilerGeneratedAttribute"), parameterTypes: null)),
-            //    }
-            //};
+            var parentTyperef = parentContext.Module.ImportReference(parentNode.XmlType.GetTypeReference(parentContext.Module, parentNode));
 
-            //parentContext.Body.Method.DeclaringType.NestedTypes.Add(anonType);
-            //var ctor = anonType.AddDefaultConstructor();
-
-            //var loadTemplate = new MethodDefinition("LoadDataTemplate",
-            //    MethodAttributes.Assembly | MethodAttributes.HideBySig,
-            //    module.TypeSystem.Object);
-            //loadTemplate.Body.InitLocals = true;
-            //anonType.Methods.Add(loadTemplate);
-
-            //var parentValues = new FieldDefinition("parentValues", FieldAttributes.Assembly, module.ImportArrayReference(("mscorlib", "System", "Object")));
-            //anonType.Fields.Add(parentValues);
-
-            //TypeReference rootType = null;
-            //var vdefRoot = parentContext.Root as VariableDefinition;
-            //if (vdefRoot != null)
-            //    rootType = vdefRoot.VariableType;
-            //var fdefRoot = parentContext.Root as FieldDefinition;
-            //if (fdefRoot != null)
-            //    rootType = fdefRoot.FieldType;
-
-            //var root = new FieldDefinition("root", FieldAttributes.Assembly, rootType);
-            //anonType.Fields.Add(root);
-
-            ////Fill the loadTemplate Body
-            //var templateIl = loadTemplate.Body.GetILProcessor();
-            //templateIl.Emit(OpCodes.Nop);
-            //var templateContext = new ILContext(templateIl, loadTemplate.Body, module, parentValues)
-            //{
-            //    Root = root
-            //};
-            //node.Accept(new CreateObjectVisitor(templateContext), null);
-            //node.Accept(new SetNamescopesAndRegisterNamesVisitor(templateContext), null);
-            //node.Accept(new SetFieldVisitor(templateContext), null);
-            //node.Accept(new SetResourcesVisitor(templateContext), null);
-            //node.Accept(new SetPropertiesVisitor(templateContext, stopOnResourceDictionary: true), null);
-
-            //templateIl.Emit(OpCodes.Ldloc, templateContext.Variables[node]);
-            //templateIl.Emit(OpCodes.Ret);
-
-            ////Instanciate nested class
-            //var parentIl = parentContext.IL;
-            //parentIl.Emit(OpCodes.Newobj, ctor);
-
-            ////Copy required local vars
-            //parentIl.Emit(OpCodes.Dup); //Duplicate the nestedclass instance
-            //parentIl.Append(node.PushParentObjectsArray(parentContext));
-            //parentIl.Emit(OpCodes.Stfld, parentValues);
-            //parentIl.Emit(OpCodes.Dup); //Duplicate the nestedclass instance
-            //if (parentContext.Root is VariableDefinition)
-            //    parentIl.Emit(OpCodes.Ldloc, parentContext.Root as VariableDefinition);
-            //else if (parentContext.Root is FieldDefinition)
-            //{
-            //    parentIl.Emit(OpCodes.Ldarg_0);
-            //    parentIl.Emit(OpCodes.Ldfld, parentContext.Root as FieldDefinition);
-            //}
-            //else
-            //    throw new InvalidProgramException();
-            //parentIl.Emit(OpCodes.Stfld, root);
-
-            ////SetDataTemplate
-            //parentIl.Emit(Ldftn, loadTemplate);
-            //parentIl.Emit(Newobj, module.ImportCtorReference(("mscorlib", "System", "Func`1"),
-            //                                                 classArguments: new[] { ("mscorlib", "System", "Object") },
-            //                                                 paramCount: 2));
-
-            //parentContext.IL.Emit(OpCodes.Callvirt, module.ImportPropertySetterReference((XamlTask.bindingAssemblyName, XamlTask.bindingInternalNameSpace, "IDataTemplate"), propertyName: "LoadTemplate"));
-
-            //loadTemplate.Body.Optimize();
+            if (parentContext.Values[parentNode] is EXamlCreateObject eXamlObject)
+            {
+                eXamlObject.IsValid = false;
+                parentContext.Values[parentNode] = new EXamlCreateDataTemplate(parentContext, parentTyperef, eXamlString);
+            }
         }
 
         bool TrySetRuntimeName(XmlName propertyName, EXamlCreateObject variableDefinition, ValueNode node)

@@ -21,6 +21,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Tizen.NUI.Binding;
+using Tizen.NUI.EXaml.Build.Tasks;
 using Tizen.NUI.Xaml;
 using Tizen.NUI.Xaml.Build.Tasks;
 
@@ -40,17 +41,18 @@ namespace Tizen.NUI.EXaml
 
             ret += "[";
 
-            ret += String.Format("({0} {1} {2})", 
-                GetValueString(instance),
-                GetValueString(definedProperties.GetIndex(property.DeclaringType, property)),
-                GetValueString(value));
+            ret += String.Format("({0} {1} {2})",
+                eXamlContext.GetValueString(instance),
+                eXamlContext.GetValueString(eXamlContext.definedProperties.GetIndex(property.DeclaringType, property)),
+                eXamlContext.GetValueString(value));
 
             ret += "]\n";
 
             return ret;
         }
 
-        public EXamlSetProperty(EXamlCreateObject instance, string propertyName, object value)
+        public EXamlSetProperty(EXamlContext context, EXamlCreateObject instance, string propertyName, object value)
+            : base(context)
         {
             var property = instance.Type.GetProperty(fi=>fi.Name==propertyName, out declareTypeRef);
             if (null != property)
@@ -99,7 +101,7 @@ namespace Tizen.NUI.EXaml
 
                 this.instance.AddProperty(declareTypeRef, property);
 
-                EXamlOperation.eXamlOperations.Add(this);
+                eXamlContext.eXamlOperations.Add(this);
             }
             else
             {

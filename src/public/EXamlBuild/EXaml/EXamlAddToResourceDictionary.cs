@@ -20,6 +20,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Tizen.NUI.Binding;
+using Tizen.NUI.EXaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
 {
@@ -34,7 +35,7 @@ namespace Tizen.NUI.EXaml
                 if (null != key)
                 {
                     ret += String.Format("*({0} {1} {2})*\n",
-                       GetValueString(instance), GetValueString(key), GetValueString(value));
+                       eXamlContext.GetValueString(instance), eXamlContext.GetValueString(key), eXamlContext.GetValueString(value));
                 }
                 else
                 {
@@ -48,22 +49,22 @@ namespace Tizen.NUI.EXaml
             }
         }
 
-        public EXamlAddToResourceDictionary(EXamlCreateObject @object, string key, object value)
+        public EXamlAddToResourceDictionary(EXamlContext context, EXamlCreateObject @object, string key, object value)
+            : base(context)
         {
             instance = @object;
             this.key = key;
             this.value = value;
-            EXamlOperation.eXamlOperations.Add(this);
+            eXamlContext.eXamlOperations.Add(this);
 
-            resourceDictionary.Add(key, value);
+            eXamlContext.resourceDictionary.Add(key, value);
         }
 
-        public EXamlAddToResourceDictionary(EXamlCreateObject @object, EXamlCreateObject value)
+        public EXamlAddToResourceDictionary(EXamlContext context, EXamlCreateObject @object, EXamlCreateObject value)
+            : base(context)
         {
-            EXamlOperation.eXamlOperations.Add(this);
+            eXamlContext.eXamlOperations.Add(this);
         }
-
-        internal static Dictionary<string, object> resourceDictionary = new Dictionary<string, object>();
 
         private EXamlCreateObject instance;
         private string key;

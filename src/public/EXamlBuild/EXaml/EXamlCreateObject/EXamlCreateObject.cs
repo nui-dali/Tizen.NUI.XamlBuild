@@ -20,11 +20,12 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using Tizen.NUI.Binding;
+using Tizen.NUI.EXaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
 {
     //use {}
-    public class EXamlCreateObject : EXamlOperation
+    internal class EXamlCreateObject : EXamlOperation
     {
         internal override string Write()
         {
@@ -53,7 +54,7 @@ namespace Tizen.NUI.EXaml
 
             if (true == isStaticInstance)
             {
-                int typeIndex = GetTypeIndex(Type);
+                int typeIndex = eXamlContext.GetTypeIndex(Type);
 
                 if (0 > typeIndex)
                 {
@@ -62,18 +63,18 @@ namespace Tizen.NUI.EXaml
 
                 if (MemberOfStaticInstance is FieldReference field)
                 {
-                    ret += $"{{{GetValueString(null)} {GetValueString(field.Name)}}} {GetValueString(typeIndex)}";
+                    ret += $"{{{eXamlContext.GetValueString(null)} {eXamlContext.GetValueString(field.Name)}}} {eXamlContext.GetValueString(typeIndex)}";
                 }
                 else if (MemberOfStaticInstance is PropertyReference property)
                 {
-                    ret += $"{{{GetValueString(property.Name)} {GetValueString(null)}}} {GetValueString(typeIndex)}";
+                    ret += $"{{{eXamlContext.GetValueString(property.Name)} {eXamlContext.GetValueString(null)}}} {eXamlContext.GetValueString(typeIndex)}";
                 }
             }
             else
             {
                 if (null != XFactoryMethod)
                 {
-                    ret += "[" + GetValueString(definedMethods.IndexOf((XFactoryMethod.DeclaringType, XFactoryMethod))) + "] ";
+                    ret += "[" + eXamlContext.GetValueString(eXamlContext.definedMethods.IndexOf((XFactoryMethod.DeclaringType, XFactoryMethod))) + "] ";
                 }
 
                 if (0 < paramsList.Count)
@@ -82,7 +83,7 @@ namespace Tizen.NUI.EXaml
 
                     foreach (var param in paramsList)
                     {
-                        ret += GetValueString(param);
+                        ret += eXamlContext.GetValueString(param);
                     }
 
                     ret += ")";
@@ -95,19 +96,19 @@ namespace Tizen.NUI.EXaml
                 else if (true == Type.Resolve()?.IsEnum)
                 {
                     ret += String.Format("o({0} {1})o ",
-                        GetValueString(GetTypeIndex(Type)),
-                        GetValueString(Instance));
+                        eXamlContext.GetValueString(eXamlContext.GetTypeIndex(Type)),
+                        eXamlContext.GetValueString(Instance));
                 }
                 else
                 {
-                    int typeIndex = GetTypeIndex(Type);
+                    int typeIndex = eXamlContext.GetTypeIndex(Type);
 
                     if (-1 == typeIndex)
                     {
                         string message = String.Format("Can't find type {0}\n", Type.FullName);
                         throw new Exception(message);
                     }
-                    ret += GetValueString(typeIndex);
+                    ret += eXamlContext.GetValueString(typeIndex);
                 }
             }
 
@@ -138,7 +139,8 @@ namespace Tizen.NUI.EXaml
             }
         }
 
-        public EXamlCreateObject(object instance, TypeReference type, object[] @params = null)
+        public EXamlCreateObject(EXamlContext context, object instance, TypeReference type, object[] @params = null)
+            : base(context)
         {
             if (null == type.Resolve())
             {
@@ -156,13 +158,14 @@ namespace Tizen.NUI.EXaml
                 }
             }
 
-            EXamlOperation.eXamlOperations.Add(this);
+            eXamlContext.eXamlOperations.Add(this);
 
-            Index = eXamlCreateObjects.Count;
-            eXamlCreateObjects.Add(this);
+            Index = eXamlContext.eXamlCreateObjects.Count;
+            eXamlContext.eXamlCreateObjects.Add(this);
         }
 
-        public EXamlCreateObject(object instance, TypeReference type, MethodDefinition xFactoryMethod, object[] @params = null)
+        public EXamlCreateObject(EXamlContext context, object instance, TypeReference type, MethodDefinition xFactoryMethod, object[] @params = null)
+            : base(context)
         {
             if (null == type.Resolve())
             {
@@ -180,14 +183,14 @@ namespace Tizen.NUI.EXaml
                 }
             }
 
-            EXamlOperation.eXamlOperations.Add(this);
+            eXamlContext.eXamlOperations.Add(this);
 
-            Index = eXamlCreateObjects.Count;
+            Index = eXamlContext.eXamlCreateObjects.Count;
             XFactoryMethod = xFactoryMethod;
-            eXamlCreateObjects.Add(this);
+            eXamlContext.eXamlCreateObjects.Add(this);
         }
 
-        public static EXamlCreateObject GetStaticInstance(TypeReference type, FieldReference field, PropertyReference property)
+        public static EXamlCreateObject GetStaticInstance(EXamlContext context, TypeReference type, FieldReference field, PropertyReference property)
         {
             MemberReference memberRef = null;
 
@@ -205,19 +208,20 @@ namespace Tizen.NUI.EXaml
                 return null;
             }
 
-            if (StaticInstances.ContainsKey((type, memberRef)))
+            if (context.StaticInstances.ContainsKey((type, memberRef)))
             {
-                return StaticInstances[(type, memberRef)];
+                return context.StaticInstances[(type, memberRef)];
             }
             else
             {
-                var staticInstance = new EXamlCreateObject(type, field, property);
-                StaticInstances.Add((type, memberRef), staticInstance);
+                var staticInstance = new EXamlCreateObject(context, type, field, property);
+                context.StaticInstances.Add((type, memberRef), staticInstance);
                 return staticInstance;
             }
         }
 
-        public EXamlCreateObject(TypeReference type, FieldReference field, PropertyReference property)
+        public EXamlCreateObject(EXamlContext context, TypeReference type, FieldReference field, PropertyReference property)
+            : base(context)
         {
             MemberReference memberRef = null;
 
@@ -234,10 +238,10 @@ namespace Tizen.NUI.EXaml
             MemberOfStaticInstance = memberRef;
             isStaticInstance = true;
 
-            EXamlOperation.eXamlOperations.Add(this);
+            eXamlContext.eXamlOperations.Add(this);
 
-            Index = eXamlCreateObjects.Count;
-            eXamlCreateObjects.Add(this);
+            Index = eXamlContext.eXamlCreateObjects.Count;
+            eXamlContext.eXamlCreateObjects.Add(this);
         }
 
         internal bool IsValid
@@ -280,11 +284,6 @@ namespace Tizen.NUI.EXaml
             get;
         } = new List<object>();
 
-        internal static List<EXamlCreateObject> eXamlCreateObjects
-        {
-            get;
-        } = new List<EXamlCreateObject>();
-
         internal EXamlDefinitionList<PropertyDefinition> PropertyList
         {
             get;
@@ -317,17 +316,6 @@ namespace Tizen.NUI.EXaml
                 BindableProperties.Add(bindalbeProperty.Resolve());
             }
         }
-
-        internal static void ClearStaticThing()
-        {
-            eXamlCreateObjects.Clear();
-            StaticInstances.Clear();
-        }
-
-        private static Dictionary<(TypeReference, MemberReference), EXamlCreateObject> StaticInstances
-        {
-            get;
-        } = new Dictionary<(TypeReference, MemberReference), EXamlCreateObject>();
 
         private bool isStaticInstance = false;
     }

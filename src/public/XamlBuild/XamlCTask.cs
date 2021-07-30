@@ -482,8 +482,6 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Replacing {0}.InitializeComponent ()");
             Exception e;
 
-            EXamlOperation.Clear();
-
             var visitorContext = new EXamlContext(typeDef);
 
             if (!TryCoreCompile(typeDef, rootnode, visitorContext, out e))
@@ -514,7 +512,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
                 var examlFilePath = examlDir + typeDef.FullName + ".examl";
 
-                EXamlOperation.WriteOpertions(examlFilePath);
+                EXamlOperation.WriteOpertions(examlFilePath, visitorContext);
             }
 
             return true;
@@ -714,7 +712,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 XmlTypeExtensions.s_xmlnsDefinitions?.Clear();
                 XmlTypeExtensions.s_xmlnsDefinitions = null;
 
-                visitorContext.Values[rootnode] = new EXamlCreateObject(null, rootnode.TypeReference);
+                visitorContext.Values[rootnode] = new EXamlCreateObject(visitorContext, null, rootnode.TypeReference);
 
                 rootnode.Accept(new XamlNodeVisitor((node, parent) => node.Parent = parent), null);
                 rootnode.Accept(new EXamlExpandMarkupsVisitor(visitorContext), null);

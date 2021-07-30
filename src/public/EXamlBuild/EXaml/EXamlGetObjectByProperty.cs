@@ -18,6 +18,7 @@ using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Tizen.NUI.EXaml.Build.Tasks;
 using Tizen.NUI.Xaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
@@ -31,8 +32,8 @@ namespace Tizen.NUI.EXaml
             {
                 string ret = "";
                 ret += String.Format("`({0} {1})`\n",
-                       GetValueString(instance),
-                       GetValueString(propertyName));
+                       eXamlContext.GetValueString(instance),
+                       eXamlContext.GetValueString(propertyName));
                 return ret;
             }
             else
@@ -41,26 +42,15 @@ namespace Tizen.NUI.EXaml
             }
         }
 
-        internal EXamlGetObjectByProperty(EXamlCreateObject instance, string propertyName)
+        internal EXamlGetObjectByProperty(EXamlContext context, EXamlCreateObject instance, string propertyName)
+            : base(context)
         {
             this.instance = instance;
             this.propertyName = propertyName;
-            objects.Add(this);
+            eXamlContext.objectsAccordingToProperty.Add(this);
 
-            EXamlOperation.eXamlOperations.Add(this);
+            eXamlContext.eXamlOperations.Add(this);
         }
-
-        internal static int GetIndex(EXamlGetObjectByProperty eXamlObjectFromProperty)
-        {
-            return objects.IndexOf(eXamlObjectFromProperty);
-        }
-
-        internal static void ClearList()
-        {
-            objects.Clear();
-        }
-
-        private static List<EXamlGetObjectByProperty> objects = new List<EXamlGetObjectByProperty>();
 
         private EXamlCreateObject instance;
         private string propertyName;

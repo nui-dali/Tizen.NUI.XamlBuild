@@ -6,12 +6,14 @@ using Tizen.NUI.EXaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
 {
-    internal class EXamlCreateArrayObject : EXamlCreateObject
+    internal class EXamlCreateDataTemplate : EXamlCreateObject
     {
-        public EXamlCreateArrayObject(EXamlContext context, TypeReference type, List<object> items) : base(context, null, type)
+        public EXamlCreateDataTemplate(EXamlContext context, TypeReference type, string content) : base(context, null, type)
         {
-            this.items = items;
+            indexRangeOfContent = eXamlContext.GetLongStringIndexs(content);
         }
+
+        private (int, int) indexRangeOfContent;
 
         internal override string Write()
         {
@@ -25,21 +27,14 @@ namespace Tizen.NUI.EXaml
 
             ret += sign + "(";
 
-            ret += $"{eXamlContext.GetValueString(0)} ";
+            ret += $"{eXamlContext.GetValueString(1)} ";
             ret += $"{eXamlContext.GetValueString(eXamlContext.GetTypeIndex(Type))} ";
-
-            ret += "(";
-            foreach (var item in items)
-            {
-                ret += $"{eXamlContext.GetValueString(item)} ";
-            }
-            ret += ")";
+            ret += $"{eXamlContext.GetValueString(indexRangeOfContent.Item1)} ";
+            ret += $"{eXamlContext.GetValueString(indexRangeOfContent.Item2)} ";
 
             ret += ")" + sign + "\n";
 
             return ret;
         }
-
-        private List<object> items;
     }
 }
