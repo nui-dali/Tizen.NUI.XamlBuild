@@ -2,6 +2,7 @@ using System;
 using Tizen.NUI.Binding.Internals;
 using Tizen.NUI.Binding;
 using Tizen.NUI.EXaml;
+using Tizen.NUI.EXaml.Build.Tasks;
 
 namespace Tizen.NUI.Xaml
 {
@@ -10,9 +11,9 @@ namespace Tizen.NUI.Xaml
     {
         public string Name { get; set; }
 
-        public object ProvideValue()
+        public object ProvideValue(EXamlContext context)
         {
-            return EXamlRegisterXName.GetObjectByXName(Name);
+            return context.GetObjectByXName(Name);
         }
 
         public object ProvideValue(IServiceProvider serviceProvider)

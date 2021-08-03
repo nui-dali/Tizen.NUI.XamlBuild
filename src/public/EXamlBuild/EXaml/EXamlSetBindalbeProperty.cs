@@ -21,6 +21,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Tizen.NUI.Binding;
+using Tizen.NUI.EXaml.Build.Tasks;
 using Tizen.NUI.Xaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
@@ -39,17 +40,18 @@ namespace Tizen.NUI.EXaml
 
             ret += "!";
 
-            ret += String.Format("({0} {1} {2})", 
-                GetValueString(Instance),
-                GetValueString(definedBindableProperties.IndexOf(BindableProperty.Resolve())),
-                GetValueString(Value));
+            ret += String.Format("({0} {1} {2})",
+                eXamlContext.GetValueString(Instance),
+                eXamlContext.GetValueString(eXamlContext.definedBindableProperties.IndexOf(BindableProperty.Resolve())),
+                eXamlContext.GetValueString(Value));
 
             ret += "!\n";
 
             return ret;
         }
 
-        public EXamlSetBindalbeProperty(EXamlCreateObject @object, MemberReference bindableProperty, object value)
+        public EXamlSetBindalbeProperty(EXamlContext context, EXamlCreateObject @object, MemberReference bindableProperty, object value)
+            : base(context)
         {
             Instance = @object;
             BindableProperty = bindableProperty;
@@ -57,7 +59,7 @@ namespace Tizen.NUI.EXaml
 
             Instance.AddBindableProperty(bindableProperty);
 
-            EXamlOperation.eXamlOperations.Add(this);
+            eXamlContext.eXamlOperations.Add(this);
         }
 
         public EXamlCreateObject Instance

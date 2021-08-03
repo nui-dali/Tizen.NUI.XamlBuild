@@ -24,37 +24,35 @@ using Tizen.NUI.EXaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
 {
-    //use ()
-    internal class EXamlImplicitOperator : EXamlOperation
+    //use ~~
+    internal class EXamlAddToCollectionInstance : EXamlOperation
     {
         internal override string Write()
         {
-            if (false == Instance.IsValid)
-            {
-                return "";
-            }
-
             string ret = "";
-            ret += String.Format("({0} {1})\n", eXamlContext.GetValueString(Instance), eXamlContext.GetValueString(Value));
+            string sign = "a";
+
+            ret += sign + "(";
+
+            ret += $"{eXamlContext.GetValueString(2)} ";
+            ret += $"{eXamlContext.GetValueString(instance)} ";
+            ret += $"{eXamlContext.GetValueString(value)} ";
+
+            ret += ")" + sign + "\n";
+
             return ret;
         }
 
-        public EXamlImplicitOperator(EXamlContext context, EXamlCreateObject @object, object value)
+        public EXamlAddToCollectionInstance(EXamlContext context, EXamlCreateObject instance, object value)
             : base(context)
         {
-            Instance = @object;
-            Value = value;
+            this.instance = instance;
+            this.value = value;
+
             eXamlContext.eXamlOperations.Add(this);
         }
 
-        public EXamlCreateObject Instance
-        {
-            get;
-        }
-
-        public object Value
-        {
-            get;
-        }
+        private EXamlCreateObject instance;
+        private object value;
     }
 }

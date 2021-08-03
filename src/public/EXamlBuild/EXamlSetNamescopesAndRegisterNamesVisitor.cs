@@ -51,7 +51,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             Context.Scopes[node] = Context.Scopes[parentNode];
             if (!IsXNameProperty(node, parentNode))
                 return;
-            new EXaml.EXamlRegisterXName(Context.Values[parentNode], node.Value as string);
+            new EXaml.EXamlRegisterXName(Context, Context.Values[parentNode], node.Value as string);
             //RegisterName((string)node.Value, Context.Scopes[node].Item1, Context.Scopes[node].Item2, Context.Variables[(IElementNode)parentNode], node);
             //SetStyleId((string)node.Value, Context.Variables[(IElementNode)parentNode]);
         }

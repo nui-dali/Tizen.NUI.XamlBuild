@@ -1398,7 +1398,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             var module = parentContext.Module;
             var anonType = new TypeDefinition(
                 null,
-                "<" + parentContext.Body.Method.Name + ">_anonXamlCDataTemplate_" + dtcount++,
+                "_" + parentContext.Body.Method.Name + "_anonXamlCDataTemplate_" + dtcount++,
                 TypeAttributes.BeforeFieldInit |
                 TypeAttributes.Sealed |
                 TypeAttributes.NestedPrivate) {
@@ -1473,7 +1473,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                                                              classArguments: new[] { ("mscorlib", "System", "Object") },
                                                              paramCount: 2));
 
-            parentContext.IL.Emit(OpCodes.Callvirt, module.ImportPropertySetterReference((XamlCTask.bindingAssemblyName, XamlCTask.bindingInternalNameSpace, "IDataTemplate"), propertyName: "LoadTemplate"));
+            var setterRef = module.ImportPropertySetterReference((XamlCTask.bindingAssemblyName, XamlCTask.bindingNameSpace, "IDataTemplate"), propertyName: "LoadTemplate");
+            parentContext.IL.Emit(OpCodes.Callvirt, setterRef);
 
             loadTemplate.Body.Optimize();
         }

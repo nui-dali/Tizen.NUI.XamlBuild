@@ -21,6 +21,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Tizen.NUI.Binding;
+using Tizen.NUI.EXaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
 {
@@ -36,20 +37,21 @@ namespace Tizen.NUI.EXaml
 
             string ret = "";
             ret += String.Format("^({0} {1} d{2}d)^\n",
-                GetValueString(Parent), 
-                GetValueString(Child),
-                definedMethods.GetIndex(Method.DeclaringType, Method));
+                eXamlContext.GetValueString(Parent),
+                eXamlContext.GetValueString(Child),
+                eXamlContext.definedMethods.GetIndex(Method.DeclaringType, Method));
             return ret;
         }
 
-        public EXamlAddObject(EXamlCreateObject parent, object child, MethodDefinition addMethod)
+        public EXamlAddObject(EXamlContext context, EXamlCreateObject parent, object child, MethodDefinition addMethod)
+            : base(context)
         {
             Parent = parent;
             Child = child;
             Method = addMethod;
 
-            EXamlOperation.eXamlOperations.Add(this);
-            eXamlAddObjectList.Add(this);
+            eXamlContext.eXamlOperations.Add(this);
+            eXamlContext.eXamlAddObjectList.Add(this);
         }
 
         public EXamlCreateObject Parent
@@ -66,10 +68,5 @@ namespace Tizen.NUI.EXaml
         {
             get;
         }
-
-        internal static List<EXamlAddObject> eXamlAddObjectList
-        {
-            get;
-        } = new List<EXamlAddObject>();
     }
 }

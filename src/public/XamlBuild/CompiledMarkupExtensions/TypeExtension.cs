@@ -70,7 +70,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
             context.TypeExtensions[node] = typeref ?? throw new XamlParseException($"Can't resolve type `{valueNode.Value}'.", node as IXmlLineInfo);
 
-            return new EXamlCreateObject(typeref, module.ImportReference(typeof(TypeReference)));
+            return new EXamlCreateObject(context, typeref, module.ImportReference(typeof(TypeReference)));
         }
     }
 }

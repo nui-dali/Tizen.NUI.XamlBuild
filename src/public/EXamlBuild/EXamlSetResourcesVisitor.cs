@@ -71,7 +71,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
                 if (realPropertyName == "XamlResources")
                 {
-                    new EXamlSetProperty(Context.Values[parentNode] as EXamlCreateObject, realPropertyName, Context.Values[node]);
+                    new EXamlSetProperty(Context, Context.Values[parentNode] as EXamlCreateObject, realPropertyName, Context.Values[node]);
                     //Context.IL.Append(SetPropertiesVisitor.SetPropertyValue(Context.Variables[(IElementNode)parentNode], propertyName, node, Context, node));
                     return;
                 }

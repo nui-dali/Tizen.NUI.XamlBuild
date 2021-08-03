@@ -3,6 +3,7 @@ using Tizen.NUI.Binding.Internals;
 using Tizen.NUI.Binding;
 using Tizen.NUI.EXaml;
 using Mono.Cecil;
+using Tizen.NUI.EXaml.Build.Tasks;
 
 namespace Tizen.NUI.Xaml
 {
@@ -31,12 +32,12 @@ namespace Tizen.NUI.Xaml
 
         public TypedBindingBase TypedBinding { get; set; }
 
-        public EXamlCreateObject ProvideValue(ModuleDefinition module)
+        public EXamlCreateObject ProvideValue(EXamlContext context, ModuleDefinition module)
         {
             if (TypedBinding == null)
             {
                 var newTypeRef = module.ImportReference(typeof(Tizen.NUI.Binding.Binding));
-                return new EXamlCreateObject(null, newTypeRef, new object[] { Path, ModeInEXaml, Converter, ConverterParameter, StringFormat, Source });
+                return new EXamlCreateObject(context, null, newTypeRef, new object[] { Path, ModeInEXaml, Converter, ConverterParameter, StringFormat, Source });
             }
             else
             {

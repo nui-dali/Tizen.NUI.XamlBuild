@@ -20,6 +20,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Tizen.NUI.Binding;
+using Tizen.NUI.EXaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
 {
@@ -29,17 +30,18 @@ namespace Tizen.NUI.EXaml
         internal override string Write()
         {
             string ret = "";
-            ret += String.Format("&({0} \"{1}\")&\n", GetValueString(Instance), XName);
+            ret += String.Format("&({0} \"{1}\")&\n", eXamlContext.GetValueString(Instance), XName);
             return ret;
         }
 
-        public EXamlRegisterXName(object @object, string xName)
+        public EXamlRegisterXName(EXamlContext context, object @object, string xName)
+            : base(context)
         {
             Instance = @object;
             XName = xName;
-            EXamlOperation.eXamlOperations.Add(this);
+            eXamlContext.eXamlOperations.Add(this);
 
-            xNameToInstance.Add(xName, @object);
+            eXamlContext.xNameToInstance.Add(xName, @object);
         }
 
         public object Instance
@@ -51,21 +53,5 @@ namespace Tizen.NUI.EXaml
         {
             get;
         }
-
-        public static object GetObjectByXName(string xName)
-        {
-            object ret = null;
-            xNameToInstance.TryGetValue(xName, out ret);
-            return ret;
-        }
-
-        internal static void ClearStaticThing()
-        {
-            xNameToInstance.Clear();
-        }
-        private static Dictionary<string, object> xNameToInstance
-        {
-            get;
-        } = new Dictionary<string, object>();
     }
 }

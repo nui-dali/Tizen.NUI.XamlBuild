@@ -482,9 +482,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Replacing {0}.InitializeComponent ()");
             Exception e;
 
-            EXamlOperation.Clear();
+            var visitorContext = new EXamlContext(typeDef);
 
-            if (!TryCoreCompile(typeDef, rootnode, out e))
+            if (!TryCoreCompile(typeDef, rootnode, visitorContext, out e))
             {
                 LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
                 (thrownExceptions = thrownExceptions ?? new List<Exception>()).Add(e);
@@ -512,7 +512,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
                 var examlFilePath = examlDir + typeDef.FullName + ".examl";
 
-                EXamlOperation.WriteOpertions(examlFilePath);
+                EXamlOperation.WriteOpertions(examlFilePath, visitorContext);
             }
 
             return true;
@@ -705,16 +705,14 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             return nestType;
         }
 
-        bool TryCoreCompile(TypeDefinition typeDef, ILRootNode rootnode, out Exception exception)
+        bool TryCoreCompile(TypeDefinition typeDef, ILRootNode rootnode, EXamlContext visitorContext, out Exception exception)
         {
             try
             {
                 XmlTypeExtensions.s_xmlnsDefinitions?.Clear();
                 XmlTypeExtensions.s_xmlnsDefinitions = null;
 
-                var visitorContext = new EXamlContext(typeDef);
-
-                visitorContext.Values[rootnode] = new EXamlCreateObject(null, rootnode.TypeReference);
+                visitorContext.Values[rootnode] = new EXamlCreateObject(visitorContext, null, rootnode.TypeReference);
 
                 rootnode.Accept(new XamlNodeVisitor((node, parent) => node.Parent = parent), null);
                 rootnode.Accept(new EXamlExpandMarkupsVisitor(visitorContext), null);
