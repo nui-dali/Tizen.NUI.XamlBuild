@@ -308,7 +308,13 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                                 }
                                 else
                                 {
-                                    Context.Values[node] = valueNode.GetBaseValue(Context, typeref);
+                                    var valueItem = valueNode.GetBaseValue(Context, typeref);
+                                    if (null == valueItem)
+                                    {
+                                        throw new XamlParseException($"Can't convert collection item \"{vnode.Value}\" to object", node);
+                                    }
+
+                                    Context.Values[node] = valueItem;
                                 }
 
                                 canConvertCollectionItem = true;
