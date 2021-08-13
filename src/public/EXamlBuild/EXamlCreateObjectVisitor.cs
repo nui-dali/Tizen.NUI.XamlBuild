@@ -294,7 +294,9 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                     {
                         bool canConvertCollectionItem = false;
 
-                        if (node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null)
+                        if (!typeref.InheritsFromOrImplements(Context.Module.ImportReference(typeof(List<string>)).Resolve())
+                            &&
+                            node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null)
                         {
                             var valueNode = node.CollectionItems.First() as ValueNode;
 

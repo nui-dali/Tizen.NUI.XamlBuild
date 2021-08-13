@@ -241,12 +241,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
         private static MethodDefinition addDefOfCollection;
         private static bool IsAddMethodOfCollection(ModuleDefinition module, MethodDefinition methodDef)
         {
-            if (null == addDefOfCollection)
-            {
-                addDefOfCollection = module.ImportReference(typeof(List<string>).GetMethod("Add")).Resolve();
-            }
-
-            return methodDef == addDefOfCollection;
+            return module.ImportReference(typeof(List<string>)).InheritsFromOrImplements(methodDef.DeclaringType);
         }
 
         public static bool TryGetPropertyName(INode node, INode parentNode, out XmlName name)
