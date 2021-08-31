@@ -26,7 +26,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
             yield return Instruction.Create(OpCodes.Ldsfld, bpRef);
         }
 
-        public FieldReference GetBindablePropertyFieldReference(string value, ModuleDefinition module, BaseNode node)
+        static public FieldReference GetBindablePropertyFieldReference(string value, ModuleDefinition module, BaseNode node)
         {
             FieldReference bpRef = null;
             string typeName = null, propertyName = null;
@@ -38,10 +38,10 @@ namespace Tizen.NUI.Xaml.Core.XamlC
                     && (   (node.Parent as ElementNode)?.XmlType.Name == nameof(Setter)
                         || (node.Parent as ElementNode)?.XmlType.Name == nameof(XamlPropertyCondition))) {
                     if (parent.XmlType.NamespaceUri == XamlParser.XFUri &&
-                        (   parent.XmlType.Name == nameof(Trigger)
-                         || parent.XmlType.Name == nameof(DataTrigger)
-                         || parent.XmlType.Name == nameof(MultiTrigger)
-                         || parent.XmlType.Name == nameof(Style))) {
+                        (   parent.XmlType.Name == "Trigger"
+                         || parent.XmlType.Name == "DataTrigger"
+                         || parent.XmlType.Name == "MultiTrigger"
+                         || parent.XmlType.Name == "Style")) {
                         var ttnode = (parent as ElementNode).Properties [new XmlName("", "TargetType")];
                         if (ttnode is ValueNode)
                             typeName = (ttnode as ValueNode).Value as string;
@@ -50,7 +50,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
                     } else if (parent.XmlType.NamespaceUri == XamlParser.XFUri && parent.XmlType.Name == nameof(VisualState)) {
                         typeName = FindTypeNameForVisualState(parent, node);
                     }
-                } else if ((node.Parent as ElementNode)?.XmlType.NamespaceUri == XamlParser.XFUri && (node.Parent as ElementNode)?.XmlType.Name == nameof(Trigger))
+                } else if ((node.Parent as ElementNode)?.XmlType.NamespaceUri == XamlParser.XFUri && (node.Parent as ElementNode)?.XmlType.Name == "Trigger")
                     typeName = ((node.Parent as ElementNode).Properties [new XmlName("", "TargetType")] as ValueNode).Value as string;
                 propertyName = parts [0];
             } else if (parts.Length == 2) {

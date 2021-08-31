@@ -31,6 +31,12 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             var yname = y.FullName.EndsWith("&", StringComparison.InvariantCulture) ? y.FullName.Substring(0, y.FullName.Length - 1) : y.FullName;
             if (xname != yname)
                 return false;
+
+            if ("Tizen.NUI.Binding.BindingBase" == xname)
+            {
+                return true;
+            }
+
             var xasm = GetAssembly(x);
             var yasm = GetAssembly(y);
 

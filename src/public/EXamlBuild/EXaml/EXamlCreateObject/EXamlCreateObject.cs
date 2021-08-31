@@ -70,6 +70,17 @@ namespace Tizen.NUI.EXaml
                     ret += $"{{{eXamlContext.GetValueString(property.Name)} {eXamlContext.GetValueString(null)}}} {eXamlContext.GetValueString(typeIndex)}";
                 }
             }
+            else if (true == isTypeObject)
+            {
+                int typeIndex = eXamlContext.GetTypeIndex(Type);
+
+                if (0 > typeIndex)
+                {
+                    throw new Exception($"Can't get type index of {Type.FullName}");
+                }
+
+                ret += $"`{eXamlContext.GetValueString(typeIndex)}`";
+            }
             else
             {
                 if (null != XFactoryMethod)
@@ -157,6 +168,18 @@ namespace Tizen.NUI.EXaml
                     paramsList.Add(obj);
                 }
             }
+
+            eXamlContext.eXamlOperations.Add(this);
+
+            Index = eXamlContext.eXamlCreateObjects.Count;
+            eXamlContext.eXamlCreateObjects.Add(this);
+        }
+
+        public EXamlCreateObject(EXamlContext context, TypeReference type) : base(context)
+        {
+
+            isTypeObject = true;
+            Type = type;
 
             eXamlContext.eXamlOperations.Add(this);
 
@@ -318,5 +341,7 @@ namespace Tizen.NUI.EXaml
         }
 
         private bool isStaticInstance = false;
+
+        private bool isTypeObject = false;
     }
 }

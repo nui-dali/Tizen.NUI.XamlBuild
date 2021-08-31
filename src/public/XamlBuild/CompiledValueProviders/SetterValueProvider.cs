@@ -20,7 +20,7 @@ namespace Tizen.NUI.Xaml.Core.XamlC
                 valueNode = ((IElementNode)node).CollectionItems[0];
 
             var bpNode = ((ValueNode)((IElementNode)node).Properties[new XmlName("", "Property")]);
-            var bpRef = (new BindablePropertyConverter()).GetBindablePropertyFieldReference((string)bpNode.Value, module, bpNode);
+            var bpRef = BindablePropertyConverter.GetBindablePropertyFieldReference((string)bpNode.Value, module, bpNode);
 
             if (SetterValueIsCollection(bpRef, module, node, context))
                 yield break;
