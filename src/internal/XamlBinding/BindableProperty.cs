@@ -13,7 +13,6 @@ namespace Tizen.NUI.Binding
     /// A BindableProperty is a backing store for properties allowing bindings on BindableObject.
     /// </summary>
     [DebuggerDisplay("{PropertyName}")]
-    [TypeConverter(typeof(BindablePropertyConverter))]
     [EditorBrowsable(EditorBrowsableState.Never)]
     internal sealed class BindableProperty
     {

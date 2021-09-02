@@ -27,6 +27,7 @@ using Tizen.NUI.Binding.Internals;
 using Tizen.NUI.EXaml;
 using Tizen.NUI.Xaml;
 using Tizen.NUI.Xaml.Build.Tasks;
+using Tizen.NUI.Xaml.Core.XamlC;
 using static Mono.Cecil.Cil.Instruction;
 using static Mono.Cecil.Cil.OpCodes;
 
@@ -770,7 +771,11 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             var vardef = context.Variables[elementNode];
             var implicitOperator = vardef.VariableType.GetImplicitOperatorTo(propertyType, module);
 
+            var value = context.Values[elementNode] as EXamlCreateObject;
+
             if (vardef.VariableType.InheritsFromOrImplements(propertyType))
+                return true;
+            if (null != value && value.GetType().InheritsFromOrImplements(propertyType))
                 return true;
             if (implicitOperator != null)
                 return true;
@@ -842,15 +847,24 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
             if (valueNode != null)
             {
-                var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { property, propertyType.ResolveCached() });
-                if (null != converterType)
+                if ("Tizen.NUI.Binding.BindableProperty" == propertyType.FullName)
                 {
-                    var converterValue = new EXamlValueConverterFromString(context, converterType.Resolve(), valueNode.Value as string);
-                    context.Values[node] = new EXamlCreateObject(context, converterValue, propertyType);
+                    var bindableProperty = BindablePropertyConverter.GetBindablePropertyFieldReference(valueNode.Value as string, module, node as BaseNode);
+                    var fieldRef = bindableProperty.DeclaringType.ResolveCached().Fields.FirstOrDefault(a => a.FullName == bindableProperty.FullName);
+                    context.Values[node] = new EXamlCreateObject(context, bindableProperty.DeclaringType, fieldRef, null);
                 }
                 else
                 {
-                    context.Values[node] = valueNode.GetBaseValue(context, property.PropertyType);
+                    var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { property, propertyType.ResolveCached() });
+                    if (null != converterType)
+                    {
+                        var converterValue = new EXamlValueConverterFromString(context, converterType.Resolve(), valueNode.Value as string);
+                        context.Values[node] = new EXamlCreateObject(context, converterValue, propertyType);
+                    }
+                    else
+                    {
+                        context.Values[node] = valueNode.GetBaseValue(context, property.PropertyType);
+                    }
                 }
             }
             else if (elementNode != null)
@@ -978,9 +992,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             adderRef = module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, module));
             var childType = GetParameterType(adderRef.Parameters[0]);
 
-            var valueNode = node as ValueNode;
-
-            if (null != valueNode)
+            if (node is ValueNode valueNode)
             {
                 if (true == valueNode.CanConvertValue(module, childType, (TypeReference)null))
                 {
@@ -998,6 +1010,11 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                     }
                     new EXamlAddToCollectionProperty(context, obj, context.Values[node]);
                 }
+            }
+            else if (node is ElementNode element)
+            {
+                var obj = new EXamlGetObjectByProperty(context, parent, propertyName);
+                new EXamlAddToCollectionProperty(context, obj, context.Values[node]);
             }
         }
 

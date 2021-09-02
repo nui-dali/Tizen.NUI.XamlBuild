@@ -180,9 +180,12 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                                                                                              "Tizen.NUI.Binding.ParameterAttribute")));
             }
             string missingCtorParameter = null;
+            List<object> parameterizedCtorParams = null;
+
             if (parameterizedCtorInfo != null && ValidateCtorArguments(parameterizedCtorInfo, node, out missingCtorParameter))
             {
                 ctorInfo = parameterizedCtorInfo;
+                parameterizedCtorParams = GetCtorArguments(parameterizedCtorInfo, node, Context);
                 //Fang
                 //IL_0000:  ldstr "foo"
                 //Context.IL.Append(PushCtorArguments(parameterizedCtorInfo, node));
@@ -286,9 +289,13 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
                     var accordingType = this.GetType().Assembly.GetType(typedef.FullName);
 
-                    if (null != accordingType)
+                    if (null != accordingType && accordingType != typeof(Binding.Setter))
                     {
                         Context.Values[node] = new EXamlCreateObject(Context, Activator.CreateInstance(accordingType), typeref);
+                    }
+                    else if (null != parameterizedCtorParams)
+                    {
+                        Context.Values[node] = new EXamlCreateObject(Context, null, typeref, parameterizedCtorParams.ToArray());
                     }
                     else
                     {
@@ -646,6 +653,56 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                         ret = null;
                     }
                     break;
+            }
+
+            return ret;
+        }
+
+        List<object> GetCtorArguments(MethodDefinition ctorinfo, ElementNode enode, EXamlContext context)
+        {
+            List<object> ret = null;
+
+            foreach (var parameter in ctorinfo.Parameters)
+            {
+                var propname =
+                    parameter.CustomAttributes.First(ca => ca.AttributeType.FullName == "Tizen.NUI.Binding.ParameterAttribute")
+                        .ConstructorArguments.First()
+                        .Value as string;
+                var node = enode.Properties[new XmlName("", propname)];
+                if (!enode.SkipProperties.Contains(new XmlName("", propname)))
+                    enode.SkipProperties.Add(new XmlName("", propname));
+
+                if (node is ValueNode valueNode)
+                {
+                    var valueType = parameter.ParameterType;
+
+                    if ("System.Type" == valueType.FullName)
+                    {
+                        var typeRef = XmlTypeExtensions.GetTypeReference(valueNode.Value as string, Module, node as BaseNode);
+                        context.Values[node] = new EXamlCreateObject(context, typeRef);
+                    }
+                    else
+                    {
+                        var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { parameter, parameter.ParameterType.ResolveCached() });
+
+                        if (null != converterType)
+                        {
+                            var converterValue = new EXamlValueConverterFromString(context, converterType.Resolve(), valueNode.Value as string);
+                            context.Values[node] = new EXamlCreateObject(context, converterValue, valueType);
+                        }
+                        else
+                        {
+                            context.Values[node] = valueNode.GetBaseValue(context, valueType);
+                        }
+                    }
+
+                    if (null == ret)
+                    {
+                        ret = new List<object>();
+                    }
+
+                    ret.Add(context.Values[node]);
+                }
             }
 
             return ret;
