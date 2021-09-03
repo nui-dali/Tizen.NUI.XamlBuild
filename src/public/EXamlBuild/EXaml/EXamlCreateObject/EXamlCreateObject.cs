@@ -36,22 +36,6 @@ namespace Tizen.NUI.EXaml
 
             string ret = "";
 
-            string signBegin = "", signEnd = "";
-
-            if (Instance is EXamlValueConverterFromString
-                ||
-                true == Type.Resolve()?.IsEnum)
-            {
-                signBegin = signEnd = "@";
-            }
-            else
-            {
-                signBegin = "{";
-                signEnd = "}";
-            }
-
-            ret += signBegin;
-
             if (true == isStaticInstance)
             {
                 int typeIndex = eXamlContext.GetTypeIndex(Type);
@@ -61,13 +45,22 @@ namespace Tizen.NUI.EXaml
                     throw new Exception($"Can't get type index of {Type.FullName}");
                 }
 
+                
                 if (MemberOfStaticInstance is FieldReference field)
                 {
-                    ret += $"{{{eXamlContext.GetValueString(null)} {eXamlContext.GetValueString(field.Name)}}} {eXamlContext.GetValueString(typeIndex)}";
+                    ret += String.Format("({0} ({1} {2} {3}))\n",
+                                      eXamlContext.GetValueString((int)EXamlOperationType.GetStaticObject),
+                                      eXamlContext.GetValueString(typeIndex),
+                                      eXamlContext.GetValueString(null),
+                                      eXamlContext.GetValueString(field.Name));
                 }
                 else if (MemberOfStaticInstance is PropertyReference property)
                 {
-                    ret += $"{{{eXamlContext.GetValueString(property.Name)} {eXamlContext.GetValueString(null)}}} {eXamlContext.GetValueString(typeIndex)}";
+                    ret += String.Format("({0} ({1} {2} {3}))\n",
+                                      eXamlContext.GetValueString((int)EXamlOperationType.GetStaticObject),
+                                      eXamlContext.GetValueString(typeIndex),
+                                      eXamlContext.GetValueString(property.Name),
+                                      eXamlContext.GetValueString(null));
                 }
             }
             else if (true == isTypeObject)
@@ -79,51 +72,71 @@ namespace Tizen.NUI.EXaml
                     throw new Exception($"Can't get type index of {Type.FullName}");
                 }
 
-                ret += $"`{eXamlContext.GetValueString(typeIndex)}`";
+                ret += String.Format("({0} ({1}))\n",
+                                      eXamlContext.GetValueString((int)EXamlOperationType.GetTypeObject),
+                                      eXamlContext.GetValueString(typeIndex));
             }
             else
             {
-                if (null != XFactoryMethod)
-                {
-                    ret += "[" + eXamlContext.GetValueString(eXamlContext.definedMethods.IndexOf((XFactoryMethod.DeclaringType, XFactoryMethod))) + "] ";
-                }
-
-                if (0 < paramsList.Count)
-                {
-                    ret += "(";
-
-                    foreach (var param in paramsList)
-                    {
-                        ret += eXamlContext.GetValueString(param);
-                    }
-
-                    ret += ")";
-                }
-
                 if (Instance is EXamlValueConverterFromString valueConverterFromString)
                 {
-                    ret += "q(" + valueConverterFromString.GetString() + ")q";
+                    ret += String.Format("({0} ({1}))\n",
+                                      eXamlContext.GetValueString((int)EXamlOperationType.GetObjectConvertedFromString),
+                                      valueConverterFromString.GetString());
                 }
                 else if (true == Type.Resolve()?.IsEnum)
                 {
-                    ret += String.Format("o({0} {1})o ",
-                        eXamlContext.GetValueString(eXamlContext.GetTypeIndex(Type)),
-                        eXamlContext.GetValueString(Instance));
+                    ret += String.Format("({0} ({1} {2}))\n",
+                                      eXamlContext.GetValueString((int)EXamlOperationType.GetEnumObject),
+                                      eXamlContext.GetValueString(eXamlContext.GetTypeIndex(Type)),
+                                      eXamlContext.GetValueString(Instance));
                 }
                 else
                 {
                     int typeIndex = eXamlContext.GetTypeIndex(Type);
+                    int xFactoryMethodIndex = -1;
+
+                    if (null != XFactoryMethod)
+                    {
+                        xFactoryMethodIndex = eXamlContext.definedMethods.IndexOf((XFactoryMethod.DeclaringType, XFactoryMethod));
+                    }
 
                     if (-1 == typeIndex)
                     {
                         string message = String.Format("Can't find type {0}\n", Type.FullName);
                         throw new Exception(message);
                     }
-                    ret += eXamlContext.GetValueString(typeIndex);
+
+                    string paramsStr = "";
+                    if (0 < paramsList.Count)
+                    {
+                        paramsStr += "(";
+                        
+                        foreach (var param in paramsList)
+                        {
+                            paramsStr += eXamlContext.GetValueString(param);
+                        }
+
+                        paramsStr += ")";
+                    }
+
+                    if (0 < paramsStr.Length)
+                    {
+                        ret += String.Format("({0} ({1} {2} {3}))\n",
+                            eXamlContext.GetValueString((int)EXamlOperationType.CreateObject),
+                            eXamlContext.GetValueString(typeIndex),
+                            eXamlContext.GetValueString(xFactoryMethodIndex),
+                            paramsStr);
+                    }
+                    else
+                    {
+                        ret += String.Format("({0} ({1} {2}))\n",
+                            eXamlContext.GetValueString((int)EXamlOperationType.CreateObject),
+                            eXamlContext.GetValueString(typeIndex),
+                            eXamlContext.GetValueString(xFactoryMethodIndex));
+                    }
                 }
             }
-
-            ret += signEnd + "\n";
             return ret;
         }
 
@@ -177,7 +190,6 @@ namespace Tizen.NUI.EXaml
 
         public EXamlCreateObject(EXamlContext context, TypeReference type) : base(context)
         {
-
             isTypeObject = true;
             Type = type;
 

@@ -37,16 +37,11 @@ namespace Tizen.NUI.EXaml
                 return "";
             }
 
-            string ret = "";
-
-            ret += "[";
-
-            ret += String.Format("({0} {1} {2})",
-                eXamlContext.GetValueString(instance),
-                eXamlContext.GetValueString(eXamlContext.definedProperties.GetIndex(property.DeclaringType, property)),
-                eXamlContext.GetValueString(value));
-
-            ret += "]\n";
+            string ret = String.Format("({0} ({1} {2} {3}))\n",
+                            eXamlContext.GetValueString((int)EXamlOperationType.SetProperty),
+                            eXamlContext.GetValueString(instance.Index),
+                            eXamlContext.GetValueString(eXamlContext.definedProperties.GetIndex(property.DeclaringType, property)),
+                            eXamlContext.GetValueString(value));
 
             return ret;
         }

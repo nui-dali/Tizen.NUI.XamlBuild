@@ -40,11 +40,12 @@ namespace Tizen.NUI.EXaml
 
             ret += "#";
 
-            ret += String.Format("({0} {1} {2} {3})",
-                eXamlContext.GetValueString(Instance),
-                eXamlContext.GetValueString(Element),
-                eXamlContext.GetValueString(eXamlContext.definedEvents.GetIndex(eventDef.DeclaringType, eventDef)),
-                eXamlContext.GetValueString(eXamlContext.definedMethods.GetIndex(Value.DeclaringType, Value)));
+            ret += String.Format("({0} ({1} {2} {3} {4}))\n",
+                                eXamlContext.GetValueString((int)EXamlOperationType.AddEvent),
+                                eXamlContext.GetValueString(Instance.Index),
+                                eXamlContext.GetValueString(Element.Index),
+                                eXamlContext.GetValueString(eXamlContext.definedEvents.GetIndex(eventDef.DeclaringType, eventDef)),
+                                eXamlContext.GetValueString(eXamlContext.definedMethods.GetIndex(Value.DeclaringType, Value)));
 
             ret += "#\n";
 

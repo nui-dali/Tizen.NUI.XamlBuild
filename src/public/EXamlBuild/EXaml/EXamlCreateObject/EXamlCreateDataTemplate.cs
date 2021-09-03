@@ -22,17 +22,11 @@ namespace Tizen.NUI.EXaml
                 return "";
             }
 
-            string ret = "";
-            string sign = "a";
-
-            ret += sign + "(";
-
-            ret += $"{eXamlContext.GetValueString(1)} ";
-            ret += $"{eXamlContext.GetValueString(eXamlContext.GetTypeIndex(Type))} ";
-            ret += $"{eXamlContext.GetValueString(indexRangeOfContent.Item1)} ";
-            ret += $"{eXamlContext.GetValueString(indexRangeOfContent.Item2)} ";
-
-            ret += ")" + sign + "\n";
+            string ret = String.Format("({0} ({1} {2} {3}))\n",
+                         eXamlContext.GetValueString((int)EXamlOperationType.CreateDataTemplate),
+                         eXamlContext.GetValueString(eXamlContext.GetTypeIndex(Type)),
+                         eXamlContext.GetValueString(indexRangeOfContent.Item1),
+                         eXamlContext.GetValueString(indexRangeOfContent.Item2));
 
             return ret;
         }

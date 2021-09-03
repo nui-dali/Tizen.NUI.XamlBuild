@@ -32,11 +32,12 @@ namespace Tizen.NUI.EXaml
         {
             if (Instance.IsValid)
             {
-                string ret = "";
-                ret += String.Format("%({0} {1} {2})%\n",
-                    eXamlContext.GetValueString(Instance),
-                    eXamlContext.GetValueString(eXamlContext.definedBindableProperties.IndexOf(BindableProperty.Resolve())),
-                    eXamlContext.GetValueString(Value));
+                string ret = String.Format("({0} ({1} {2} {3}))\n",
+                         eXamlContext.GetValueString((int)EXamlOperationType.SetBinding),
+                         eXamlContext.GetValueString(Instance.Index),
+                         eXamlContext.GetValueString(eXamlContext.definedBindableProperties.IndexOf(BindableProperty.Resolve())),
+                         eXamlContext.GetValueString(Value.Index));
+
                 return ret;
             }
             else
@@ -50,7 +51,11 @@ namespace Tizen.NUI.EXaml
         {
             Instance = @object;
             BindableProperty = bindableProperty;
-            Value = binding;
+            Value = binding as EXamlCreateObject;
+            if (null == Value)
+            {
+                throw new Exception($"Can't set binding {binding.ToString()} to {bindableProperty.FullName}");
+            }
             eXamlContext.eXamlOperations.Add(this);
 
             Instance.AddBindableProperty(bindableProperty);
@@ -66,7 +71,7 @@ namespace Tizen.NUI.EXaml
             get;
         }
 
-        public object Value
+        public EXamlCreateObject Value
         {
             get;
         }

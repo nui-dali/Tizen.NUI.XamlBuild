@@ -68,17 +68,19 @@ namespace Tizen.NUI.EXaml.Build.Tasks
         public void Visit(ElementNode node, INode parentNode)
         {
             var typeref = Module.ImportReference(node.XmlType.GetTypeReference(Module, node));
-            TypeDefinition typedef = typeref.ResolveCached();
 
             if (IsXaml2009LanguagePrimitive(node))
             {
                 var vardef = new VariableDefinition(typeref);
                 Context.Variables[node] = vardef;
 
-                var value = GetValueFromLanguagePrimitive(typedef, node);
+                var value = GetValueFromLanguagePrimitive(typeref, node);
+
                 Context.Values[node] = value;
                 return;
             }
+
+            TypeDefinition typedef = typeref.ResolveCached();
 
             //if this is a MarkupExtension that can be compiled directly, compile and returns the value
             var compiledMarkupExtensionName = typeref
@@ -519,13 +521,15 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             return false;
         }
 
-        object GetValueFromLanguagePrimitive(TypeDefinition typedef, ElementNode node)
+        object GetValueFromLanguagePrimitive(TypeReference typeRef, ElementNode node)
         {
             var module = Context.Module;
             var hasValue = node.CollectionItems.Count == 1 && node.CollectionItems[0] is ValueNode &&
                            ((ValueNode)node.CollectionItems[0]).Value is string;
             var valueString = hasValue ? ((ValueNode)node.CollectionItems[0]).Value as string : string.Empty;
             object ret = null;
+
+            TypeDefinition typedef = typeRef.ResolveCached();
 
             switch (typedef.FullName)
             {
@@ -644,14 +648,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                     };
                     break;
                 default:
-                    var defaultCtor = module.ImportCtorReference(typedef, parameterTypes: null);
-                    if (defaultCtor != null)
-                        ret = Create(Newobj, defaultCtor);
-                    else
-                    {
-                        //should never happen. but if it does, this prevents corrupting the IL stack
-                        ret = null;
-                    }
+                    ret = new EXamlCreateObject(Context, null, typeRef);
                     break;
             }
 

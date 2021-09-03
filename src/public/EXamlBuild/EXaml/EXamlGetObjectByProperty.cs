@@ -30,10 +30,11 @@ namespace Tizen.NUI.EXaml
         {
             if (instance.IsValid)
             {
-                string ret = "";
-                ret += String.Format("`({0} {1})`\n",
-                       eXamlContext.GetValueString(instance),
-                       eXamlContext.GetValueString(propertyName));
+                string ret = String.Format("({0} ({1} {2}))\n",
+                         eXamlContext.GetValueString((int)EXamlOperationType.GetObjectByProperty),
+                         eXamlContext.GetValueString(instance.Index),
+                         eXamlContext.GetValueString(propertyName));
+
                 return ret;
             }
             else
