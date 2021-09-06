@@ -35,11 +35,11 @@ namespace Tizen.NUI.EXaml
                 return "";
             }
 
-            string ret = "";
-            ret += String.Format("^({0} {1} d{2}d)^\n",
-                eXamlContext.GetValueString(Parent),
-                eXamlContext.GetValueString(Child),
-                eXamlContext.definedMethods.GetIndex(Method.DeclaringType, Method));
+            string ret = String.Format("({0} ({1} {2} {3}))\n",
+                         eXamlContext.GetValueString((int)EXamlOperationType.AddObject),
+                         eXamlContext.GetValueString(Parent.Index),
+                         eXamlContext.GetValueString(Child),
+                         eXamlContext.GetValueString(eXamlContext.definedMethods.GetIndex(Method.DeclaringType, Method)));
             return ret;
         }
 

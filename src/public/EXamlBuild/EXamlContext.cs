@@ -297,39 +297,40 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 }
             }
 
-            ret += "<\n";
             foreach (var ass in definedAssemblies)
             {
-                ret += String.Format("\"{0}\"\n", ass);
+                ret += String.Format("({0} ({1}))\n",
+                                GetValueString((int)EXamlOperationType.GatherAssembly),
+                                GetValueString(ass));
             }
-            ret += ">\n";
 
-            ret += "<\n";
             foreach (var type in definedTypes)
             {
-                ret += type.ConvertToString(definedAssemblies, definedTypes) + "\n";
+                ret += String.Format("({0} {1})\n",
+                                GetValueString((int)EXamlOperationType.GatherType),
+                                type.ConvertToString(definedAssemblies, definedTypes));
             }
-            ret += ">\n";
 
-            ret += "<\n";
             foreach (var property in definedProperties)
             {
                 var typeDef = property.Item1;
                 int typeIndex = GetTypeIndex(typeDef);
-                ret += String.Format("(\"{0}\" \"{1}\")\n", typeIndex, property.Item2.Name);
+                ret += String.Format("({0} ({1} {2}))\n",
+                                GetValueString((int)EXamlOperationType.GatherProperty),
+                                GetValueString(typeIndex),
+                                GetValueString(property.Item2.Name));
             }
-            ret += ">\n";
 
-            ret += "<\n";
             foreach (var eventDef in definedEvents)
             {
                 var typeDef = eventDef.Item1;
                 int typeIndex = GetTypeIndex(typeDef);
-                ret += String.Format("(\"{0}\" \"{1}\")\n", typeIndex, eventDef.Item2.Name);
+                ret += String.Format("({0} ({1} {2}))\n",
+                                GetValueString((int)EXamlOperationType.GatherProperty),
+                                GetValueString(typeIndex),
+                                GetValueString(eventDef.Item2.Name));
             }
-            ret += ">\n";
 
-            ret += "<\n";
             foreach (var method in definedMethods)
             {
                 var typeDef = method.Item1;
@@ -349,27 +350,34 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 }
                 strForParam += ")";
 
-                ret += String.Format("(\"{0}\" \"{1}\" {2})\n", typeIndex, method.Item2.Name, strForParam);
+                ret += String.Format("({0} ({1} {2} {3}))\n",
+                                GetValueString((int)EXamlOperationType.GatherMethod),
+                                GetValueString(typeIndex),
+                                GetValueString(method.Item2.Name),
+                                strForParam);
             }
-            ret += ">\n";
 
-            ret += "<\n";
             foreach (var property in definedBindableProperties)
             {
                 var typeDef = property.DeclaringType;
                 int typeIndex = GetTypeIndex(typeDef);
-                ret += String.Format("(\"{0}\" \"{1}\")\n", typeIndex, property.Name);
+                ret += String.Format("({0} ({1} {2}))\n",
+                                GetValueString((int)EXamlOperationType.GatherBindableProperty),
+                                GetValueString(typeIndex),
+                                GetValueString(property.Name));
             }
-            ret += ">\n";
 
             foreach (var op in eXamlOperations)
             {
                 ret += op.Write();
             }
 
-            ret += "<\n";
-            ret += longStrings;
-            ret += ">\n";
+            if (0 < longStrings.Length)
+            {
+                ret += String.Format("({0} ({1}))\n",
+                                GetValueString((int)EXamlOperationType.GetLongString),
+                                GetValueString(longStrings));
+            }
 
             return ret;
         }
@@ -647,9 +655,14 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 {
                     return GetValueString(GetIndex(valueObject as EXamlGetObjectByProperty));
                 }
-                else if (paramType == typeof(string) || paramType == typeof(char) || paramType == typeof(Uri))
+                else if (paramType == typeof(string) || paramType == typeof(Uri))
                 {
                     signBegin = signEnd = "\"";
+                    value = valueObject.ToString();
+                }
+                else if (paramType == typeof(char))
+                {
+                    signBegin = signEnd = "\'";
                     value = valueObject.ToString();
                 }
                 else if (paramType == typeof(SByte))
@@ -788,7 +801,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
             if (null == GenericArgumentTypes)
             {
-                ret += String.Format("(\"{0}\" \"{1}\")", assemblyIndex, FullName);
+                ret += String.Format("(d{0}d \"{1}\")", assemblyIndex, FullName);
             }
             else
             {
@@ -801,7 +814,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
                 strForGenericTypes += ")";
 
-                ret += String.Format("(\"{0}\" {1} \"{2}\")", assemblyIndex, strForGenericTypes, FullName);
+                ret += String.Format("(d{0}d \"{1}\" {2})", assemblyIndex, FullName, strForGenericTypes);
             }
 
             return ret;

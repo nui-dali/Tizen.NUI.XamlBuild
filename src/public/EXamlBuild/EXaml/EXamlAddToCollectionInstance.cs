@@ -29,16 +29,10 @@ namespace Tizen.NUI.EXaml
     {
         internal override string Write()
         {
-            string ret = "";
-            string sign = "a";
-
-            ret += sign + "(";
-
-            ret += $"{eXamlContext.GetValueString(2)} ";
-            ret += $"{eXamlContext.GetValueString(instance)} ";
-            ret += $"{eXamlContext.GetValueString(value)} ";
-
-            ret += ")" + sign + "\n";
+            string ret = String.Format("({0} ({1} {2}))\n",
+                         eXamlContext.GetValueString((int)EXamlOperationType.AddToCollectionObject),
+                         eXamlContext.GetValueString(instance.Index),
+                         eXamlContext.GetValueString(value));
 
             return ret;
         }

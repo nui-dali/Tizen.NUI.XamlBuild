@@ -32,11 +32,11 @@ namespace Tizen.NUI.EXaml
         {
             if (@object.IsValid)
             {
-                string ret = "";
-                ret += String.Format("$({0} {1} {2})$\n",
-                    eXamlContext.GetValueString(@object),
-                    eXamlContext.GetValueString(eXamlContext.definedBindableProperties.IndexOf(bindableProperty.Resolve())),
-                    eXamlContext.GetValueString(key));
+                string ret = String.Format("({0} ({1} {2} {3}))\n",
+                         eXamlContext.GetValueString((int)EXamlOperationType.SetDynamicResource),
+                         eXamlContext.GetValueString(@object.Index),
+                         eXamlContext.GetValueString(eXamlContext.definedBindableProperties.IndexOf(bindableProperty.Resolve())),
+                         eXamlContext.GetValueString(key));
                 return ret;
             }
             else

@@ -20,22 +20,23 @@ namespace Tizen.NUI.EXaml
                 return "";
             }
 
-            string ret = "";
-            string sign = "a";
-
-            ret += sign + "(";
-
-            ret += $"{eXamlContext.GetValueString(0)} ";
-            ret += $"{eXamlContext.GetValueString(eXamlContext.GetTypeIndex(Type))} ";
-
-            ret += "(";
-            foreach (var item in items)
+            string itemsString = "";
+            if (0 < items.Count)
             {
-                ret += $"{eXamlContext.GetValueString(item)} ";
-            }
-            ret += ")";
+                itemsString += "(";
 
-            ret += ")" + sign + "\n";
+                foreach (var item in items)
+                {
+                    itemsString += $"{eXamlContext.GetValueString(item)} ";
+                }
+
+                itemsString += ")";
+            }
+
+            string ret = String.Format("({0} ({1} {2}))\n",
+                         eXamlContext.GetValueString((int)EXamlOperationType.CreateArrayObject),
+                         eXamlContext.GetValueString(eXamlContext.GetTypeIndex(Type)),
+                         itemsString);
 
             return ret;
         }

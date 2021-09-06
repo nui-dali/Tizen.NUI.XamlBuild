@@ -18,7 +18,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
         public EXamlCreateObject ProvideValue(IElementNode node, ModuleDefinition module, EXamlContext Context)
         {
-            throw new NotImplementedException();
+            return null;
         }
     }
 }

@@ -34,13 +34,13 @@ namespace Tizen.NUI.EXaml
                 string ret = "";
                 if (null != key)
                 {
-                    ret += String.Format("*({0} {1} {2})*\n",
-                       eXamlContext.GetValueString(instance), eXamlContext.GetValueString(key), eXamlContext.GetValueString(value));
+                    ret = String.Format("({0} ({1} {2} {3}))\n",
+                         eXamlContext.GetValueString((int)EXamlOperationType.AddToResourceDictionary),
+                         eXamlContext.GetValueString(instance.Index),
+                         eXamlContext.GetValueString(key),
+                         eXamlContext.GetValueString(value));
                 }
-                else
-                {
-                    int temp = 0;
-                }
+
                 return ret;
             }
             else
