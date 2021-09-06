@@ -213,6 +213,11 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
             using (var assemblyDefinition = AssemblyDefinition.ReadAssembly(System.IO.Path.GetFullPath(Assembly), readerParameters))
             {
+                if (null != XamlFilePath)
+                {
+                    return GenerateEXaml(XamlFilePath, assemblyDefinition.MainModule, out thrownExceptions);
+                }
+
                 CustomAttribute xamlcAttr;
                 if (assemblyDefinition.HasCustomAttributes &&
                     (xamlcAttr =
@@ -482,9 +487,9 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Replacing {0}.InitializeComponent ()");
             Exception e;
 
-            var visitorContext = new EXamlContext(typeDef);
+            var visitorContext = new EXamlContext(typeDef, typeDef.Module);
 
-            if (!TryCoreCompile(typeDef, rootnode, visitorContext, out e))
+            if (!TryCoreCompile(rootnode, visitorContext, out e))
             {
                 LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
                 (thrownExceptions = thrownExceptions ?? new List<Exception>()).Add(e);
@@ -517,6 +522,75 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
             return true;
         }
+
+        bool GenerateEXaml(string xamlFilePath, ModuleDefinition module, out IList<Exception> thrownExceptions)
+        {
+            thrownExceptions = null;
+
+            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Parsing Xaml");
+            Stream xamlStream = File.Open(xamlFilePath, FileMode.Open);
+
+            string className;
+            if (!CecilExtensions.IsXaml(xamlStream, module, out className))
+            {
+                thrownExceptions.Add(new Exception($"{xamlFilePath} is not xaml format file"));
+            }
+
+            xamlStream.Seek(0, SeekOrigin.Begin);
+            var typeDef = module.GetTypeDefinition(className);
+
+            var rootnode = ParseXaml(xamlStream, typeDef);
+
+            xamlStream.Close();
+
+            if (rootnode == null)
+            {
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
+                return false;
+            }
+            LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}done.");
+
+            hasCompiledXamlResources = true;
+
+            LoggingHelper.LogMessage(Low, $"{new string(' ', 6)}Replacing {0}.InitializeComponent ()");
+            Exception e;
+
+            var visitorContext = new EXamlContext(typeDef, module);
+
+            if (!TryCoreCompile(rootnode, visitorContext, out e))
+            {
+                LoggingHelper.LogMessage(Low, $"{new string(' ', 8)}failed.");
+                (thrownExceptions = thrownExceptions ?? new List<Exception>()).Add(e);
+                if (e is XamlParseException xpe)
+                    LoggingHelper.LogError(null, null, null, xamlFilePath, xpe.XmlInfo.LineNumber, xpe.XmlInfo.LinePosition, 0, 0, xpe.Message, xpe.HelpLink, xpe.Source);
+                else if (e is XmlException xe)
+                    LoggingHelper.LogError(null, null, null, xamlFilePath, xe.LineNumber, xe.LinePosition, 0, 0, xe.Message, xe.HelpLink, xe.Source);
+                else
+                    LoggingHelper.LogError(null, null, null, xamlFilePath, 0, 0, 0, 0, e.Message, e.HelpLink, e.Source);
+
+                if (null != e.StackTrace)
+                {
+                    LoggingHelper.LogMessage(Low, e.StackTrace);
+                }
+
+                return false;
+            }
+            else
+            {
+                var examlDir = outputRootPath + @"res/examl/";
+                if (Directory.Exists(examlDir))
+                {
+                    Directory.CreateDirectory(examlDir);
+                }
+
+                var examlFilePath = examlDir + typeDef.FullName + ".examl";
+
+                EXamlOperation.WriteOpertions(examlFilePath, visitorContext);
+            }
+
+            return true;
+        }
+
 
         bool InjectionMethodGetEXamlPath(TypeDefinition typeDef)
         {
@@ -705,7 +779,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             return nestType;
         }
 
-        bool TryCoreCompile(TypeDefinition typeDef, ILRootNode rootnode, EXamlContext visitorContext, out Exception exception)
+        bool TryCoreCompile(ILRootNode rootnode, EXamlContext visitorContext, out Exception exception)
         {
             try
             {

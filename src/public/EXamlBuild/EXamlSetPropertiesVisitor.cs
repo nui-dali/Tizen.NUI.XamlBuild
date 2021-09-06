@@ -1074,7 +1074,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             IXmlLineInfo xmlLineInfo)
         {
             var typeref = parentContext.Module.ImportReference(rootnode.XmlType.GetTypeReference(parentContext.Module, rootnode));
-            var visitorContext = new EXamlContext(typeref.ResolveCached());
+            var visitorContext = new EXamlContext(typeref.ResolveCached(), typeref.Module);
 
             rootnode.Accept(new XamlNodeVisitor((node, parent) => node.Parent = parent), null);
             rootnode.Accept(new EXamlExpandMarkupsVisitor(visitorContext), null);
