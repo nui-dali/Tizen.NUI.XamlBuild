@@ -539,6 +539,11 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             xamlStream.Seek(0, SeekOrigin.Begin);
             var typeDef = module.GetTypeDefinition(className);
 
+            if (null == typeDef)
+            {
+                throw new Exception($"Can't find type \"{className}\" in assembly \"{module.Assembly.FullName}\"");
+            }
+
             var rootnode = ParseXaml(xamlStream, typeDef);
 
             xamlStream.Close();
