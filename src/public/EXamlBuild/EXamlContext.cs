@@ -326,7 +326,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 var typeDef = eventDef.Item1;
                 int typeIndex = GetTypeIndex(typeDef);
                 ret += String.Format("({0} ({1} {2}))\n",
-                                GetValueString((int)EXamlOperationType.GatherProperty),
+                                GetValueString((int)EXamlOperationType.GatherEvent),
                                 GetValueString(typeIndex),
                                 GetValueString(eventDef.Item2.Name));
             }
