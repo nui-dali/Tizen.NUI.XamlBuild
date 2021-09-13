@@ -165,7 +165,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 Context.Variables[node] = vardef;
 
                 var argumentList = GetCtorXArguments(node, factoryMethodInfo.Parameters.Count);
-                Context.Values[node] = new EXamlCreateObject(Context, null, typedef, factoryMethodInfo, argumentList.ToArray());
+                Context.Values[node] = new EXamlCreateObject(Context, null, typedef, factoryMethodInfo, argumentList?.ToArray());
                 return;
             }
 

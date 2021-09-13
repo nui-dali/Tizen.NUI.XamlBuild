@@ -26,7 +26,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 {
     internal class EXamlContext
     {
-        public EXamlContext(TypeDefinition type, FieldDefinition parentContextValues = null)
+        public EXamlContext(TypeDefinition type, ModuleDefinition module, FieldDefinition parentContextValues = null)
         {
             Values = new Dictionary<INode, object>();
             Variables = new Dictionary<IElementNode, VariableDefinition>();
@@ -34,7 +34,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             TypeExtensions = new Dictionary<INode, TypeReference>();
             ParentContextValues = parentContextValues;
             Type = type;
-            Module = type.Module;
+            Module = module;
         }
 
         public Dictionary<INode, object> Values { get; private set; }
@@ -51,7 +51,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
         public INode RootNode { get; set; }
 
-        public TypeDefinition Type;
+        public TypeDefinition Type { get; set; }
 
         public ModuleDefinition Module { get; private set; }
 
@@ -326,7 +326,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 var typeDef = eventDef.Item1;
                 int typeIndex = GetTypeIndex(typeDef);
                 ret += String.Format("({0} ({1} {2}))\n",
-                                GetValueString((int)EXamlOperationType.GatherProperty),
+                                GetValueString((int)EXamlOperationType.GatherEvent),
                                 GetValueString(typeIndex),
                                 GetValueString(eventDef.Item2.Name));
             }

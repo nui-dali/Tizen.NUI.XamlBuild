@@ -166,7 +166,7 @@ namespace Tizen.NUI.EXaml
         public EXamlCreateObject(EXamlContext context, object instance, TypeReference type, object[] @params = null)
             : base(context)
         {
-            if (null == type.Resolve())
+            if (null == type?.Resolve())
             {
                 throw new Exception("Type can't be null when create object");
             }

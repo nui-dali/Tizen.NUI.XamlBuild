@@ -267,6 +267,28 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         static Dictionary<(ModuleDefinition module, (string assemblyName, string clrNamespace, string typeName)), TypeDefinition> typeDefCache
             = new Dictionary<(ModuleDefinition module, (string assemblyName, string clrNamespace, string typeName)), TypeDefinition>();
 
+        public static TypeDefinition GetTypeDefinition(this ModuleDefinition module, string typeName)
+        {
+            int index = typeName.LastIndexOf('.');
+
+            var ret = module.GetType(typeName);
+
+            if (null == ret)
+            {
+                foreach (var ass in module.AssemblyReferences)
+                {
+                    var refAss = module.AssemblyResolver.Resolve(ass);
+                    ret = refAss?.MainModule.GetType(typeName);
+                    if (null != ret)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return ret;
+        }
+
         public static TypeDefinition GetTypeDefinition(this ModuleDefinition module, (string assemblyName, string clrNamespace, string typeName) type)
         {
             if (typeDefCache.TryGetValue((module, type), out TypeDefinition cachedTypeDefinition))

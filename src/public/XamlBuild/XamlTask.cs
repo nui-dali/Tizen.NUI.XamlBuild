@@ -37,6 +37,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         public int Verbosity { get; set; }
         public bool DebugSymbols { get; set; }
         public string DebugType { get; set; }
+        public string XamlFilePath { get; set; }
 
         protected TaskLoggingHelper LoggingHelper { get; }
 
@@ -144,6 +145,30 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
                 return false;
             }
+        }
+
+        public static bool IsXaml(Stream resourceStream, ModuleDefinition module, out string classname)
+        {
+            classname = null;
+
+            var xmlDoc = new XmlDocument();
+            xmlDoc.Load(resourceStream);
+
+            var nsmgr = new XmlNamespaceManager(xmlDoc.NameTable);
+
+            var root = xmlDoc.SelectSingleNode("/*", nsmgr);
+            if (root == null)
+                return false;
+
+            var rootClass = root.Attributes["Class", XamlParser.X2006Uri] ??
+                            root.Attributes["Class", XamlParser.X2009Uri];
+            if (rootClass != null)
+            {
+                classname = rootClass.Value;
+                return true;
+            }
+
+            return false;
         }
 
         static TypeReference GetTypeForResourceId(ModuleDefinition module, string resourceId)
