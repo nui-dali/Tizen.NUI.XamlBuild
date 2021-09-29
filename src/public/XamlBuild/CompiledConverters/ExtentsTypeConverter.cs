@@ -31,6 +31,14 @@ namespace Tizen.NUI.Xaml.Core.XamlC
             {
                 var thickness = value.Split(',');
 
+                foreach (var thick in thickness)
+                {
+                    if (thick.EndsWith("dp") || thick.EndsWith("px"))
+                    {
+                        return null;
+                    }
+                }
+
                 if (4 == thickness.Length)
                 {
                     ushort start, end, top, bottom;

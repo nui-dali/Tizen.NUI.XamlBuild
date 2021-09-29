@@ -40,8 +40,14 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             if (ctor is null)
                 return null;
             var ctorRef = module.ImportReference(ctor);
+            if (type.IsGenericInstance && type.Name == "List`1")
+            {
+                ctorRef = module.ImportReference(ctorRef.ResolveGenericParameters(type, module));
+            }
+
             if (classArguments == null)
                 return ctorRef;
+
             return module.ImportReference(ctorRef.ResolveGenericParameters(type.MakeGenericInstanceType(classArguments), module));
         }
 

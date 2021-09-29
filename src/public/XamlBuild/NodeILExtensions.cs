@@ -232,8 +232,28 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         public static object GetBaseValue(this ValueNode node, EXamlContext context, TypeReference targetTypeRef)
         {
             var str = (string)node.Value;
+            object ret = null;
 
-            return GetBaseValue(context, str, targetTypeRef);
+            if ("System.String" != targetTypeRef.FullName)
+            {
+                if (str.EndsWith("dp"))
+                {
+                    var value = GetBaseValue(context, str.Substring(0, str.Length - "dp".Length), targetTypeRef);
+                    ret = new EXamlCreateDPObject(context, value, targetTypeRef, "dp");
+                }
+                else if (str.EndsWith("px"))
+                {
+                    var value = GetBaseValue(context, str.Substring(0, str.Length - "px".Length), targetTypeRef);
+                    ret = new EXamlCreateDPObject(context, value, targetTypeRef, "px");
+                }
+            }
+
+            if (null == ret)
+            {
+                ret = GetBaseValue(context, str, targetTypeRef);
+            }
+
+            return ret;
         }
 
         public static TypeReference GetConverterType(this ValueNode node, IEnumerable<ICustomAttributeProvider> attributeProviders)
@@ -306,13 +326,17 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             if (compiledConverterName != null && (compiledConverterType = Type.GetType (compiledConverterName)) != null) {
                 var compiledConverter = Activator.CreateInstance (compiledConverterType);
                 var converter = typeof(ICompiledTypeConverter).GetMethods ().FirstOrDefault (md => md.Name == "ConvertFromString");
-                var instructions = (IEnumerable<Instruction>)converter.Invoke (compiledConverter, new object[] {
+                IEnumerable<Instruction> instructions = (IEnumerable<Instruction>)converter.Invoke (compiledConverter, new object[] {
                     node.Value as string, context, node as BaseNode});
-                foreach (var i in instructions)
-                    yield return i;
-                if (targetTypeRef.IsValueType && boxValueTypes)
-                    yield return Instruction.Create (OpCodes.Box, module.ImportReference (targetTypeRef));
-                yield break;
+
+                if (null != instructions)
+                {
+                    foreach (var i in instructions)
+                        yield return i;
+                    if (targetTypeRef.IsValueType && boxValueTypes)
+                        yield return Instruction.Create(OpCodes.Box, module.ImportReference(targetTypeRef));
+                    yield break;
+                }
             }
 
             //If there's a [TypeConverter], use it
@@ -370,7 +394,21 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             else if (targetTypeRef.FullName == "System.SByte")
                 yield return Instruction.Create(OpCodes.Ldc_I4, SByte.Parse(str, CultureInfo.InvariantCulture));
             else if (targetTypeRef.FullName == "System.Int16")
-                yield return Instruction.Create(OpCodes.Ldc_I4, Int16.Parse(str, CultureInfo.InvariantCulture));
+            {
+                if (str.EndsWith("dp") || str.EndsWith("px"))
+                {
+                    var insOfDPValue = GetDPValue(module, node, targetTypeRef, str);
+
+                    foreach (var ins in insOfDPValue)
+                    {
+                        yield return ins;
+                    }
+                }
+                else
+                {
+                    yield return Instruction.Create(OpCodes.Ldc_I4, Int16.Parse(str, CultureInfo.InvariantCulture));
+                }
+            }
             else if (targetTypeRef.FullName == "System.Int32")
                 yield return Instruction.Create(OpCodes.Ldc_I4, Int32.Parse(str, CultureInfo.InvariantCulture));
             else if (targetTypeRef.FullName == "System.Int64")
@@ -384,7 +422,21 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             else if (targetTypeRef.FullName == "System.UInt64")
                 yield return Instruction.Create(OpCodes.Ldc_I8, unchecked((long)UInt64.Parse(str, CultureInfo.InvariantCulture)));
             else if (targetTypeRef.FullName == "System.Single")
-                yield return Instruction.Create(OpCodes.Ldc_R4, Single.Parse(str, CultureInfo.InvariantCulture));
+            {
+                if (str.EndsWith("dp") || str.EndsWith("px"))
+                {
+                    var insOfDPValue = GetDPValue(module, node, targetTypeRef, str);
+
+                    foreach (var ins in insOfDPValue)
+                    {
+                        yield return ins;
+                    }
+                }
+                else
+                {
+                    yield return Instruction.Create(OpCodes.Ldc_R4, Single.Parse(str, CultureInfo.InvariantCulture));
+                }
+            }
             else if (targetTypeRef.FullName == "System.Double")
                 yield return Instruction.Create(OpCodes.Ldc_R8, Double.Parse(str, CultureInfo.InvariantCulture));
             else if (targetTypeRef.FullName == "System.Boolean")
@@ -515,6 +567,45 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 yield return Create(Newobj, module.ImportReference(nullableCtor));
             if (originalTypeRef.IsValueType && boxValueTypes)
                 yield return Create(Box, module.ImportReference(originalTypeRef));
+        }
+
+        private static TypeDefinition typeOfGraphicManager;
+        private static MethodReference getMethodOfInstance;
+        private static MethodReference methodOfConvertScriptToPixel;
+
+        static private IEnumerable<Instruction> GetDPValue(ModuleDefinition module, ValueNode node, TypeReference targetTypeRef, string str)
+        {
+            if (null == typeOfGraphicManager)
+            {
+                typeOfGraphicManager = module.GetTypeDefinition(("Tizen.NUI", "Tizen.NUI", "GraphicsTypeManager"));
+            }
+
+            if (null == getMethodOfInstance)
+            {
+                var propertyOfInstance = typeOfGraphicManager.Properties.FirstOrDefault(a => a.Name == "Instance");
+                getMethodOfInstance = propertyOfInstance.GetMethod;
+                getMethodOfInstance = module.ImportReference(getMethodOfInstance);
+            }
+
+            yield return Create(Call, getMethodOfInstance);
+            yield return Create(Ldstr, str);
+
+            if (null == methodOfConvertScriptToPixel)
+            {
+                methodOfConvertScriptToPixel = typeOfGraphicManager.Methods.FirstOrDefault(a => a.Name == "ConvertScriptToPixel");
+                methodOfConvertScriptToPixel = module.ImportReference(methodOfConvertScriptToPixel);
+            }
+
+            yield return Create(Callvirt, methodOfConvertScriptToPixel);
+
+            var convertType = typeof(System.Convert);
+            var typeOfConvert = module.GetTypeDefinition((convertType.Assembly.FullName, convertType.Namespace, convertType.Name));
+
+            var methodOfTo = typeOfConvert.Methods.FirstOrDefault(a => a.Name == "To" + targetTypeRef.Name);
+
+            yield return Create(Box, module.ImportReference(targetTypeRef));
+
+            yield return Create(Call, module.ImportReference(methodOfTo));
         }
 
         static public object GetParsedEnum(EXamlContext context, TypeReference enumRef, string value)

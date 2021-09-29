@@ -19,6 +19,15 @@ namespace Tizen.NUI.Xaml.Core.XamlC
                 throw new XamlParseException($"Cannot convert \"{value}\" into Rectangle", node);
             double x, y, w, h;
             var xywh = value.Split(',');
+
+            foreach (var thick in xywh)
+            {
+                if (thick.EndsWith("dp") || thick.EndsWith("px"))
+                {
+                    return null;
+                }
+            }
+
             if (xywh.Length != 4 ||
                 !double.TryParse(xywh [0], NumberStyles.Number, CultureInfo.InvariantCulture, out x) ||
                 !double.TryParse(xywh [1], NumberStyles.Number, CultureInfo.InvariantCulture, out y) ||
@@ -35,17 +44,17 @@ namespace Tizen.NUI.Xaml.Core.XamlC
 //            IL_0009:  ldc.r8 4.2000000000000002
 //            IL_0012:  ldc.r8 5.2999999999999998
 //            IL_001b:  ldc.r8 6.4000000000000004
-//            IL_0024:  newobj instance void valuetype Test.Rectangle::'.ctor'(float64, float64, float64, float64)
+//            IL_0024:  newobj instance void valuetype Test.Rectangle::'.ctor'(int, int, int, int)
 
-            yield return Instruction.Create(OpCodes.Ldc_R8, x);
-            yield return Instruction.Create(OpCodes.Ldc_R8, y);
-            yield return Instruction.Create(OpCodes.Ldc_R8, w);
-            yield return Instruction.Create(OpCodes.Ldc_R8, h);
+            yield return Instruction.Create(OpCodes.Ldc_I4, (int)x);
+            yield return Instruction.Create(OpCodes.Ldc_I4, (int)y);
+            yield return Instruction.Create(OpCodes.Ldc_I4, (int)w);
+            yield return Instruction.Create(OpCodes.Ldc_I4, (int)h);
             yield return Instruction.Create(OpCodes.Newobj, module.ImportCtorReference((XamlTask.nuiAssemblyName, XamlTask.nuiNameSpace, "Rectangle"), parameterTypes: new[] {
-                ("mscorlib", "System", "Double"),
-                ("mscorlib", "System", "Double"),
-                ("mscorlib", "System", "Double"),
-                ("mscorlib", "System", "Double")}));
+                ("mscorlib", "System", "Int32"),
+                ("mscorlib", "System", "Int32"),
+                ("mscorlib", "System", "Int32"),
+                ("mscorlib", "System", "Int32")}));
         }
     }
 }
