@@ -138,26 +138,40 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 var parentVar = Context.Variables[(IElementNode)parentNode];
                 string contentProperty;
 
+                bool isAdded = false;
+
                 if (CanAddToResourceDictionary(parentVar, parentVar.VariableType, node, node, Context))
                 {
                     Context.IL.Emit(Ldloc, parentVar);
                     Context.IL.Append(AddToResourceDictionary(node, node, Context));
+                    isAdded = true;
                 }
                 // Collection element, implicit content, or implicit collection element.
                 else if (parentVar.VariableType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module).Any())
                 {
                     var elementType = parentVar.VariableType;
-                    var adderTuple = elementType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module).First();
-                    var adderRef = Module.ImportReference(adderTuple.Item1);
-                    adderRef = Module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, Module));
+                    var paramType = Context.Variables[node].VariableType;
 
-                    Context.IL.Emit(Ldloc, parentVar);
-                    Context.IL.Emit(Ldloc, vardef);
-                    Context.IL.Emit(Callvirt, adderRef);
-                    if (adderRef.ReturnType.FullName != "System.Void")
-                        Context.IL.Emit(Pop);
+                    foreach (var adderTuple in elementType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module))
+                    {
+                        if (paramType.InheritsFromOrImplements(adderTuple.Item1.Parameters[0].ParameterType.FullName))
+                        {
+                            var adderRef = Module.ImportReference(adderTuple.Item1);
+                            adderRef = Module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, Module));
+
+                            Context.IL.Emit(Ldloc, parentVar);
+                            Context.IL.Emit(Ldloc, vardef);
+                            Context.IL.Emit(Callvirt, adderRef);
+                            if (adderRef.ReturnType.FullName != "System.Void")
+                                Context.IL.Emit(Pop);
+
+                            isAdded = true;
+                            break;
+                        }
+                    }
                 }
-                else if ((contentProperty = GetContentProperty(parentVar.VariableType)) != null)
+
+                if (!isAdded && (contentProperty = GetContentProperty(parentVar.VariableType)) != null)
                 {
                     var name = new XmlName(node.NamespaceURI, contentProperty);
                     if (skips.Contains(name))
@@ -166,7 +180,8 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                         return;
                     Context.IL.Append(SetPropertyValue(Context.Variables[(IElementNode)parentNode], name, node, Context, node));
                 }
-                else
+                
+                if (!isAdded)
                 {
                     throw new XamlParseException($"Can not set the content of {((IElementNode)parentNode).XmlType.Name} as it doesn't have a ContentPropertyAttribute", node);
                 }
