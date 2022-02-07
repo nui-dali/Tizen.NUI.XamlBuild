@@ -29,6 +29,14 @@ namespace Tizen.NUI.Xaml.Core.XamlC
             {
                 var thickness = value.Split(',');
 
+                foreach (var thick in thickness)
+                {
+                    if (thick.EndsWith("dp") || thick.EndsWith("px"))
+                    {
+                        return null;
+                    }
+                }
+
                 if (3 == thickness.Length)
                 {
                     float x, y, z;
@@ -71,6 +79,15 @@ namespace Tizen.NUI.Xaml.Core.XamlC
             {
                 int x, y;
                 var thickness = value.Split(',');
+
+                foreach (var thick in thickness)
+                {
+                    if (thick.EndsWith("dp") || thick.EndsWith("px"))
+                    {
+                        return null;
+                    }
+                }
+
                 if (int.TryParse(thickness[0], NumberStyles.Number, CultureInfo.InvariantCulture, out x) &&
                     int.TryParse(thickness[1], NumberStyles.Number, CultureInfo.InvariantCulture, out y))
                     return GenerateIL(module, x, y);

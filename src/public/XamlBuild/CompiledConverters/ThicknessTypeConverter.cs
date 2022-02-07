@@ -19,6 +19,15 @@ namespace Tizen.NUI.Xaml.Core.XamlC
             if (!string.IsNullOrEmpty(value)) {
                 double l, t, r, b;
                 var thickness = value.Split(',');
+
+                foreach (var thick in thickness)
+                {
+                    if (thick.EndsWith("dp") || thick.EndsWith("px"))
+                    {
+                        return null;
+                    }
+                }
+
                 switch (thickness.Length) {
                 case 1:
                     if (double.TryParse(thickness[0], NumberStyles.Number, CultureInfo.InvariantCulture, out l))

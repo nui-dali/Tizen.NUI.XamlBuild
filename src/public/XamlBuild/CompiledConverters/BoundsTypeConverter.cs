@@ -23,6 +23,14 @@ namespace Tizen.NUI.Xaml.Core.XamlC
             bool hasX, hasY, hasW, hasH;
             var xywh = value.Split(',');
 
+            foreach (var thick in xywh)
+            {
+                if (thick.EndsWith("dp") || thick.EndsWith("px"))
+                {
+                    return null;
+                }
+            }
+
             if (xywh.Length != 2 && xywh.Length != 4)
                 throw new XamlParseException($"Cannot convert \"{value}\" into Rectangle", node);
 

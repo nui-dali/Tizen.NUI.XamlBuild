@@ -58,7 +58,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 Context.Variables[node] = vardef;
                 Context.Body.Variables.Add(vardef);
 
-                Context.IL.Append(PushValueFromLanguagePrimitive(typedef, node));
+                Context.IL.Append(PushValueFromLanguagePrimitive(typeref, node));
                 Context.IL.Emit(OpCodes.Stloc, vardef);
                 return;
             }
@@ -535,13 +535,13 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             return false;
         }
 
-        IEnumerable<Instruction> PushValueFromLanguagePrimitive(TypeDefinition typedef, ElementNode node)
+        IEnumerable<Instruction> PushValueFromLanguagePrimitive(TypeReference typeRef, ElementNode node)
         {
             var module = Context.Body.Method.Module;
             var hasValue = node.CollectionItems.Count == 1 && node.CollectionItems[0] is ValueNode &&
                            ((ValueNode)node.CollectionItems[0]).Value is string;
             var valueString = hasValue ? ((ValueNode)node.CollectionItems[0]).Value as string : string.Empty;
-            switch (typedef.FullName)
+            switch (typeRef.FullName)
             {
                 case "System.SByte":
                     if (hasValue && sbyte.TryParse(valueString, NumberStyles.Number, CultureInfo.InvariantCulture, out sbyte outsbyte))
@@ -713,7 +713,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                         yield return Create(Ldnull);
                     break;
                 default:
-                    var defaultCtor = module.ImportCtorReference(typedef, parameterTypes: null);
+                    var defaultCtor = module.ImportCtorReference(typeRef, parameterTypes: null);
                     if (defaultCtor != null)
                         yield return Create(Newobj, defaultCtor);
                     else
