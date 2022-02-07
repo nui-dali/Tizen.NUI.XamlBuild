@@ -154,18 +154,25 @@ namespace Tizen.NUI.Xaml.Build.Tasks
 
                     foreach (var adderTuple in elementType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module))
                     {
-                        if (paramType.InheritsFromOrImplements(adderTuple.Item1.Parameters[0].ParameterType.FullName))
-                        {
-                            var adderRef = Module.ImportReference(adderTuple.Item1);
-                            adderRef = Module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, Module));
+                        var adderRef = Module.ImportReference(adderTuple.Item1);
+                        adderRef = Module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, Module));
 
+                        if (IsAddMethodOfCollection(Module, adderRef.Resolve()))
+                        {
+                            isAdded = true;
+                        }
+                        else if (paramType.InheritsFromOrImplements(adderTuple.Item1.Parameters[0].ParameterType.FullName))
+                        {
+                            isAdded = true;
+                        }
+
+                        if (isAdded)
+                        {
                             Context.IL.Emit(Ldloc, parentVar);
                             Context.IL.Emit(Ldloc, vardef);
                             Context.IL.Emit(Callvirt, adderRef);
                             if (adderRef.ReturnType.FullName != "System.Void")
                                 Context.IL.Emit(Pop);
-
-                            isAdded = true;
                             break;
                         }
                     }
@@ -179,6 +186,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                     if (parentNode is IElementNode && ((IElementNode)parentNode).SkipProperties.Contains(propertyName))
                         return;
                     Context.IL.Append(SetPropertyValue(Context.Variables[(IElementNode)parentNode], name, node, Context, node));
+                    isAdded = true;
                 }
                 
                 if (!isAdded)
@@ -221,6 +229,11 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 if (adderRef.ReturnType.FullName != "System.Void")
                         Context.IL.Emit(OpCodes.Pop);
             }
+        }
+
+        private static bool IsAddMethodOfCollection(ModuleDefinition module, MethodDefinition methodDef)
+        {
+            return module.ImportReference(typeof(List<string>)).InheritsFromOrImplements(methodDef.DeclaringType);
         }
 
         public void Visit(RootNode node, INode parentNode)

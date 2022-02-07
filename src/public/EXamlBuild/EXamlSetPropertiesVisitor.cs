@@ -185,20 +185,18 @@ namespace Tizen.NUI.EXaml.Build.Tasks
 
                     foreach (var adderTuple in elementType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module))
                     {
-                        if (paramType.InheritsFromOrImplements(adderTuple.Item1.Parameters[0].ParameterType.FullName))
+                        var adderRef = Module.ImportReference(adderTuple.Item1);
+                        adderRef = Module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, Module));
+
+                        if (IsAddMethodOfCollection(Module, adderRef.Resolve()))
                         {
-                            var adderRef = Module.ImportReference(adderTuple.Item1);
-                            adderRef = Module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, Module));
-
-                            if (IsAddMethodOfCollection(Module, adderRef.Resolve()))
-                            {
-                                new EXamlAddToCollectionInstance(Context, parentVar, Context.Values[node]);
-                            }
-                            else
-                            {
-                                new EXamlAddObject(Context, parentVar, Context.Values[node], adderRef.Resolve());
-                            }
-
+                            new EXamlAddToCollectionInstance(Context, parentVar, Context.Values[node]);
+                            isAdded = true;
+                            break;
+                        }
+                        else if (paramType.InheritsFromOrImplements(adderTuple.Item1.Parameters[0].ParameterType.FullName))
+                        {
+                            new EXamlAddObject(Context, parentVar, Context.Values[node], adderRef.Resolve());
                             isAdded = true;
                             break;
                         }
@@ -214,6 +212,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                         return;
                     
                     SetPropertyValue(Context.Values[parentNode] as EXamlCreateObject, name, node, Context, node);
+                    isAdded = true;
                 }
                 
                 if (!isAdded)
