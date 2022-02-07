@@ -168,29 +168,42 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 var parentVar = Context.Values[parentNode] as EXamlCreateObject;
                 string contentProperty;
 
+                bool isAdded = false;
+
                 if (CanAddToResourceDictionary(parentVar, parentVar.GetType(), node, node, Context))
                 {
                     var keyName = (node.Properties[XmlName.xKey] as ValueNode).Value as string;
                     new EXamlAddToResourceDictionary(Context, parentVar, keyName, Context.Values[node]);
+                    isAdded = true;
                 }
+                
                 // Collection element, implicit content, or implicit collection element.
-                else if (parentVar.GetType().GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module).Any())
+                if (!isAdded && parentVar.GetType().GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module).Any())
                 {
                     var elementType = parentVar.GetType();
-                    var adderTuple = elementType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module).First();
-                    var adderRef = Module.ImportReference(adderTuple.Item1);
-                    adderRef = Module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, Module));
+                    var paramType = Context.Variables[node].VariableType;
 
-                    if (IsAddMethodOfCollection(Module, adderRef.Resolve()))
+                    foreach (var adderTuple in elementType.GetMethods(md => md.Name == "Add" && md.Parameters.Count == 1, Module))
                     {
-                        new EXamlAddToCollectionInstance(Context, parentVar, Context.Values[node]);
-                    }
-                    else
-                    {
-                        new EXamlAddObject(Context, parentVar, Context.Values[node], adderRef.Resolve());
+                        var adderRef = Module.ImportReference(adderTuple.Item1);
+                        adderRef = Module.ImportReference(adderRef.ResolveGenericParameters(adderTuple.Item2, Module));
+
+                        if (IsAddMethodOfCollection(Module, adderRef.Resolve()))
+                        {
+                            new EXamlAddToCollectionInstance(Context, parentVar, Context.Values[node]);
+                            isAdded = true;
+                            break;
+                        }
+                        else if (paramType.InheritsFromOrImplements(adderTuple.Item1.Parameters[0].ParameterType.FullName))
+                        {
+                            new EXamlAddObject(Context, parentVar, Context.Values[node], adderRef.Resolve());
+                            isAdded = true;
+                            break;
+                        }
                     }
                 }
-                else if ((contentProperty = GetContentProperty(parentVar.GetType())) != null)
+                
+                if (!isAdded && (contentProperty = GetContentProperty(parentVar.GetType())) != null)
                 {
                     var name = new XmlName(node.NamespaceURI, contentProperty);
                     if (skips.Contains(name))
@@ -199,8 +212,10 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                         return;
                     
                     SetPropertyValue(Context.Values[parentNode] as EXamlCreateObject, name, node, Context, node);
+                    isAdded = true;
                 }
-                else
+                
+                if (!isAdded)
                 {
                     throw new XamlParseException($"Can not set the content of {((IElementNode)parentNode).XmlType.Name} as it doesn't have a ContentPropertyAttribute", node);
                 }
