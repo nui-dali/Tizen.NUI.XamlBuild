@@ -225,6 +225,14 @@ namespace Tizen.NUI.EXaml
             eXamlContext.eXamlCreateObjects.Add(this);
         }
 
+        public EXamlCreateObject(EXamlContext context, PropertyDefinition property) : base(context)
+        {
+            eXamlContext.eXamlOperations.Add(this);
+            Index = eXamlContext.eXamlCreateObjects.Count;
+            Type = property.PropertyType;
+            eXamlContext.eXamlCreateObjects.Add(this);
+        }
+
         public static EXamlCreateObject GetStaticInstance(EXamlContext context, TypeReference type, FieldReference field, PropertyReference property)
         {
             MemberReference memberRef = null;

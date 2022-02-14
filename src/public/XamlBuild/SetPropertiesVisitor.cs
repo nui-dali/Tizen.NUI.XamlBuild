@@ -106,6 +106,15 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 return;
             }
 
+            if (null != propertyName.LocalName && propertyName.LocalName.Contains("."))
+            {
+                if (true == IsIteratorProperty(Context.Variables[(IElementNode)parentNode].VariableType, propertyName, node, Context))
+                {
+                    Context.IL.Append(SetIteratorProperty(Context.Variables[(IElementNode)parentNode], propertyName, node, node, Context));
+                    return;
+                }
+            }
+
             //if this node is an IMarkupExtension, invoke ProvideValue() and replace the variable
             var vardef = Context.Variables[node];
             var vardefref = new VariableDefinitionReference(vardef);
@@ -833,6 +842,125 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 return Add(parent, propertyName, valueNode, iXmlLineInfo, context);
 
             throw new XamlParseException($"No property, bindable property, or event found for '{localName}', or mismatching type between value and property.", iXmlLineInfo);
+        }
+
+        private static bool IsIteratorProperty(TypeReference typeRef, XmlName propertyName, INode node, ILContext context)
+        {
+            var index = propertyName.LocalName.IndexOf('.');
+
+            if (0 < index)
+            {
+                var currentPropertyName = propertyName.LocalName.Substring(0, index);
+
+                TypeReference declareType = null;
+                var property = typeRef.ResolveCached().GetProperty(prop => prop.Name == currentPropertyName, out declareType);
+
+                var remainName = propertyName.LocalName.Substring(index + 1);
+
+                if (null != property)
+                {
+                    var newPropertyName = new XmlName(propertyName.NamespaceURI, remainName);
+                    return IsIteratorProperty(property.PropertyType, newPropertyName, node, context);
+                }
+                else
+                {
+                    var elementType = new XmlType(propertyName.NamespaceURI, currentPropertyName, null).GetTypeReference(context.Body.Method.Module, node as IXmlLineInfo);
+
+                    if (typeRef.InheritsFromOrImplements(elementType))
+                    {
+                        propertyName = new XmlName(propertyName.NamespaceURI, remainName);
+                        return IsIteratorProperty(typeRef, propertyName, node, context);
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                TypeReference declareType = null;
+                var name = propertyName.LocalName;
+                var property = typeRef.ResolveCached().GetProperty(prop => prop.Name == name, out declareType);
+
+                if (null == property)
+                {
+                    return false;
+                }
+
+                if (node is ValueNode valueNode)
+                {
+                    if (property.PropertyType.FullName != context.Values[valueNode].GetType().FullName)
+                    {
+                        return false;
+                    }
+                }
+                else if (node is IElementNode elementNode)
+                {
+                    if (property.PropertyType.FullName != context.Variables[elementNode].VariableType.FullName)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private static IEnumerable<Instruction> SetIteratorProperty(VariableDefinition parent, XmlName propertyName, INode valueNode, IXmlLineInfo iXmlLineInfo, ILContext context)
+        {
+            var index = propertyName.LocalName.IndexOf('.');
+
+            if (0 < index)
+            {
+                var currentPropertyName = propertyName.LocalName.Substring(0, index);
+
+                TypeReference declareType = null;
+                var property = parent.VariableType.ResolveCached().GetProperty(prop => prop.Name == currentPropertyName, out declareType);
+
+                var remainPropertyName = propertyName.LocalName.Substring(index + 1);
+
+                if (null != property)
+                {
+                    var vardef = new VariableDefinition(property.PropertyType);
+                    context.Body.Variables.Add(vardef);
+
+                    yield return Create(Ldloc, parent);
+                    yield return Create(Callvirt, context.Module.ImportReference(property.GetMethod));
+                    yield return Create(Stloc, vardef);
+
+                    var ret = SetIteratorProperty(vardef, new XmlName(propertyName.NamespaceURI, remainPropertyName), valueNode, iXmlLineInfo, context);
+
+                    foreach (var ins in ret)
+                    {
+                        yield return ins;
+                    }
+                }
+                else
+                {
+                    var elementType = new XmlType(propertyName.NamespaceURI, currentPropertyName, null).GetTypeReference(context.Body.Method.Module, null);
+
+                    if (parent.VariableType.InheritsFromOrImplements(elementType))
+                    {
+                        propertyName = new XmlName(propertyName.NamespaceURI, remainPropertyName);
+                        var ret = SetIteratorProperty(parent, propertyName, valueNode, iXmlLineInfo, context);
+
+                        foreach (var ins in ret)
+                        {
+                            yield return ins;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                var ret = SetPropertyValue(parent, propertyName, valueNode, context, iXmlLineInfo);
+
+                foreach (var ins in ret)
+                {
+                    yield return ins;
+                }
+            }
         }
 
         public static IEnumerable<Instruction> GetPropertyValue(VariableDefinition parent, XmlName propertyName, ILContext context, IXmlLineInfo lineInfo, out TypeReference propertyType)

@@ -233,6 +233,11 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 {
                     GatherType(examlOp.Type);
 
+                    if (examlOp is EXamlGetInstanceOfProperty getProperty)
+                    {
+                        definedProperties.Add(getProperty.InstanceType, getProperty.Property);
+                    }
+
                     foreach (var property in examlOp.PropertyList)
                     {
                         GatherType(property.Item1);

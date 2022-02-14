@@ -442,6 +442,14 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             var localName = propertyName.LocalName;
             bool attached;
 
+            if (propertyName.LocalName.Contains("."))
+            {
+                if (SetIteratorProperty(context, parent, new XmlName(propertyName.NamespaceURI, propertyName.LocalName), valueNode, iXmlLineInfo))
+                {
+                    return;
+                }
+            }
+
             var bpRef = GetBindablePropertyReference(parent, propertyName.NamespaceURI, ref localName, out attached, context, iXmlLineInfo);
 
             //If the target is an event, connect
@@ -477,6 +485,52 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             else
             {
                 throw new XamlParseException($"No property, bindable property, or event found for '{localName}', or mismatching type between value and property.", iXmlLineInfo);
+            }
+        }
+
+        private static bool SetIteratorProperty(EXamlContext context, EXamlCreateObject instance, XmlName propertyName, INode valueNode, IXmlLineInfo iXmlLineInfo)
+        {
+            var index = propertyName.LocalName.IndexOf('.');
+
+            if (0 < index)
+            {
+                var currentPropertyName = propertyName.LocalName.Substring(0, index);
+                var remainPropertyName = propertyName.LocalName.Substring(index + 1);
+
+                TypeReference declareType = null;
+                var property = instance.Type.Resolve().GetProperty(prop => prop.Name == currentPropertyName, out declareType);
+
+                if (null != property)
+                {
+                    var instanceOfProperty = new EXamlGetInstanceOfProperty(context, instance, property);
+                    return SetIteratorProperty(context, instanceOfProperty, new XmlName(propertyName.NamespaceURI, remainPropertyName), valueNode, iXmlLineInfo);
+                }
+                else
+                {
+                    try
+                    {
+                        var elementType = new XmlType(propertyName.NamespaceURI, currentPropertyName, null).GetTypeReference(context.Module, iXmlLineInfo);
+
+                        if (instance.GetType().InheritsFromOrImplements(elementType))
+                        {
+                            propertyName = new XmlName(propertyName.NamespaceURI, remainPropertyName);
+                            return SetIteratorProperty(context, instance, new XmlName(propertyName.NamespaceURI, remainPropertyName), valueNode, iXmlLineInfo);
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                SetPropertyValue(instance, propertyName, valueNode, context, iXmlLineInfo);
+                return true;
             }
         }
 
