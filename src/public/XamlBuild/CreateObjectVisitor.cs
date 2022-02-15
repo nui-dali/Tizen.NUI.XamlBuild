@@ -268,7 +268,22 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                     var ctor = Module.ImportReference(ctorinforef);
                     //                    IL_0001:  newobj instance void class [Tizen.NUI.Xaml.UIComponents]Tizen.NUI.Xaml.UIComponents.Button::'.ctor'()
                     //                    IL_0006:  stloc.0 
-                    Context.IL.Emit(OpCodes.Newobj, ctor);
+                    if (node.CollectionItems.Count == 1 && node.CollectionItems.First() is ValueNode valueNode)
+                    {
+                        if (valueNode.CanConvertValue(Context.Module, typeref, (TypeReference)null))
+                        {
+                            var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { typeref.Resolve() });
+                            if (null != converterType)
+                            {
+                                Context.IL.Append(vnode.PushConvertedValue(Context, typeref, new ICustomAttributeProvider[] { typedef },
+                                    node.PushServiceProvider(Context), false, true));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Context.IL.Emit(OpCodes.Newobj, ctor);
+                    }
                     Context.IL.Emit(OpCodes.Stloc, vardef);
                 }
                 else if (ctorInfo != null && node.Properties.ContainsKey(XmlName.xArguments) &&
