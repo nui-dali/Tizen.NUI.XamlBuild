@@ -50,6 +50,7 @@
 			DebugSymbols = "$(DebugSymbols)"
 			DebugType = "$(DebugType)"
 			UseInjection = "$(NeedInjection)"
+			PrintReferenceAssemblies = "$(PrintReferenceAssemblies)"
 			KeepXamlResources = "$(XFKeepXamlResources)" />
 		<Touch Files="$(IntermediateOutputPath)XamlC.stamp" AlwaysCreate="True" />
 		<ItemGroup>
