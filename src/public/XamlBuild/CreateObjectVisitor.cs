@@ -268,6 +268,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                     var ctor = Module.ImportReference(ctorinforef);
                     //                    IL_0001:  newobj instance void class [Tizen.NUI.Xaml.UIComponents]Tizen.NUI.Xaml.UIComponents.Button::'.ctor'()
                     //                    IL_0006:  stloc.0 
+                    bool isConvertValue = false;
                     if (node.CollectionItems.Count == 1 && node.CollectionItems.First() is ValueNode valueNode)
                     {
                         if (valueNode.CanConvertValue(Context.Module, typeref, (TypeReference)null))
@@ -275,12 +276,14 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                             var converterType = valueNode.GetConverterType(new ICustomAttributeProvider[] { typeref.Resolve() });
                             if (null != converterType)
                             {
+                                isConvertValue = true;
                                 Context.IL.Append(vnode.PushConvertedValue(Context, typeref, new ICustomAttributeProvider[] { typedef },
                                     node.PushServiceProvider(Context), false, true));
                             }
                         }
                     }
-                    else
+                    
+                    if (false == isConvertValue)
                     {
                         Context.IL.Emit(OpCodes.Newobj, ctor);
                     }
@@ -510,7 +513,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             for (var i = arguments.Count; i < factoryCtorInfo.Parameters.Count; i++)
             {
                 var parameter = factoryCtorInfo.Parameters[i];
-                var arg = new ValueNode(parameter.Constant.ToString(), node.NamespaceResolver);
+                var arg = new ValueNode(parameter.Constant?.ToString(), node.NamespaceResolver);
 
                 foreach (var instruction in arg.PushConvertedValue(Context,
                         parameter.ParameterType,

@@ -30,7 +30,6 @@ namespace Tizen.NUI.EXaml
         GatherBindableProperty,
         CreateObject,
         CreateArrayObject,
-        CreateDPObject,
         CreateDataTemplate,
         GetStaticObject,
         GetTypeObject,
@@ -48,6 +47,8 @@ namespace Tizen.NUI.EXaml
         AddToResourceDictionary,
         RegisterXName,
         GetLongString,
+        CreateDPObject,
+        CreateNullableObject,
         MAX
     }
 }
