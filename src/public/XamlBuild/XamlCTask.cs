@@ -1,5 +1,5 @@
 /*
- * Copyright(c) 2021 Samsung Electronics Co., Ltd.
+ * Copyright(c) 2022 Samsung Electronics Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Xml;
-
+using System.ComponentModel;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -32,6 +32,7 @@ using static Mono.Cecil.Cil.OpCodes;
 
 namespace Tizen.NUI.Xaml.Build.Tasks
 {
+    [EditorBrowsable(EditorBrowsableState.Never)]
     public class XamlCTask : XamlTask
     {
         bool hasCompiledXamlResources;
@@ -202,13 +203,11 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             else
                 LoggingHelper.LogMessage(Low, $"{new string(' ', 2)}Ignoring dependency and reference paths due to an unsupported resolver");
 
-            var debug = DebugSymbols || (!string.IsNullOrEmpty(DebugType) && DebugType.ToLowerInvariant() != "none");
-
             var readerParameters = new ReaderParameters
             {
                 AssemblyResolver = resolver,
                 ReadWrite = !ReadOnly,
-                ReadSymbols = debug,
+                ReadSymbols = NeedDebug,
             };
 
             using (var assemblyDefinition = AssemblyDefinition.ReadAssembly(System.IO.Path.GetFullPath(Assembly), readerParameters))
@@ -357,7 +356,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
                 {
                     assemblyDefinition.Write(new WriterParameters
                     {
-                        WriteSymbols = debug,
+                        WriteSymbols = NeedDebug,
                     });
                     LoggingHelper.LogMessage(Low, $"{new string(' ', 2)}done.");
                 }
@@ -886,3 +885,4 @@ namespace Tizen.NUI.Xaml.Build.Tasks
         }
     }
 }
+ 

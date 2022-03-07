@@ -49,6 +49,7 @@
 			OptimizeIL = "true"
 			DebugSymbols = "$(DebugSymbols)"
 			DebugType = "$(DebugType)"
+			NeedDebug = "$(NeedDebug)"
 			UseInjection = "$(NeedInjection)"
 			PrintReferenceAssemblies = "$(PrintReferenceAssemblies)"
 			KeepXamlResources = "$(XFKeepXamlResources)" />
