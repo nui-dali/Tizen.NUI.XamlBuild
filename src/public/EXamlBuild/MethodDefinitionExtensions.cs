@@ -79,7 +79,14 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 }
                 else
                 {
-                    argType = paramType.Module.ImportReference(argValue.GetType());
+                    if (context.Variables.ContainsKey(arguments[i] as IElementNode))
+                    {
+                        argType = context.Variables[arguments[i] as IElementNode].VariableType;
+                    }
+                    else
+                    {
+                        argType = paramType.Module.ImportReference(argValue.GetType());
+                    }
                 }
 
                 if (!argType.InheritsFromOrImplements(paramType))

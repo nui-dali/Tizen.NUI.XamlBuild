@@ -253,7 +253,15 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                 if (node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null &&
                     vardef.VariableType.IsValueType)
                 {
-                    Context.Values[node] = vnode.GetBaseValue(Context, typeref);
+                    var instance = vnode.GetBaseValue(Context, typeref);
+                    if (typedef.FullName == "System.Nullable`1")
+                    {
+                        Context.Values[node] = new EXamlCreateNullableObject(Context, instance, typeref, (typeref as GenericInstanceType).GenericArguments[0]);
+                    }
+                    else
+                    {
+                        Context.Values[node] = instance;
+                    }
                 }
                 else if (node.CollectionItems.Count == 1 && (vnode = node.CollectionItems.First() as ValueNode) != null &&
                            implicitOperatorref != null)
@@ -496,7 +504,7 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             if (node.NamespaceURI == XamlParser.X2009Uri)
             {
                 var n = node.XmlType.Name.Split(':')[1];
-                return n != "Array";
+                return n != "Array" && n != "Nullable";
             }
             if (node.NamespaceURI != "clr-namespace:System;assembly=mscorlib")
                 return false;

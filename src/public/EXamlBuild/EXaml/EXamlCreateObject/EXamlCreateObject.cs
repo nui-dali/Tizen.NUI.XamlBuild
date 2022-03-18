@@ -21,6 +21,7 @@ using System.Reflection;
 using System.Text;
 using Tizen.NUI.Binding;
 using Tizen.NUI.EXaml.Build.Tasks;
+using Tizen.NUI.Xaml.Build.Tasks;
 
 namespace Tizen.NUI.EXaml
 {
@@ -120,20 +121,30 @@ namespace Tizen.NUI.EXaml
                         paramsStr += ")";
                     }
 
-                    if (0 < paramsStr.Length)
+                    if (null != Constructor)
                     {
-                        ret += String.Format("({0} ({1} {2} {3}))\n",
-                            eXamlContext.GetValueString((int)EXamlOperationType.CreateObject),
-                            eXamlContext.GetValueString(typeIndex),
-                            eXamlContext.GetValueString(xFactoryMethodIndex),
-                            paramsStr);
+                        ret += String.Format("({0} ({1} {2}))\n",
+                                eXamlContext.GetValueString((int)EXamlOperationType.CallConstructor),
+                                eXamlContext.GetValueString(eXamlContext.constructors.GetIndex(Constructor.DeclaringType, Constructor)),
+                                paramsStr);
                     }
                     else
                     {
-                        ret += String.Format("({0} ({1} {2}))\n",
-                            eXamlContext.GetValueString((int)EXamlOperationType.CreateObject),
-                            eXamlContext.GetValueString(typeIndex),
-                            eXamlContext.GetValueString(xFactoryMethodIndex));
+                        if (0 < paramsStr.Length)
+                        {
+                            ret += String.Format("({0} ({1} {2} {3}))\n",
+                                eXamlContext.GetValueString((int)EXamlOperationType.CreateObject),
+                                eXamlContext.GetValueString(typeIndex),
+                                eXamlContext.GetValueString(xFactoryMethodIndex),
+                                paramsStr);
+                        }
+                        else
+                        {
+                            ret += String.Format("({0} ({1} {2}))\n",
+                                eXamlContext.GetValueString((int)EXamlOperationType.CreateObject),
+                                eXamlContext.GetValueString(typeIndex),
+                                eXamlContext.GetValueString(xFactoryMethodIndex));
+                        }
                     }
                 }
             }
@@ -173,6 +184,14 @@ namespace Tizen.NUI.EXaml
 
             Instance = instance;
             Type = type;
+
+            foreach (var method in type.Resolve().Methods)
+            {
+                if (method.IsConstructor && IsMatch(method, @params))
+                {
+                    Constructor = method;
+                }
+            }
 
             if (null != @params)
             {
@@ -222,6 +241,14 @@ namespace Tizen.NUI.EXaml
 
             Index = eXamlContext.eXamlCreateObjects.Count;
             XFactoryMethod = xFactoryMethod;
+            eXamlContext.eXamlCreateObjects.Add(this);
+        }
+
+        public EXamlCreateObject(EXamlContext context, PropertyDefinition property) : base(context)
+        {
+            eXamlContext.eXamlOperations.Add(this);
+            Index = eXamlContext.eXamlCreateObjects.Count;
+            Type = property.PropertyType;
             eXamlContext.eXamlCreateObjects.Add(this);
         }
 
@@ -308,6 +335,12 @@ namespace Tizen.NUI.EXaml
             set;
         }
 
+        internal MethodDefinition Constructor
+        {
+            get;
+            set;
+        }
+
         internal MemberReference MemberOfStaticInstance
         {
             get;
@@ -355,5 +388,77 @@ namespace Tizen.NUI.EXaml
         private bool isStaticInstance = false;
 
         private bool isTypeObject = false;
+
+        private bool IsMatch(MethodDefinition constructor, object[] paramObjects)
+        {
+            int paramCount = (null == paramObjects) ? 0 : paramObjects.Length;
+
+            if (constructor.Parameters.Count < paramCount)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < paramCount; i++)
+            {
+                var param = constructor.Parameters[i];
+
+                if (null == paramObjects[i])
+                {
+                    if (!param.HasDefault && param.ParameterType.IsValueType)
+                    {
+                        return false;
+                    }
+                }
+                else if (paramObjects[i] is EXamlCreateNullableObject nullableObject)
+                {
+                    if (param.ParameterType.Resolve() != nullableObject.NullableType.Resolve())
+                    {
+                        return false;
+                    }
+                }
+                else if (paramObjects[i] is EXamlCreateObject eXamlObject)
+                {
+                    TypeReference typeRef = eXamlObject.GetType();
+
+                    if (eXamlObject.isTypeObject)
+                    {
+                        typeRef = eXamlContext.Module.ImportReference(typeof(Type));
+                    }
+                    else
+                    {
+                        typeRef = eXamlObject.GetType();
+                    }
+
+                    if (!typeRef.InheritsFromOrImplements(param.ParameterType.FullName)
+                        &&
+                        !typeRef.IsInterface(param.ParameterType.FullName))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    var typeRef = eXamlContext.Module.ImportReference(paramObjects[i].GetType());
+
+                    if (!typeRef.InheritsFromOrImplements(param.ParameterType.FullName)
+                        &&
+                        !typeRef.IsInterface(param.ParameterType.FullName))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            for (int i = paramCount; i < constructor.Parameters.Count; i++)
+            {
+                if (!constructor.Parameters[i].HasDefault)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }
+

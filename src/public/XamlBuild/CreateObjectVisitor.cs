@@ -544,7 +544,7 @@ namespace Tizen.NUI.Xaml.Build.Tasks
             if (node.NamespaceURI == XamlParser.X2009Uri)
             {
                 var n = node.XmlType.Name.Split(':')[1];
-                return n != "Array";
+                return n != "Array" && n != "Nullable";
             }
             if (node.NamespaceURI != "clr-namespace:System;assembly=mscorlib")
                 return false;

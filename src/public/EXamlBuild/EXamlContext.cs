@@ -150,6 +150,11 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             get;
         } = new EXamlDefinitionList<MethodDefinition>();
 
+        internal EXamlDefinitionList<MethodDefinition> constructors
+        {
+            get;
+        } = new EXamlDefinitionList<MethodDefinition>();
+
         #region Data of CreateObject
         internal List<EXamlCreateObject> eXamlCreateObjects
         {
@@ -274,6 +279,11 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                         }
                     }
 
+                    if (null != examlOp.Constructor)
+                    {
+                        GatherConstructor((examlOp.Constructor.DeclaringType, examlOp.Constructor));
+                    }
+
                     if (null != examlOp.XFactoryMethod)
                     {
                         GatherMethod((examlOp.XFactoryMethod.DeclaringType, examlOp.XFactoryMethod));
@@ -357,6 +367,31 @@ namespace Tizen.NUI.EXaml.Build.Tasks
                                 strForParam);
             }
 
+            foreach (var method in constructors)
+            {
+                var typeDef = method.Item1;
+                int typeIndex = GetTypeIndex(typeDef);
+
+                string strForParam = "(";
+                foreach (var param in method.Item2.Parameters)
+                {
+                    int paramTypeIndex = GetTypeIndex(param.ParameterType);
+
+                    if (-1 == paramTypeIndex)
+                    {
+                        throw new Exception($"Can't find index of param type {param.ParameterType.FullName}");
+                    }
+
+                    strForParam += GetValueString(paramTypeIndex) + " ";
+                }
+                strForParam += ")";
+
+                ret += String.Format("({0} ({1} {2}))\n",
+                                GetValueString((int)EXamlOperationType.GatherConstructor),
+                                GetValueString(typeIndex),
+                                strForParam);
+            }
+
             foreach (var property in definedBindableProperties)
             {
                 var typeDef = property.DeclaringType;
@@ -427,6 +462,18 @@ namespace Tizen.NUI.EXaml.Build.Tasks
             }
 
             definedMethods.Add(methodInfo.Item1, methodInfo.Item2);
+        }
+
+        private void GatherConstructor((TypeReference, MethodDefinition) methodInfo)
+        {
+            GatherType(methodInfo.Item1);
+
+            foreach (var param in methodInfo.Item2.Parameters)
+            {
+                GatherType(param.ParameterType);
+            }
+
+            constructors.Add(methodInfo.Item1, methodInfo.Item2);
         }
 
         private int GetTypeIndex(TypeData typeData)

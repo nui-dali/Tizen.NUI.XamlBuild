@@ -49,6 +49,8 @@ namespace Tizen.NUI.EXaml
         GetLongString,
         CreateDPObject,
         CreateNullableObject,
+        GatherConstructor,
+        CallConstructor,
         MAX
     }
 }
